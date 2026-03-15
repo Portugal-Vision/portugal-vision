@@ -2,120 +2,218 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Control | Portugal Vision</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-        .container { max-width: 1100px; margin: auto; }
+        :root {
+            --primary: #1d3557; --secondary: #457b9d; --accent: #e63946;
+            --success: #27ae60; --warning: #f39c12; --bg: #f8f9fa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: #333; display: none; } /* Esconde o corpo até validar a senha */
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         
-        /* Filtros e Busca */
-        .search-box { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-
-        /* Tabela */
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        th { background: #1d3557; color: white; padding: 15px; text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid #eee; }
+        .dashboard-row { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 25px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card h3 { margin: 0; font-size: 12px; color: #666; text-transform: uppercase; }
+        .stat-card p { margin: 10px 0 0; font-size: 22px; font-weight: bold; color: var(--primary); }
         
-        /* Status */
-        .status { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .chart-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 250px; }
+
+        .search-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+
+        .table-container { background: white; border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: var(--primary); color: white; padding: 15px; text-align: left; font-size: 13px; }
+        td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
+        
+        .status { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .ativa { background: #d4edda; color: #155724; }
         .suspensa { background: #f8d7da; color: #721c24; }
+        
+        .toggle-btn { cursor: pointer; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; transition: 0.2s; }
+        .on { background: var(--success); color: white; }
+        .off { background: #ccc; color: white; }
 
-        /* Botões */
-        .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px; margin-right: 5px; }
-        .btn-sus { background: #f39c12; color: white; }
-        .btn-act { background: #27ae60; color: white; }
-        .btn-del { background: #e74c3c; color: white; }
+        .btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-edit { background: var(--secondary); color: white; }
+        .btn-del { background: var(--accent); color: white; }
+
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 400px; }
+        .modal-content input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>🚀 Master Control - Portugal Vision</h1>
-        <div id="count-lojas" style="background: #1d3557; color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold;">0 Lojas</div>
+        <h1>🚀 Portugal Vision <small style="font-weight: normal; font-size: 16px; opacity: 0.7;">| Master Admin</small></h1>
+        <button class="btn btn-edit" onclick="carregarDados()">🔄 Atualizar Global</button>
+    </div>
+
+    <div class="dashboard-row">
+        <div class="stats-grid">
+            <div class="stat-card"><h3>Lojas</h3><p id="stat-total">0</p></div>
+            <div class="stat-card"><h3>Views</h3><p id="stat-cliques">0</p></div>
+            <div class="stat-card"><h3>WhatsApp</h3><p id="stat-waps">0</p></div>
+            <div class="stat-card"><h3>Ativos</h3><p id="stat-cats">0</p></div>
+        </div>
+        <div class="chart-container">
+            <canvas id="growthChart"></canvas>
+        </div>
     </div>
 
     <div class="search-box">
-        <input type="text" id="search" placeholder="Procurar loja por nome ou slug..." onkeyup="filtrarLojas()">
+        <input type="text" id="search" placeholder="Pesquisar loja, slug ou e-mail..." onkeyup="filtrarLojas()">
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Loja / Slug</th>
-                <th>Status</th>
-                <th>WhatsApp</th>
-                <th>Desempenho</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="lista-lojas">
-            </tbody>
-    </table>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>LOJA / CONTACTO</th>
+                    <th>FUNCIONALIDADES</th>
+                    <th>STATUS</th>
+                    <th>MÉTRICAS</th>
+                    <th>AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody id="lista-lojas"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0">Editar Perfil</h2>
+        <input type="hidden" id="edit-id">
+        <label>Nome Comercial</label><input type="text" id="edit-nome">
+        <label>E-mail de Acesso</label><input type="email" id="edit-email">
+        <label>Telemóvel/WhatsApp</label><input type="text" id="edit-whatsapp">
+        <label>Alterar Password (opcional)</label><input type="password" id="edit-pass" placeholder="Manter atual">
+        <button class="btn" style="background:var(--success); color:white; width:100%; padding:15px" onclick="salvarEdicao()">Gravar Alterações</button>
+        <button class="btn" style="background:#eee; width:100%; margin-top:10px" onclick="fecharModal()">Cancelar</button>
+    </div>
 </div>
 
 <script>
-    const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
+    // --- CONFIGURAÇÃO ---
+    const SB_URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
+    const SENHA_MESTRA = "1234"; // ALTERA ESTA SENHA PARA A TUA PREFERIDA
+
+    // Validar acesso antes de qualquer coisa
+    const acesso = prompt("Introduza a Senha Master de Administrador:");
+    if (acesso === SENHA_MESTRA) {
+        document.body.style.display = "block";
+    } else {
+        alert("Acesso negado.");
+        window.location.href = "about:blank";
+    }
+
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
     let todasAsLojas = [];
+    let myChart = null;
 
     async function carregarDados() {
-        // Busca da View SQL que criámos para ser super rápido
-        const { data, error } = await _sb.from('resumo_lojas').select('*').order('created_at', {ascending: false});
-        
+        const { data, error } = await _sb.from('lojas').select('*').order('created_at', {ascending: false});
         if (data) {
             todasAsLojas = data;
-            document.getElementById('count-lojas').innerText = data.length + " Lojas";
-            renderizar(todasAsLojas);
+            atualizarStats(data);
+            renderizar(data);
+            gerarGrafico(data);
         }
+    }
+
+    function gerarGrafico(lista) {
+        const ctx = document.getElementById('growthChart').getContext('2d');
+        const contagem = {};
+        
+        [...lista].reverse().forEach(l => {
+            const data = new Date(l.created_at).toLocaleDateString();
+            contagem[data] = (contagem[data] || 0) + 1;
+        });
+
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(contagem),
+                datasets: [{
+                    label: 'Registos de Lojas',
+                    data: Object.values(contagem),
+                    borderColor: '#457b9d',
+                    backgroundColor: 'rgba(69, 123, 157, 0.1)',
+                    fill: true, tension: 0.4
+                }]
+            },
+            options: { 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+
+    function atualizarStats(lista) {
+        document.getElementById('stat-total').innerText = lista.length;
+        document.getElementById('stat-cliques').innerText = lista.reduce((acc, l) => acc + (l.views || 0), 0);
+        document.getElementById('stat-waps').innerText = lista.reduce((acc, l) => acc + (l.waps || 0), 0);
+        document.getElementById('stat-cats').innerText = lista.filter(l => l.status_catalogo).length;
     }
 
     function renderizar(lista) {
         document.getElementById('lista-lojas').innerHTML = lista.map(l => `
             <tr>
+                <td><strong>${l.nome}</strong><br><small>@${l.slug} | ${l.email || 'N/A'}</small></td>
                 <td>
-                    <strong>${l.nome}</strong><br>
-                    <small style="color:#666">@${l.slug}</small>
-                </td>
-                <td><span class="status ${l.status}">${l.status}</span></td>
-                <td>${l.whatsapp || '---'}</td>
-                <td>
-                    <span title="Visualizações">👁️ ${l.views}</span> | 
-                    <span title="Cliques WhatsApp">📱 ${l.waps}</span>
+                    <button class="toggle-btn ${l.status_catalogo ? 'on' : 'off'}" onclick="toggleFeature(${l.id}, 'status_catalogo', ${l.status_catalogo})">Catálogo ${l.status_catalogo ? 'ON' : 'OFF'}</button>
+                    <button class="toggle-btn ${l.status_digital_box ? 'on' : 'off'}" onclick="toggleFeature(${l.id}, 'status_digital_box', ${l.status_digital_box})">Box ${l.status_digital_box ? 'ON' : 'OFF'}</button>
                 </td>
                 <td>
-                    ${l.status === 'ativa' 
-                        ? `<button class="btn btn-sus" onclick="mudarStatus(${l.id}, 'suspensa')">Suspender</button>`
-                        : `<button class="btn btn-act" onclick="mudarStatus(${l.id}, 'ativa')">Ativar</button>`
-                    }
-                    <button class="btn btn-del" onclick="apagarLoja(${l.id})">Apagar</button>
-                    <a href="catalogo.html?loja=${l.slug}" target="_blank" style="text-decoration:none; font-size:18px">🔗</a>
+                    <span class="status ${l.status || 'suspensa'}">${l.status || 'pendente'}</span>
+                    <button class="btn" style="font-size:9px; padding:2px" onclick="toggleStatus(${l.id}, '${l.status}')">🔄</button>
+                </td>
+                <td>👁️ ${l.views || 0} | 📱 ${l.waps || 0}</td>
+                <td>
+                    <button class="btn btn-edit" onclick='abrirModal(${JSON.stringify(l)})'>✏️</button>
+                    <button class="btn btn-del" onclick="apagarLoja(${l.id})">🗑️</button>
                 </td>
             </tr>
         `).join('');
     }
 
+    async function toggleFeature(id, campo, val) { await _sb.from('lojas').update({ [campo]: !val }).eq('id', id); carregarDados(); }
+    async function toggleStatus(id, st) { await _sb.from('lojas').update({ status: st === 'ativa' ? 'suspensa' : 'ativa' }).eq('id', id); carregarDados(); }
+    
+    function abrirModal(l) {
+        document.getElementById('edit-id').value = l.id;
+        document.getElementById('edit-nome').value = l.nome;
+        document.getElementById('edit-email').value = l.email || '';
+        document.getElementById('edit-whatsapp').value = l.whatsapp || '';
+        document.getElementById('modal').style.display = 'flex';
+    }
+    function fecharModal() { document.getElementById('modal').style.display = 'none'; }
+
+    async function salvarEdicao() {
+        const id = document.getElementById('edit-id').value;
+        const upd = { nome: document.getElementById('edit-nome').value, email: document.getElementById('edit-email').value, whatsapp: document.getElementById('edit-whatsapp').value };
+        if(document.getElementById('edit-pass').value) upd.password = document.getElementById('edit-pass').value;
+        await _sb.from('lojas').update(upd).eq('id', id);
+        fecharModal(); carregarDados();
+    }
+
+    async function apagarLoja(id) { if(confirm("Apagar permanentemente?")) { await _sb.from('lojas').delete().eq('id', id); carregarDados(); } }
+
     function filtrarLojas() {
-        const termo = document.getElementById('search').value.toLowerCase();
-        const filtradas = todasAsLojas.filter(l => 
-            l.nome.toLowerCase().includes(termo) || 
-            l.slug.toLowerCase().includes(termo)
-        );
-        renderizar(filtradas);
-    }
-
-    async function mudarStatus(id, novoStatus) {
-        await _sb.from('lojas').update({ status: novoStatus }).eq('id', id);
-        carregarDados();
-    }
-
-    async function apagarLoja(id) {
-        if(confirm("ATENÇÃO: Isto apagará a loja, todos os produtos e todas as métricas permanentemente. Continuar?")) {
-            await _sb.from('lojas').delete().eq('id', id);
-            carregarDados();
-        }
+        const t = document.getElementById('search').value.toLowerCase();
+        renderizar(todasAsLojas.filter(l => l.nome.toLowerCase().includes(t) || l.slug.toLowerCase().includes(t)));
     }
 
     carregarDados();
