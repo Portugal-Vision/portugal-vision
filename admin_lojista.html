@@ -182,7 +182,6 @@
             </div>
         </div>`).join('');
 
-    // FUNÇÃO PARA GERAR O SLUG AUTOMÁTICO NO REGISTO
     async function registar() {
         const nome = document.getElementById('r-nome').value;
         const email = document.getElementById('r-email').value;
@@ -190,11 +189,10 @@
         const zap = document.getElementById('r-zap').value;
         const nif = document.getElementById('r-nif').value;
         
-        // Criar slug: "Loja do Zé" -> "loja-do-ze"
         const slug = nome.toLowerCase().trim()
-                         .normalize('NFD').replace(/[\u0300-\u036f]/g, "") // remove acentos
-                         .replace(/[^a-z0-9]/g, '-') // troca tudo o que não é letra/número por hifen
-                         .replace(/-+/g, '-'); // remove hifens duplos
+                         .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+                         .replace(/[^a-z0-9]/g, '-')
+                         .replace(/-+/g, '-');
 
         const { data, error } = await _sb.from('lojas').insert([{
             nome: nome,
@@ -231,9 +229,9 @@
         
         if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
         
-        // Gerar Link e QR Code se o slug existir (Ajustado para catalogo_digital.html)
+        // CORREÇÃO: Link ajustado para o caminho do repositório no GitHub
         if(lojaAtiva.slug) {
-            const link = window.location.origin + "/catalogo_digital.html?loja=" + lojaAtiva.slug;
+            const link = "https://portugal-vision.github.io/portugal-vision/catalogo_digital.html?loja=" + lojaAtiva.slug;
             document.getElementById('link-catalogo').value = link;
             QRCode.toDataURL(link, { width: 300, margin: 2 }, (err, url) => {
                 if(!err) {
@@ -264,8 +262,6 @@
         document.execCommand("copy");
         alert("Link copiado!");
     }
-
-    // --- MANUTENÇÃO DAS FUNÇÕES ORIGINAIS ---
 
     function marcarAltConfig() {
         const btn = document.getElementById('btn-save-config');
