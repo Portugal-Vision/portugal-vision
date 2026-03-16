@@ -28,6 +28,11 @@
         .inputs-tempo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .periodo { font-size: 11px; color: #666; margin-bottom: 4px; display: block; }
         
+        /* Estilo para a Seleção Múltipla de Tags */
+        .tags-group { background: #fdfdfd; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-top: 5px; }
+        .tag-item { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 5px; cursor: pointer; }
+        .tag-item input { width: auto; margin: 0; }
+
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .prod-card { background: white; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #ddd; }
         .prod-img { width: 100%; height: 140px; object-fit: cover; background: #f9f9f9; cursor: pointer; display: block; }
@@ -95,19 +100,22 @@
                 <input type="text" id="p-nome" placeholder="Nome do Artigo">
                 <input type="number" id="p-preco" placeholder="Preço (€)">
                 <input type="number" id="p-desc" placeholder="Desconto %">
-                <select id="p-tipo">
-                    <option value="normal">Padrão</option>
-                    <option value="promo">Promoção</option>
-                    <option value="novo">Novidade</option>
-                    <option value="destaque">Destaque</option>
-                    <option value="hoje">Produto do Dia</option>
-                </select>
+                <div style="grid-column: span 2">
+                    <small style="color:#666">Etiquetas do Produto (pode selecionar várias):</small>
+                    <div class="tags-group" id="p-tags-container">
+                        <label class="tag-item"><input type="checkbox" value="normal"> Padrão</label>
+                        <label class="tag-item"><input type="checkbox" value="promo"> Promoção</label>
+                        <label class="tag-item"><input type="checkbox" value="novo"> Novidade</label>
+                        <label class="tag-item"><input type="checkbox" value="destaque"> Destaque</label>
+                        <label class="tag-item"><input type="checkbox" value="hoje"> Produto do Dia</label>
+                    </div>
+                </div>
             </div>
-            <div id="foto-input-area">
+            <div id="foto-input-area" style="margin-top:10px">
                 <label id="label-foto" style="font-size: 11px;">Tirar Foto / Carregar (WebP automático):</label>
                 <input type="file" id="p-foto" accept="image/*" capture="environment">
             </div>
-            <button id="btn-save-prod" onclick="salvarProduto()" style="background:var(--ok)">GUARDAR</button>
+            <button id="btn-save-prod" onclick="salvarProduto()" style="background:var(--ok); margin-top:10px">GUARDAR</button>
             <button id="btn-cancel" class="hidden" onclick="cancelarEdicao()" style="background:#666">CANCELAR</button>
         </div>
 
@@ -154,7 +162,6 @@
             </div>
         </div>`).join('');
 
-    // --- FUNÇÕES DE INTERFACE PERFIL ---
     function marcarAlteracao() {
         const btn = document.getElementById('btn-save-profile');
         btn.style.background = "var(--ok)";
@@ -168,29 +175,11 @@
             morada: document.getElementById('v-morada-edit').value,
             telefone: document.getElementById('v-tel-edit').value
         }).eq('id', lojaAtiva.id);
-
         if(!error) {
             btn.style.background = "var(--s)";
             btn.innerText = "Perfil Guardado com Sucesso!";
             setTimeout(() => { btn.innerText = "Guardar Alterações do Perfil"; }, 3000);
-        } else {
-            alert("Erro ao atualizar perfil.");
         }
-    }
-
-    async function registar() {
-        const dados = {
-            nome: document.getElementById('r-nome').value,
-            email: document.getElementById('r-email').value,
-            password: document.getElementById('r-pass').value,
-            telefone: document.getElementById('r-zap').value,
-            morada: document.getElementById('r-morada').value,
-            nif: document.getElementById('r-nif').value
-        };
-        if(!dados.email || !dados.password || !dados.nif) return alert("Preenche os campos obrigatórios!");
-        const { error } = await _sb.from('lojas').insert([dados]);
-        if (error) alert("Erro ao registar: " + error.message);
-        else { alert("Conta criada com sucesso!"); selTab('login'); }
     }
 
     async function login() {
@@ -235,7 +224,7 @@
             ferias_inicio: document.getElementById('v-ferias-inicio').value || null,
             ferias_fim: document.getElementById('v-ferias-fim').value || null
         }).eq('id', lojaAtiva.id);
-        if(!error) alert("Configurações guardadas!"); else alert("Erro ao guardar.");
+        if(!error) alert("Configurações guardadas!");
     }
 
     function selTab(m) {
@@ -283,26 +272,57 @@
     async function salvarProduto() {
         const id = document.getElementById('edit-id').value;
         const file = document.getElementById('p-foto').files[0];
+        
+        // Obter todas as tags selecionadas
+        const tagsMarcadas = Array.from(document.querySelectorAll('#p-tags-container input:checked')).map(el => el.value);
+
         const dados = {
             nome: document.getElementById('p-nome').value,
             preco: parseFloat(document.getElementById('p-preco').value),
             desconto_percent: parseInt(document.getElementById('p-desc').value) || 0,
-            tipo_tag: document.getElementById('p-tipo').value,
+            tipo_tag: tagsMarcadas, // Agora envia um array de strings
             loja_id: lojaAtiva.id
         };
+
         if (file) {
             const path = `p_${Date.now()}.webp`;
             await _sb.storage.from('produtos').upload(path, file);
             const { data: url } = _sb.storage.from('produtos').getPublicUrl(path);
             dados.imagem_url = url.publicUrl;
         }
+
         if(id) await _sb.from('produtos').update(dados).eq('id', id);
         else await _sb.from('produtos').insert([dados]);
+        
         cancelarEdicao(); carregarDados();
     }
 
-    function cancelarEdicao() { document.getElementById('edit-id').value = ""; document.getElementById('p-nome').value = ""; document.getElementById('p-preco').value = ""; document.getElementById('btn-cancel').classList.add('hidden'); }
-    function prepararEdicao(p) { document.getElementById('edit-id').value = p.id; document.getElementById('p-nome').value = p.nome; document.getElementById('p-preco').value = p.preco; document.getElementById('btn-cancel').classList.remove('hidden'); window.scrollTo(0,0); }
+    function cancelarEdicao() { 
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('p-nome').value = ""; 
+        document.getElementById('p-preco').value = ""; 
+        document.getElementById('p-desc').value = "";
+        document.querySelectorAll('#p-tags-container input').forEach(el => el.checked = false);
+        document.getElementById('btn-cancel').classList.add('hidden'); 
+        document.getElementById('form-title').innerText = "📸 Publicar Novo Produto";
+    }
+
+    function prepararEdicao(p) { 
+        document.getElementById('edit-id').value = p.id; 
+        document.getElementById('p-nome').value = p.nome; 
+        document.getElementById('p-preco').value = p.preco; 
+        document.getElementById('p-desc').value = p.desconto_percent || 0;
+        
+        // Resetar e marcar as tags salvas
+        document.querySelectorAll('#p-tags-container input').forEach(el => {
+            el.checked = Array.isArray(p.tipo_tag) ? p.tipo_tag.includes(el.value) : (p.tipo_tag === el.value);
+        });
+
+        document.getElementById('btn-cancel').classList.remove('hidden'); 
+        document.getElementById('form-title').innerText = "✏️ Editar Produto";
+        window.scrollTo(0,0); 
+    }
+
     async function apagarProd(id) { if(confirm("Apagar?")) { await _sb.from('produtos').delete().eq('id', id); carregarDados(); } }
     async function subirLogo(input) {
         const file = input.files[0];
