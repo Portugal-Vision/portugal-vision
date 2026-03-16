@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Lojista | Portugal Vision</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
         :root { --p: #1d3557; --s: #457b9d; --ok: #27ae60; --err: #e63946; --gray: #f4f4f9; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray); margin: 0; padding: 10px; color: #333; }
@@ -22,6 +23,11 @@
         .stat-card { background: var(--p); color: white; padding: 15px; border-radius: 12px; text-align: center; }
         .stat-card b { display: block; font-size: 1.5rem; }
         
+        /* Estilos do QR Code e Link */
+        .qr-section { text-align: center; border-top: 1px dashed #ddd; padding-top: 20px; margin-top: 10px; }
+        .link-box { display: flex; gap: 5px; margin: 10px 0; }
+        #img-qrcode { width: 150px; background: white; padding: 10px; border: 1px solid #eee; border-radius: 10px; }
+
         .dia-config { background: #f9f9f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #ccc; }
         .dia-config.aberto { border-left-color: var(--ok); }
         .dia-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -93,6 +99,17 @@
                 <div class="stat-card">Visitas <b id="s-views">0</b></div>
                 <div class="stat-card">WhatsApp <b id="s-waps">0</b></div>
             </div>
+
+            <div class="qr-section">
+                <small>Link do seu Catálogo Digital:</small>
+                <div class="link-box">
+                    <input type="text" id="link-catalogo" readonly style="font-size: 11px; height: 35px;">
+                    <button onclick="copiarLink()" style="width:80px; height:35px; font-size:11px; background:var(--s)">Copiar</button>
+                </div>
+                <img id="img-qrcode" src="" alt="QR Code">
+                <br>
+                <a id="download-qr" href="#" download="meu-qr-catalogo.png" style="font-size:11px; color:var(--s); text-decoration:none;">💾 Descarregar QR Code</a>
+            </div>
         </div>
 
         <div class="card">
@@ -147,6 +164,7 @@
     let lojaAtiva = null;
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
+    // Renderizar Horários
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -163,6 +181,91 @@
                 </div>
             </div>
         </div>`).join('');
+
+    // FUNÇÃO PARA GERAR O SLUG AUTOMÁTICO NO REGISTO
+    async function registar() {
+        const nome = document.getElementById('r-nome').value;
+        const email = document.getElementById('r-email').value;
+        const pass = document.getElementById('r-pass').value;
+        const zap = document.getElementById('r-zap').value;
+        const nif = document.getElementById('r-nif').value;
+        
+        // Criar slug: "Loja do Zé" -> "loja-do-ze"
+        const slug = nome.toLowerCase().trim()
+                         .normalize('NFD').replace(/[\u0300-\u036f]/g, "") // remove acentos
+                         .replace(/[^a-z0-9]/g, '-') // troca tudo o que não é letra/número por hifen
+                         .replace(/-+/g, '-'); // remove hifens duplos
+
+        const { data, error } = await _sb.from('lojas').insert([{
+            nome: nome,
+            email: email,
+            password: pass,
+            telefone: zap,
+            nif: nif,
+            slug: slug
+        }]).select().single();
+
+        if(!error) { alert("Conta criada! Já pode entrar."); selTab('login'); }
+        else { alert("Erro ao registar. NIF ou E-mail já podem existir."); }
+    }
+
+    async function login() {
+        const email = document.getElementById('l-email').value;
+        const pass = document.getElementById('l-pass').value;
+        const { data } = await _sb.from('lojas').select('*').eq('email', email).eq('password', pass).maybeSingle();
+        if (data) { 
+            lojaAtiva = data; 
+            abrirPainel(); 
+        } else { alert("Credenciais inválidas."); }
+    }
+
+    function abrirPainel() {
+        document.getElementById('auth-area').classList.add('hidden');
+        document.getElementById('dash-area').classList.remove('hidden');
+        
+        document.getElementById('v-nome-edit').value = lojaAtiva.nome;
+        document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
+        document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
+        document.getElementById('v-ferias-inicio').value = lojaAtiva.ferias_inicio || "";
+        document.getElementById('v-ferias-fim').value = lojaAtiva.ferias_fim || "";
+        
+        if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
+        
+        // Gerar Link e QR Code se o slug existir
+        if(lojaAtiva.slug) {
+            const link = window.location.origin + "/catalogo.html?loja=" + lojaAtiva.slug;
+            document.getElementById('link-catalogo').value = link;
+            QRCode.toDataURL(link, { width: 300, margin: 2 }, (err, url) => {
+                if(!err) {
+                    document.getElementById('img-qrcode').src = url;
+                    document.getElementById('download-qr').href = url;
+                }
+            });
+        }
+
+        if(lojaAtiva.horarios) {
+            lojaAtiva.horarios.forEach((h, i) => {
+                if(h) {
+                    document.getElementById(`h-${i}-m1`).value = h.m1 || "";
+                    document.getElementById(`h-${i}-m2`).value = h.m2 || "";
+                    document.getElementById(`h-${i}-t1`).value = h.t1 || "";
+                    document.getElementById(`h-${i}-t2`).value = h.t2 || "";
+                    document.getElementById(`h-${i}-status`).value = h.status || "aberto";
+                    atualizarEstiloDia(i);
+                }
+            });
+        }
+        carregarDados();
+    }
+
+    function copiarLink() {
+        const input = document.getElementById('link-catalogo');
+        input.select();
+        document.execCommand("copy");
+        alert("Link copiado!");
+    }
+
+    // --- MANUTENÇÃO DAS FUNÇÕES ORIGINAIS ---
 
     function marcarAltConfig() {
         const btn = document.getElementById('btn-save-config');
@@ -188,37 +291,6 @@
             btn.innerText = "Perfil Guardado com Sucesso!";
             setTimeout(() => { btn.innerText = "Guardar Alterações do Perfil"; }, 3000);
         }
-    }
-
-    async function login() {
-        const email = document.getElementById('l-email').value;
-        const pass = document.getElementById('l-pass').value;
-        const { data } = await _sb.from('lojas').select('*').eq('email', email).eq('password', pass).maybeSingle();
-        if (data) { lojaAtiva = data; abrirPainel(); } else { alert("Credenciais inválidas."); }
-    }
-
-    function abrirPainel() {
-        document.getElementById('auth-area').classList.add('hidden');
-        document.getElementById('dash-area').classList.remove('hidden');
-        document.getElementById('v-nome-edit').value = lojaAtiva.nome;
-        document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
-        document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
-        document.getElementById('v-ferias-inicio').value = lojaAtiva.ferias_inicio || "";
-        document.getElementById('v-ferias-fim').value = lojaAtiva.ferias_fim || "";
-        if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
-        if(lojaAtiva.horarios) {
-            lojaAtiva.horarios.forEach((h, i) => {
-                if(h) {
-                    document.getElementById(`h-${i}-m1`).value = h.m1 || "";
-                    document.getElementById(`h-${i}-m2`).value = h.m2 || "";
-                    document.getElementById(`h-${i}-t1`).value = h.t1 || "";
-                    document.getElementById(`h-${i}-t2`).value = h.t2 || "";
-                    document.getElementById(`h-${i}-status`).value = h.status || "aberto";
-                    atualizarEstiloDia(i);
-                }
-            });
-        }
-        carregarDados();
     }
 
     async function salvarConfig() {
@@ -272,9 +344,8 @@
 
     async function carregarDados() {
         const { data: prods } = await _sb.from('produtos').select('*').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
-        
-        // BUSCA DAS MÉTRICAS NA TABELA metricas_cliques
         const { data: m } = await _sb.from('metricas_cliques').select('tipo').eq('loja_id', lojaAtiva.id);
+        
         document.getElementById('s-views').innerText = m ? m.filter(i => i.tipo === 'view_loja').length : 0;
         document.getElementById('s-waps').innerText = m ? m.filter(i => i.tipo === 'click_whatsapp').length : 0;
         
@@ -288,10 +359,9 @@
             <div class="prod-card ${isOculto ? 'oculto' : ''}" id="prod-${p.id}">
                 ${descPerc > 0 ? `<div class="badge-desc">-${descPerc}%</div>` : ''}
                 <div class="prod-actions">
-                    <button class="btn-circle" style="background:orange" title="Editar" onclick='prepararEdicao(${JSON.stringify(p)})'>✏️</button>
-                    <button class="btn-circle" style="background:${isOculto ? 'var(--ok)' : '#666'}" title="${isOculto ? 'Mostrar' : 'Ocultar'}" onclick="alternarVisibilidade(${p.id}, ${isOculto})">${isOculto ? '👁️' : '🚫'}</button>
-                    <button class="btn-circle" style="background:var(--s)" title="Adicionar Novo" onclick="window.scrollTo(0,0)">➕</button>
-                    <button class="btn-circle" style="background:var(--err)" title="Eliminar" onclick="apagarProd(${p.id})">🗑️</button>
+                    <button class="btn-circle" style="background:orange" onclick='prepararEdicao(${JSON.stringify(p)})'>✏️</button>
+                    <button class="btn-circle" style="background:${isOculto ? 'var(--ok)' : '#666'}" onclick="alternarVisibilidade(${p.id}, ${isOculto})">${isOculto ? '👁️' : '🚫'}</button>
+                    <button class="btn-circle" style="background:var(--err)" onclick="apagarProd(${p.id})">🗑️</button>
                 </div>
                 <img src="${p.imagem_url || "https://via.placeholder.com/140"}" class="prod-img">
                 <div style="padding:8px; font-size:12px">
