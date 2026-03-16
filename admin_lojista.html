@@ -9,29 +9,38 @@
         :root { --p: #1d3557; --s: #457b9d; --ok: #27ae60; --err: #e63946; --gray: #f4f4f9; --warn: #f39c12; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray); margin: 0; padding: 10px; color: #333; }
         .container { max-width: 900px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
+        .auth-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; margin: 50px auto; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: bold; color: #999; }
+        .tab.active { color: var(--p); border-bottom: 3px solid var(--p); }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* Botões Dinâmicos */
-        .btn-save { background: var(--s); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 8px; width: 100%; }
-        .btn-save.dirty { background: var(--ok) !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        /* Botões Profissionais */
+        .btn-main { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; padding: 12px; border-radius: 8px; width: 100%; transition: 0.3s; }
+        .btn-status { background: var(--s); color: white; border: none; font-weight: bold; cursor: pointer; padding: 10px; border-radius: 8px; width: 100%; transition: 0.5s; }
+        .btn-status.dirty { background: var(--ok) !important; box-shadow: 0 0 10px rgba(39, 174, 96, 0.5); }
 
         .header-loja { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
         .logo-box { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--p); overflow: hidden; position: relative; background: #eee; flex-shrink: 0; }
         .logo-box img { width: 100%; height: 100%; object-fit: cover; }
         .logo-box input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
         
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-card { background: var(--p); color: white; padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-card b { display: block; font-size: 1.5rem; }
+
+        .tag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; }
+        .tag-item { display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; }
+        .tag-item input { width: auto; margin: 0; }
+
+        .prod-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; position: relative; }
+        .prod-img { width: 100%; height: 140px; object-fit: cover; }
+        .badge-desc { position: absolute; top: 5px; left: 5px; background: var(--err); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .prod-card { background: white; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #ddd; }
-        .prod-img-container { position: relative; width: 100%; height: 140px; }
-        .prod-img { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Badge de Desconto */
-        .badge-desconto { position: absolute; top: 5px; left: 5px; background: var(--err); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-        
-        .tag-group { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; background: #f9f9f9; padding: 10px; border-radius: 8px; }
-        .tag-check { display: flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; background: white; padding: 4px 8px; border-radius: 15px; border: 1px solid #ddd; }
-        .tag-check input { width: auto; margin: 0; }
+
+        .horarios-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .horarios-table td { padding: 8px 4px; border-bottom: 1px solid #eee; }
+        input[type="time"] { width: 70px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; }
 
         input, select { width: 100%; padding: 10px; margin: 4px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
         .hidden { display: none !important; }
@@ -40,20 +49,48 @@
 <body>
 
 <div class="container">
-    <div id="auth-area" class="card">... (Login/Registo) ...</div>
+    <div id="auth-area" class="auth-card">
+        <h2 style="text-align:center; color: var(--p)">Portugal Vision</h2>
+        <div class="tabs">
+            <div id="t-login" class="tab active" onclick="selTab('login')">ENTRAR</div>
+            <div id="t-reg" class="tab" onclick="selTab('reg')">REGISTAR</div>
+        </div>
+        <div id="f-login">
+            <input type="email" id="l-email" placeholder="E-mail">
+            <input type="password" id="l-pass" placeholder="Password">
+            <button class="btn-main" onclick="login()">ENTRAR</button>
+        </div>
+        <div id="f-reg" class="hidden">
+            <input type="text" id="r-nome" placeholder="Nome do Negócio">
+            <input type="email" id="r-email" placeholder="E-mail">
+            <input type="text" id="r-zap" placeholder="Telefone">
+            <input type="text" id="r-morada" placeholder="Morada">
+            <input type="text" id="r-nif" placeholder="NIF">
+            <input type="password" id="r-pass" placeholder="Password">
+            <button class="btn-main" style="background:var(--ok)" onclick="registar()">CRIAR CONTA</button>
+        </div>
+    </div>
 
     <div id="dash-area" class="hidden">
-        <div class="card" id="card-perfil">
+        <div class="card">
             <div class="header-loja">
-                <div class="logo-box"><img id="v-logo" src=""><input type="file" onchange="subirLogo(this)"></div>
-                <div style="flex:1">
-                    <input type="text" id="v-nome-edit" oninput="markDirty('btn-perfil')">
-                    <input type="text" id="v-morada-edit" placeholder="Morada" oninput="markDirty('btn-perfil')">
-                    <input type="text" id="v-tel-edit" placeholder="Telefone" oninput="markDirty('btn-perfil')">
+                <div class="logo-box" title="Mudar Logotipo">
+                    <img id="v-logo" src="https://via.placeholder.com/80">
+                    <input type="file" accept="image/*" onchange="subirLogo(this)">
                 </div>
-                <button onclick="checkExit()" style="width:auto; background:var(--err); padding:5px 10px;">Sair</button>
+                <div style="flex:1">
+                    <input type="text" id="v-nome-edit" oninput="markDirty('btn-perfil')" style="font-weight:bold; font-size:1.1rem; border:none; background:transparent">
+                    <input type="text" id="v-morada-edit" oninput="markDirty('btn-perfil')" placeholder="Morada" style="border:none; font-size:12px; background:transparent">
+                    <input type="text" id="v-tel-edit" oninput="markDirty('btn-perfil')" placeholder="Telefone" style="border:none; font-size:12px; background:transparent">
+                </div>
+                <button onclick="sair()" style="width:auto; background:var(--err); padding: 5px 10px; color:white; border:none; border-radius:5px; cursor:pointer">Sair</button>
             </div>
-            <button id="btn-perfil" class="btn-save" onclick="atualizarPerfil()">Guardar Alterações do Perfil</button>
+            <button id="btn-perfil" class="btn-status" onclick="atualizarPerfil()">Guardar Alterações do Perfil</button>
+            
+            <div class="stats">
+                <div class="stat-card">Visitas <b id="s-views">0</b></div>
+                <div class="stat-card">WhatsApp <b id="s-waps">0</b></div>
+            </div>
         </div>
 
         <div class="card">
@@ -64,101 +101,128 @@
                 <input type="number" id="p-preco" placeholder="Preço (€)">
                 <input type="number" id="p-desc" placeholder="Desconto %">
             </div>
-
-            <div class="tag-info" style="font-size:11px; margin-top:10px">Categorias/Tags:</div>
-            <div class="tag-group" id="p-tags">
-                <label class="tag-check"><input type="checkbox" value="promo"> Promoção</label>
-                <label class="tag-check"><input type="checkbox" value="novo"> Novidade</label>
-                <label class="tag-check"><input type="checkbox" value="destaque"> Destaque</label>
-                <label class="tag-check"><input type="checkbox" value="hoje"> Produto do Dia</label>
+            
+            <div class="tag-grid" id="p-tags-vistos">
+                <label class="tag-item"><input type="checkbox" value="promo"> Promoção</label>
+                <label class="tag-item"><input type="checkbox" value="novo"> Novidade</label>
+                <label class="tag-item"><input type="checkbox" value="destaque"> Destaque</label>
+                <label class="tag-item"><input type="checkbox" value="hoje"> Produto do Dia</label>
             </div>
 
             <div id="foto-input-area">
-                <label style="font-size: 11px;">Imagem do Produto:</label>
+                <label style="font-size: 11px;">Foto do Produto:</label>
                 <input type="file" id="p-foto" accept="image/*">
             </div>
-            <button id="btn-save-prod" onclick="salvarProduto()" class="btn-save" style="background:var(--ok)">GUARDAR PRODUTO</button>
-            <button id="btn-cancel" class="hidden" onclick="cancelarEdicao()" style="background:#666; margin-top:5px">CANCELAR</button>
+            <button class="btn-main" id="btn-save-prod" onclick="salvarProduto()" style="background:var(--ok)">GUARDAR</button>
+            <button id="btn-cancel" class="hidden" onclick="cancelarEdicao()" style="background:#666; color:white; border:none; padding:8px; border-radius:8px; margin-top:5px; width:100%">CANCELAR EDIÇÃO</button>
         </div>
 
+        <h3>📦 Minha Montra</h3>
         <div id="grid-prods" class="grid"></div>
 
-        <div class="card" id="card-horario">
-            <h3>⚙️ Funcionamento</h3>
-            <div id="horarios-container"></div>
-            <button id="btn-horario" class="btn-save" onclick="salvarConfig()" style="margin-top:15px">ATUALIZAR FUNCIONAMENTO</button>
+        <div class="card" style="margin-top:30px">
+            <h3>⚙️ Funcionamento e Férias</h3>
+            <table class="horarios-table"><tbody id="horarios-body"></tbody></table>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px">
+                <input type="date" id="v-ferias-inicio" oninput="markDirty('btn-horario')">
+                <input type="date" id="v-ferias-fim" oninput="markDirty('btn-horario')">
+            </div>
+            <button id="btn-horario" class="btn-status" onclick="salvarConfig()">ATUALIZAR FUNCIONAMENTO</button>
         </div>
     </div>
 </div>
 
 <script>
     const _URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
-    const _KEY = "SUA_KEY_AQUI";
+    const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
     const _sb = supabase.createClient(_URL, _KEY);
     
     let lojaAtiva = null;
-    let isDirty = false;
+    let pendente = false;
+    const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // Monitorizar alterações para o aviso de saída
-    function markDirty(btnId) {
-        isDirty = true;
-        document.getElementById(btnId).classList.add('dirty');
+    // Render Horário Inicial
+    document.getElementById('horarios-body').innerHTML = diasSemana.map((dia, i) => `
+        <tr>
+            <td><b>${dia}</b></td>
+            <td><input type="time" id="h-${i}-m1" oninput="markDirty('btn-horario')"> - <input type="time" id="h-${i}-m2" oninput="markDirty('btn-horario')"></td>
+            <td><select id="h-${i}-status" onchange="markDirty('btn-horario')"><option value="aberto">Aberto</option><option value="fechado">Fechado</option></select></td>
+        </tr>
+    `).join('');
+
+    function markDirty(id) {
+        pendente = true;
+        document.getElementById(id).classList.add('dirty');
     }
 
-    function checkExit() {
-        if (isDirty) {
-            if (confirm("Tens alterações não guardadas! Desejas sair sem guardar?")) location.reload();
-        } else {
-            location.reload();
-        }
+    function sair() {
+        if(pendente && !confirm("Tens alterações por guardar. Queres mesmo sair?")) return;
+        location.reload();
     }
 
-    // Lógica de Preço com Desconto
-    function calcularPrecoFinal(preco, desc) {
-        if (!desc || desc <= 0) return preco.toFixed(2);
-        return (preco * (1 - desc / 100)).toFixed(2);
+    function selTab(m) {
+        document.getElementById('f-login').classList.toggle('hidden', m==='reg');
+        document.getElementById('f-reg').classList.toggle('hidden', m==='login');
+        document.getElementById('t-login').classList.toggle('active', m==='login');
+        document.getElementById('t-reg').classList.toggle('active', m==='reg');
+    }
+
+    async function login() {
+        const email = document.getElementById('l-email').value;
+        const pass = document.getElementById('l-pass').value;
+        const { data } = await _sb.from('lojas').select('*').eq('email', email).eq('password', pass).maybeSingle();
+        if (data) { lojaAtiva = data; abrirPainel(); } else alert("Erro no login.");
+    }
+
+    function abrirPainel() {
+        document.getElementById('auth-area').classList.add('hidden');
+        document.getElementById('dash-area').classList.remove('hidden');
+        document.getElementById('v-nome-edit').value = lojaAtiva.nome;
+        document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
+        document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
+        if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
+        carregarDados();
     }
 
     async function carregarDados() {
         const { data: prods } = await _sb.from('produtos').select('*').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
+        const { data: m } = await _sb.from('metricas_cliques').select('tipo').eq('loja_id', lojaAtiva.id);
         
+        document.getElementById('s-views').innerText = m ? m.filter(i => i.tipo === 'view_loja').length : 0;
+        document.getElementById('s-waps').innerText = m ? m.filter(i => i.tipo === 'click_whatsapp').length : 0;
+
         document.getElementById('grid-prods').innerHTML = (prods || []).map(p => {
-            const precoFinal = calcularPrecoFinal(p.preco, p.desconto_percent);
-            const tags = Array.isArray(p.tipo_tag) ? p.tipo_tag : [p.tipo_tag]; // Suporta múltiplas tags
-            
+            const final = p.desconto_percent > 0 ? (p.preco * (1 - p.desconto_percent/100)).toFixed(2) : p.preco;
             return `
-                <div class="prod-card">
-                    <div class="prod-img-container">
-                        ${p.desconto_percent > 0 ? `<div class="badge-desconto">-${p.desconto_percent}%</div>` : ''}
-                        <img src="${p.imagem_url}" class="prod-img">
-                    </div>
-                    <div style="padding:8px">
-                        <div style="font-size:12px; font-weight:bold">${p.nome}</div>
-                        <div style="display:flex; align-items:center; gap:5px">
-                            <span style="color:var(--err); font-weight:bold">${precoFinal}€</span>
-                            ${p.desconto_percent > 0 ? `<small style="text-decoration:line-through; color:#999">${p.preco}€</small>` : ''}
-                        </div>
-                        <button onclick='prepararEdicao(${JSON.stringify(p)})' style="font-size:10px; padding:2px; margin-top:5px">Editar</button>
+            <div class="prod-card" style="${p.oculto ? 'opacity:0.5' : ''}">
+                ${p.desconto_percent > 0 ? `<div class="badge-desc">-${p.desconto_percent}%</div>` : ''}
+                <img src="${p.imagem_url}" class="prod-img">
+                <div style="padding:8px">
+                    <b style="font-size:12px">${p.nome}</b><br>
+                    <span style="color:var(--err); font-weight:bold">${final}€</span>
+                    ${p.desconto_percent > 0 ? `<small style="text-decoration:line-through; margin-left:5px">${p.preco}€</small>` : ''}
+                    <div style="margin-top:5px; display:flex; gap:5px">
+                        <button onclick='prepararEdicao(${JSON.stringify(p)})' style="flex:1; font-size:10px">Editar</button>
+                        <button onclick="toggleOcultar(${p.id}, ${p.oculto})" style="font-size:10px">${p.oculto ? 'Mostrar' : 'Ocultar'}</button>
                     </div>
                 </div>
-            `;
+            </div>`;
         }).join('');
     }
 
     async function salvarProduto() {
         const id = document.getElementById('edit-id').value;
-        const selectedTags = Array.from(document.querySelectorAll('#p-tags input:checked')).map(cb => cb.value);
+        const tags = Array.from(document.querySelectorAll('#p-tags-vistos input:checked')).map(i => i.value);
         
         const dados = {
             nome: document.getElementById('p-nome').value,
             preco: parseFloat(document.getElementById('p-preco').value),
             desconto_percent: parseInt(document.getElementById('p-desc').value) || 0,
-            tipo_tag: selectedTags, // Agora guarda como array
+            tipo_tag: tags,
             loja_id: lojaAtiva.id
         };
 
         const file = document.getElementById('p-foto').files[0];
-        
         if (file) {
             const path = `p_${Date.now()}.webp`;
             await _sb.storage.from('produtos').upload(path, file);
@@ -166,31 +230,12 @@
             dados.imagem_url = url.publicUrl;
         }
 
-        if(id) {
-            await _sb.from('produtos').update(dados).eq('id', id);
-        } else {
-            if(!dados.imagem_url) return alert("Adiciona uma foto para o novo produto!");
+        if(id) await _sb.from('produtos').update(dados).eq('id', id);
+        else {
+            if(!dados.imagem_url) return alert("Falta a foto!");
             await _sb.from('produtos').insert([dados]);
         }
-        
         cancelarEdicao(); carregarDados();
-    }
-
-    async function atualizarPerfil() {
-        const btn = document.getElementById('btn-perfil');
-        const { error } = await _sb.from('lojas').update({
-            nome: document.getElementById('v-nome-edit').value,
-            morada: document.getElementById('v-morada-edit').value,
-            telefone: document.getElementById('v-tel-edit').value
-        }).eq('id', lojaAtiva.id);
-
-        if(!error) {
-            isDirty = false;
-            btn.classList.remove('dirty');
-            alert("Perfil guardado com sucesso!");
-        } else {
-            alert("Erro: " + error.message);
-        }
     }
 
     function prepararEdicao(p) {
@@ -200,20 +245,47 @@
         document.getElementById('p-preco').value = p.preco;
         document.getElementById('p-desc').value = p.desconto_percent;
         
-        // Reset e Marcar Checkboxes
-        document.querySelectorAll('#p-tags input').forEach(cb => {
+        document.querySelectorAll('#p-tags-vistos input').forEach(cb => {
             cb.checked = Array.isArray(p.tipo_tag) ? p.tipo_tag.includes(cb.value) : p.tipo_tag === cb.value;
         });
 
         document.getElementById('btn-cancel').classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    async function atualizarPerfil() {
+        const { error } = await _sb.from('lojas').update({
+            nome: document.getElementById('v-nome-edit').value,
+            morada: document.getElementById('v-morada-edit').value,
+            telefone: document.getElementById('v-tel-edit').value
+        }).eq('id', lojaAtiva.id);
+        
+        if(!error) {
+            pendente = false;
+            document.getElementById('btn-perfil').classList.remove('dirty');
+            alert("Perfil Guardado!");
+        }
     }
 
     function cancelarEdicao() {
         document.getElementById('edit-id').value = "";
-        document.querySelectorAll('#p-tags input').forEach(cb => cb.checked = false);
-        document.getElementById('form-title').innerText = "📸 Publicar Novo Produto";
+        document.getElementById('p-nome').value = "";
         document.getElementById('btn-cancel').classList.add('hidden');
+        document.getElementById('form-title').innerText = "📸 Publicar Novo Produto";
+    }
+
+    async function toggleOcultar(id, estado) {
+        await _sb.from('produtos').update({ oculto: !estado }).eq('id', id);
+        carregarDados();
+    }
+
+    async function subirLogo(input) {
+        const file = input.files[0];
+        const path = `logo_${lojaAtiva.id}.webp`;
+        await _sb.storage.from('produtos').upload(path, file, {upsert:true});
+        const { data: url } = _sb.storage.from('produtos').getPublicUrl(path);
+        await _sb.from('lojas').update({ logo_url: url.publicUrl }).eq('id', lojaAtiva.id);
+        document.getElementById('v-logo').src = url.publicUrl;
     }
 </script>
 </body>
