@@ -231,9 +231,9 @@
         
         if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
         
-        // Gerar Link e QR Code se o slug existir
+        // Gerar Link e QR Code se o slug existir (Ajustado para catalogo_digital.html)
         if(lojaAtiva.slug) {
-            const link = window.location.origin + "/catalogo.html?loja=" + lojaAtiva.slug;
+            const link = window.location.origin + "/catalogo_digital.html?loja=" + lojaAtiva.slug;
             document.getElementById('link-catalogo').value = link;
             QRCode.toDataURL(link, { width: 300, margin: 2 }, (err, url) => {
                 if(!err) {
