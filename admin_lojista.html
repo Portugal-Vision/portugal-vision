@@ -100,7 +100,7 @@
                 </select>
             </div>
             <div id="foto-input-area">
-                <label style="font-size: 11px;">Tirar Foto / Carregar (WebP automático):</label>
+                <label id="label-foto" style="font-size: 11px;">Tirar Foto / Carregar (WebP automático):</label>
                 <input type="file" id="p-foto" accept="image/*" capture="environment">
             </div>
             <button id="btn-save-prod" onclick="salvarProduto()" style="background:var(--ok)">GUARDAR</button>
@@ -132,19 +132,12 @@
     let lojaAtiva = null;
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // --- NOVA FUNÇÃO PARA VERIFICAR ALTERAÇÕES ---
     function verificarAlteracoesPerfil() {
         const btn = document.getElementById('btn-save-profile');
         const nome = document.getElementById('v-nome-edit').value;
         const morada = document.getElementById('v-morada-edit').value;
         const tel = document.getElementById('v-tel-edit').value;
-
-        // Compara com os dados que vieram da base de dados (lojaAtiva)
-        const houveMudanca = nome !== lojaAtiva.nome || 
-                             morada !== (lojaAtiva.morada || "") || 
-                             tel !== (lojaAtiva.telefone || "");
-
-        // Se mudou algo, fica verde (--ok), se estiver igual ao original, volta ao azul (--s)
+        const houveMudanca = nome !== lojaAtiva.nome || morada !== (lojaAtiva.morada || "") || tel !== (lojaAtiva.telefone || "");
         btn.style.background = houveMudanca ? 'var(--ok)' : 'var(--s)';
     }
 
@@ -168,13 +161,7 @@
         const email = document.getElementById('l-email').value;
         const pass = document.getElementById('l-pass').value;
         const { data, error } = await _sb.from('lojas').select('*').eq('email', email).eq('password', pass).maybeSingle();
-        
-        if (data) {
-            lojaAtiva = data;
-            abrirPainel();
-        } else {
-            alert("Credenciais inválidas.");
-        }
+        if (data) { lojaAtiva = data; abrirPainel(); } else { alert("Credenciais inválidas."); }
     }
 
     async function registar() {
@@ -205,10 +192,8 @@
     async function carregarDados() {
         const { data: prods } = await _sb.from('produtos').select('*').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
         const { data: m } = await _sb.from('metricas_cliques').select('tipo').eq('loja_id', lojaAtiva.id);
-        
         document.getElementById('s-views').innerText = m ? m.filter(i => i.tipo === 'view_loja').length : 0;
         document.getElementById('s-waps').innerText = m ? m.filter(i => i.tipo === 'click_whatsapp').length : 0;
-
         document.getElementById('grid-prods').innerHTML = (prods || []).map(p => `
             <div class="prod-card" style="${p.oculto ? 'opacity:0.4' : ''}">
                 <div class="prod-actions">
@@ -228,8 +213,11 @@
         `).join('');
     }
 
+    // --- FUNÇÃO SALVAR ATUALIZADA PARA SUPORTAR TROCA DE IMAGEM ---
     async function salvarProduto() {
         const id = document.getElementById('edit-id').value;
+        const file = document.getElementById('p-foto').files[0];
+        
         const dados = {
             nome: document.getElementById('p-nome').value,
             preco: parseFloat(document.getElementById('p-preco').value),
@@ -238,15 +226,20 @@
             loja_id: lojaAtiva.id
         };
 
-        if(id) {
-            await _sb.from('produtos').update(dados).eq('id', id);
-        } else {
-            const file = document.getElementById('p-foto').files[0];
-            if(!file) return alert("Falta a foto!");
+        // Se houver uma nova foto selecionada, fazemos o upload
+        if (file) {
             const path = `p_${Date.now()}.webp`;
             await _sb.storage.from('produtos').upload(path, file);
             const { data: url } = _sb.storage.from('produtos').getPublicUrl(path);
             dados.imagem_url = url.publicUrl;
+        }
+
+        if(id) {
+            // Edição: Só enviamos imagem_url se uma nova foto foi carregada
+            await _sb.from('produtos').update(dados).eq('id', id);
+        } else {
+            // Novo: Foto é obrigatória
+            if(!file) return alert("Falta a foto!");
             await _sb.from('produtos').insert([dados]);
         }
         cancelarEdicao(); carregarDados();
@@ -256,25 +249,12 @@
         const novoNome = document.getElementById('v-nome-edit').value;
         const novaMorada = document.getElementById('v-morada-edit').value;
         const novoTel = document.getElementById('v-tel-edit').value;
-
-        const { error } = await _sb.from('lojas').update({
-            nome: novoNome,
-            morada: novaMorada,
-            telefone: novoTel
-        }).eq('id', lojaAtiva.id);
-
-        if (!error) {
-            // Atualiza a variável local para que o botão volte a ficar azul (sem alterações pendentes)
-            lojaAtiva.nome = novoNome;
-            lojaAtiva.morada = novaMorada;
-            lojaAtiva.telefone = novoTel;
-            verificarAlteracoesPerfil();
-            alert("Perfil atualizado!");
-        } else {
-            alert("Erro ao atualizar");
-        }
+        const { error } = await _sb.from('lojas').update({ nome: novoNome, morada: novaMorada, telefone: novoTel }).eq('id', lojaAtiva.id);
+        if (!error) { lojaAtiva.nome = novoNome; lojaAtiva.morada = novaMorada; lojaAtiva.telefone = novoTel; verificarAlteracoesPerfil(); alert("Perfil atualizado!"); }
+        else { alert("Erro ao atualizar"); }
     }
 
+    // --- FUNÇÃO PREPARAR EDIÇÃO AJUSTADA ---
     function prepararEdicao(p) {
         document.getElementById('form-title').innerText = "✏️ Editar Produto";
         document.getElementById('edit-id').value = p.id;
@@ -283,7 +263,11 @@
         document.getElementById('p-desc').value = p.desconto_percent;
         document.getElementById('p-tipo').value = p.tipo_tag;
         document.getElementById('btn-cancel').classList.remove('hidden');
-        document.getElementById('foto-input-area').classList.add('hidden');
+        
+        // Mantemos a área da foto visível para permitir a troca
+        document.getElementById('foto-input-area').classList.remove('hidden');
+        document.getElementById('label-foto').innerText = "Mudar Foto (Opcional):";
+        
         window.scrollTo(0,0);
     }
 
@@ -295,8 +279,11 @@
     function cancelarEdicao() {
         document.getElementById('edit-id').value = "";
         document.getElementById('p-nome').value = "";
+        document.getElementById('p-preco').value = "";
+        document.getElementById('p-desc').value = "";
+        document.getElementById('p-foto').value = ""; // Limpa o ficheiro selecionado
         document.getElementById('btn-cancel').classList.add('hidden');
-        document.getElementById('foto-input-area').classList.remove('hidden');
+        document.getElementById('label-foto').innerText = "Tirar Foto / Carregar (WebP automático):";
         document.getElementById('form-title').innerText = "📸 Publicar Novo Produto";
     }
 
