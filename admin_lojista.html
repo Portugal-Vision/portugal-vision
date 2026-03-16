@@ -26,7 +26,7 @@
         .horarios-table input[type="time"] { padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; width: 75px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .prod-card { background: white; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #ddd; }
-        .prod-img { width: 100%; height: 140px; object-fit: cover; background: #f9f9f9; cursor: pointer; }
+        .prod-img { width: 100%; height: 140px; object-fit: cover; background: #f9f9f9; cursor: pointer; display: block; }
         .prod-actions { position: absolute; top: 5px; right: 5px; display: flex; flex-direction: column; gap: 5px; z-index: 10; }
         .btn-circle { width: 30px; height: 30px; border-radius: 50%; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         input, select, button { width: 100%; padding: 10px; margin: 4px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
@@ -151,7 +151,7 @@
         const nome = document.getElementById('v-nome-edit').value;
         const morada = document.getElementById('v-morada-edit').value;
         const tel = document.getElementById('v-tel-edit').value;
-        const houveMudanca = nome !== lojaAtiva.nome || morada !== (lojaAtiva.morada || "") || tel !== (lojaAtiva.telefone || "");
+        const houveMudanca = lojaAtiva && (nome !== lojaAtiva.nome || morada !== (lojaAtiva.morada || "") || tel !== (lojaAtiva.telefone || ""));
         btn.style.background = houveMudanca ? 'var(--ok)' : 'var(--s)';
     }
 
@@ -214,6 +214,9 @@
             const temDesc = p.desconto_percent > 0;
             const precoOriginal = parseFloat(p.preco);
             const precoFinal = temDesc ? (precoOriginal * (1 - p.desconto_percent / 100)).toFixed(2) : precoOriginal.toFixed(2);
+            
+            // CORREÇÃO: Prioriza imagem_url (novo padrão) mas aceita url_foto (antigo padrão)
+            const linkImagem = p.imagem_url || p.url_foto || "https://via.placeholder.com/140?text=Sem+Foto";
 
             return `
             <div class="prod-card" style="${p.oculto ? 'opacity:0.4' : ''}">
@@ -223,7 +226,7 @@
                     <button class="btn-circle" style="background:gray" onclick="toggleOcultar(${p.id}, ${p.oculto})">${p.oculto ? '👁️' : '🚫'}</button>
                     <button class="btn-circle" style="background:red" onclick="apagarProd(${p.id})">🗑️</button>
                 </div>
-                <img src="${p.imagem_url || p.url_foto}" class="prod-img">
+                <img src="${linkImagem}" class="prod-img" onerror="this.src='https://via.placeholder.com/140?text=Erro+Imagem'">
                 <div style="padding:8px; font-size:12px">
                     <b>${p.nome}</b><br>
                     ${temDesc ? 
@@ -264,6 +267,8 @@
                 const { error: uploadErr } = await _sb.storage.from('produtos').upload(path, file);
                 if (uploadErr) throw uploadErr;
                 const { data: url } = _sb.storage.from('produtos').getPublicUrl(path);
+                
+                // Salvamos em imagem_url (novo padrão)
                 dados.imagem_url = url.publicUrl;
             }
 
@@ -277,7 +282,7 @@
             }
 
             cancelarEdicao();
-            await carregarDados(); // Aguarda o recarregamento dos dados
+            await carregarDados();
         } catch (err) {
             alert("Erro: " + err.message);
         } finally {
