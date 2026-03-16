@@ -272,6 +272,8 @@
 
     async function carregarDados() {
         const { data: prods } = await _sb.from('produtos').select('*').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
+        
+        // BUSCA DAS MÉTRICAS NA TABELA metricas_cliques
         const { data: m } = await _sb.from('metricas_cliques').select('tipo').eq('loja_id', lojaAtiva.id);
         document.getElementById('s-views').innerText = m ? m.filter(i => i.tipo === 'view_loja').length : 0;
         document.getElementById('s-waps').innerText = m ? m.filter(i => i.tipo === 'click_whatsapp').length : 0;
@@ -358,6 +360,7 @@
     }
 
     async function apagarProd(id) { if(confirm("Apagar?")) { await _sb.from('produtos').delete().eq('id', id); carregarDados(); } }
+    
     async function subirLogo(input) {
         const file = input.files[0];
         const path = `logo_${lojaAtiva.id}.webp`;
