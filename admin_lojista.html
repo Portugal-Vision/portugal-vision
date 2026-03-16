@@ -80,7 +80,7 @@
                 </div>
                 <button onclick="location.reload()" style="width:auto; background:var(--err); padding: 5px 10px;">Sair</button>
             </div>
-            <button onclick="atualizarPerfil()" style="font-size:11px; padding:5px; background:var(--s)">Guardar Alterações do Perfil</button>
+            <button id="btn-save-profile" onclick="atualizarPerfil()" style="font-size:11px; padding:5px; background:var(--s)">Guardar Alterações do Perfil</button>
             
             <div class="stats" style="margin-top:15px">
                 <div class="stat-card">Visitas <b id="s-views">0</b></div>
@@ -104,18 +104,19 @@
                 </select>
             </div>
             <div id="foto-input-area">
-                <label style="font-size: 11px;">Foto (WebP automático):</label>
+                <label id="label-foto" style="font-size: 11px;">Tirar Foto / Carregar (WebP automático):</label>
                 <input type="file" id="p-foto" accept="image/*" capture="environment">
             </div>
-            <button onclick="salvarProduto()" style="background:var(--ok)">GUARDAR</button>
+            <button id="btn-save-prod" onclick="salvarProduto()" style="background:var(--ok)">GUARDAR</button>
             <button id="btn-cancel" class="hidden" onclick="cancelarEdicao()" style="background:#666">CANCELAR</button>
         </div>
 
+        <div class="section-title"><h3>📦 Minha Montra</h3></div>
         <div id="grid-prods" class="grid"></div>
 
         <div class="card" style="margin-top:30px">
             <h3>⚙️ Horário de Funcionamento</h3>
-            <button onclick="replicarSegunda()" style="background:#eee; color:#333; font-size:11px; margin-bottom:15px">📋 Copiar Segunda para todos</button>
+            <button onclick="replicarSegunda()" style="background:#eee; color:#333; font-size:11px; margin-bottom:15px">📋 Copiar horário de Segunda para todos</button>
             <div id="horarios-lista"></div>
 
             <h3 style="margin-top:20px">📅 Férias</h3>
@@ -136,7 +137,6 @@
     let lojaAtiva = null;
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // Gerar UI dos horários
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -146,9 +146,11 @@
                     <option value="fechado">Fechado</option>
                 </select>
             </div>
-            <div id="inputs-${i}" class="inputs-tempo">
-                <div><span class="periodo">Manhã</span><div style="display:flex;gap:4px"><input type="time" id="h-${i}-m1"><input type="time" id="h-${i}-m2"></div></div>
-                <div><span class="periodo">Tarde</span><div style="display:flex;gap:4px"><input type="time" id="h-${i}-t1"><input type="time" id="h-${i}-t2"></div></div>
+            <div id="inputs-${i}">
+                <div class="inputs-tempo">
+                    <div><span class="periodo">Manhã</span><div style="display:flex; gap:4px"><input type="time" id="h-${i}-m1"><input type="time" id="h-${i}-m2"></div></div>
+                    <div><span class="periodo">Tarde</span><div style="display:flex; gap:4px"><input type="time" id="h-${i}-t1"><input type="time" id="h-${i}-t2"></div></div>
+                </div>
             </div>
         </div>`).join('');
 
@@ -161,15 +163,17 @@
             morada: document.getElementById('r-morada').value,
             nif: document.getElementById('r-nif').value
         };
+        if(!dados.email || !dados.password || !dados.nif) return alert("Preenche os campos obrigatórios!");
         const { error } = await _sb.from('lojas').insert([dados]);
-        if (error) alert("Erro: " + error.message); else { alert("Conta criada!"); selTab('login'); }
+        if (error) alert("Erro ao registar: " + error.message);
+        else { alert("Conta criada com sucesso!"); selTab('login'); }
     }
 
     async function login() {
         const email = document.getElementById('l-email').value;
         const pass = document.getElementById('l-pass').value;
         const { data } = await _sb.from('lojas').select('*').eq('email', email).eq('password', pass).maybeSingle();
-        if (data) { lojaAtiva = data; abrirPainel(); } else alert("Credenciais inválidas.");
+        if (data) { lojaAtiva = data; abrirPainel(); } else { alert("Credenciais inválidas."); }
     }
 
     function abrirPainel() {
@@ -179,16 +183,16 @@
         document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
         document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
         if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
-        
         if(lojaAtiva.horarios) {
             lojaAtiva.horarios.forEach((h, i) => {
-                if(!h) return;
-                document.getElementById(`h-${i}-m1`).value = h.m1 || "";
-                document.getElementById(`h-${i}-m2`).value = h.m2 || "";
-                document.getElementById(`h-${i}-t1`).value = h.t1 || "";
-                document.getElementById(`h-${i}-t2`).value = h.t2 || "";
-                document.getElementById(`h-${i}-status`).value = h.status || "aberto";
-                atualizarEstiloDia(i);
+                if(h) {
+                    document.getElementById(`h-${i}-m1`).value = h.m1 || "";
+                    document.getElementById(`h-${i}-m2`).value = h.m2 || "";
+                    document.getElementById(`h-${i}-t1`).value = h.t1 || "";
+                    document.getElementById(`h-${i}-t2`).value = h.t2 || "";
+                    document.getElementById(`h-${i}-status`).value = h.status || "aberto";
+                    atualizarEstiloDia(i);
+                }
             });
         }
         carregarDados();
@@ -200,7 +204,50 @@
             morada: document.getElementById('v-morada-edit').value,
             telefone: document.getElementById('v-tel-edit').value
         }).eq('id', lojaAtiva.id);
-        if(!error) alert("Perfil atualizado!");
+        if(!error) alert("Perfil atualizado!"); else alert("Erro ao atualizar perfil.");
+    }
+
+    async function salvarConfig() {
+        const horarios = diasSemana.map((_, i) => ({
+            m1: document.getElementById(`h-${i}-m1`).value,
+            m2: document.getElementById(`h-${i}-m2`).value,
+            t1: document.getElementById(`h-${i}-t1`).value,
+            t2: document.getElementById(`h-${i}-t2`).value,
+            status: document.getElementById(`h-${i}-status`).value
+        }));
+        const { error } = await _sb.from('lojas').update({ 
+            horarios,
+            ferias_inicio: document.getElementById('v-ferias-inicio').value || null,
+            ferias_fim: document.getElementById('v-ferias-fim').value || null
+        }).eq('id', lojaAtiva.id);
+        if(!error) alert("Configurações guardadas!"); else alert("Erro ao guardar.");
+    }
+
+    // Mantidas todas as tuas outras funções originais (carregarDados, subirLogo, etc)
+    function selTab(m) {
+        document.getElementById('f-login').classList.toggle('hidden', m==='reg');
+        document.getElementById('f-reg').classList.toggle('hidden', m==='login');
+        document.getElementById('t-login').classList.toggle('active', m==='login');
+        document.getElementById('t-reg').classList.toggle('active', m==='reg');
+    }
+
+    function atualizarEstiloDia(i) {
+        const status = document.getElementById(`h-${i}-status`).value;
+        const card = document.getElementById(`card-${i}`);
+        const inputs = document.getElementById(`inputs-${i}`);
+        if(status === 'fechado') { card.classList.remove('aberto'); inputs.style.opacity = '0.3'; inputs.style.pointerEvents = 'none'; }
+        else { card.classList.add('aberto'); inputs.style.opacity = '1'; inputs.style.pointerEvents = 'auto'; }
+    }
+
+    function replicarSegunda() {
+        const m1 = document.getElementById('h-0-m1').value, m2 = document.getElementById('h-0-m2').value;
+        const t1 = document.getElementById('h-0-t1').value, t2 = document.getElementById('h-0-t2').value;
+        const status = document.getElementById('h-0-status').value;
+        for(let i=1; i<7; i++) {
+            document.getElementById(`h-${i}-m1`).value = m1; document.getElementById(`h-${i}-m2`).value = m2;
+            document.getElementById(`h-${i}-t1`).value = t1; document.getElementById(`h-${i}-t2`).value = t2;
+            document.getElementById(`h-${i}-status`).value = status; atualizarEstiloDia(i);
+        }
     }
 
     async function carregarDados() {
@@ -208,12 +255,11 @@
         const { data: m } = await _sb.from('metricas_cliques').select('tipo').eq('loja_id', lojaAtiva.id);
         document.getElementById('s-views').innerText = m ? m.filter(i => i.tipo === 'view_loja').length : 0;
         document.getElementById('s-waps').innerText = m ? m.filter(i => i.tipo === 'click_whatsapp').length : 0;
-        
         document.getElementById('grid-prods').innerHTML = (prods || []).map(p => `
             <div class="prod-card">
                 <div class="prod-actions">
                     <button class="btn-circle" style="background:orange" onclick='prepararEdicao(${JSON.stringify(p)})'>✏️</button>
-                    <button class="btn-circle" style="background:red" onclick="apagarProd('${p.id}')">🗑️</button>
+                    <button class="btn-circle" style="background:red" onclick="apagarProd(${p.id})">🗑️</button>
                 </div>
                 <img src="${p.imagem_url || "https://via.placeholder.com/140"}" class="prod-img">
                 <div style="padding:8px; font-size:12px"><b>${p.nome}</b><br>${p.preco}€</div>
@@ -225,7 +271,7 @@
         const file = document.getElementById('p-foto').files[0];
         const dados = {
             nome: document.getElementById('p-nome').value,
-            preco: parseFloat(document.getElementById('p-preco').value) || 0,
+            preco: parseFloat(document.getElementById('p-preco').value),
             desconto_percent: parseInt(document.getElementById('p-desc').value) || 0,
             tipo_tag: document.getElementById('p-tipo').value,
             loja_id: lojaAtiva.id
@@ -241,50 +287,9 @@
         cancelarEdicao(); carregarDados();
     }
 
+    function cancelarEdicao() { document.getElementById('edit-id').value = ""; document.getElementById('p-nome').value = ""; document.getElementById('p-preco').value = ""; document.getElementById('btn-cancel').classList.add('hidden'); }
+    function prepararEdicao(p) { document.getElementById('edit-id').value = p.id; document.getElementById('p-nome').value = p.nome; document.getElementById('p-preco').value = p.preco; document.getElementById('btn-cancel').classList.remove('hidden'); window.scrollTo(0,0); }
     async function apagarProd(id) { if(confirm("Apagar?")) { await _sb.from('produtos').delete().eq('id', id); carregarDados(); } }
-
-    async function salvarConfig() {
-        const horarios = diasSemana.map((_, i) => ({
-            m1: document.getElementById(`h-${i}-m1`).value, m2: document.getElementById(`h-${i}-m2`).value,
-            t1: document.getElementById(`h-${i}-t1`).value, t2: document.getElementById(`h-${i}-t2`).value,
-            status: document.getElementById(`h-${i}-status`).value
-        }));
-        await _sb.from('lojas').update({ horarios, ferias_inicio: document.getElementById('v-ferias-inicio').value || null, ferias_fim: document.getElementById('v-ferias-fim').value || null }).eq('id', lojaAtiva.id);
-        alert("Configurações guardadas!");
-    }
-
-    function selTab(m) {
-        document.getElementById('f-login').classList.toggle('hidden', m==='reg');
-        document.getElementById('f-reg').classList.toggle('hidden', m==='login');
-        document.getElementById('t-login').classList.toggle('active', m==='login');
-        document.getElementById('t-reg').classList.toggle('active', m==='reg');
-    }
-    function atualizarEstiloDia(i) {
-        const status = document.getElementById(`h-${i}-status`).value;
-        document.getElementById(`card-${i}`).classList.toggle('aberto', status === 'aberto');
-        document.getElementById(`inputs-${i}`).style.opacity = status === 'fechado' ? '0.3' : '1';
-    }
-    function replicarSegunda() {
-        const m1 = document.getElementById('h-0-m1').value, m2 = document.getElementById('h-0-m2').value;
-        const t1 = document.getElementById('h-0-t1').value, t2 = document.getElementById('h-0-t2').value;
-        const status = document.getElementById('h-0-status').value;
-        for(let i=1; i<7; i++) {
-            document.getElementById(`h-${i}-m1`).value = m1; document.getElementById(`h-${i}-m2`).value = m2;
-            document.getElementById(`h-${i}-t1`).value = t1; document.getElementById(`h-${i}-t2`).value = t2;
-            document.getElementById(`h-${i}-status`).value = status; atualizarEstiloDia(i);
-        }
-    }
-    function prepararEdicao(p) {
-        document.getElementById('edit-id').value = p.id;
-        document.getElementById('p-nome').value = p.nome;
-        document.getElementById('p-preco').value = p.preco;
-        document.getElementById('btn-cancel').classList.remove('hidden');
-        window.scrollTo(0,0);
-    }
-    function cancelarEdicao() {
-        document.getElementById('edit-id').value = ""; document.getElementById('p-nome').value = "";
-        document.getElementById('p-preco').value = ""; document.getElementById('btn-cancel').classList.add('hidden');
-    }
     async function subirLogo(input) {
         const file = input.files[0];
         const path = `logo_${lojaAtiva.id}.webp`;
