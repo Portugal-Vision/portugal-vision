@@ -5,78 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo | Portugal Vision</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --p: #1d3557; --s: #457b9d; --ok: #25d366; --err: #e63946; --gray: #f4f4f9; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray); margin: 0; padding-bottom: 100px; }
+        :root { 
+            --p: #1d3557; 
+            --s: #457b9d; 
+            --ok: #25d366; 
+            --accent: #e63946;
+            --bg: #0f172a; /* Azul muito escuro moderno */
+        }
         
-        .header { background: white; padding: 30px 20px; text-align: center; box-shadow: 0 2px 15px rgba(0,0,0,0.08); border-bottom: 3px solid var(--p); }
-        .logo { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--p); margin-bottom: 10px; background: white; }
-        .header h2 { margin: 5px 0; color: var(--p); font-size: 1.5em; text-transform: uppercase; }
-        .morada { color: #666; font-size: 0.85em; display: block; margin-top: 5px; }
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: #f8fafc;
+            margin: 0; 
+            padding-bottom: 40px; 
+        }
 
-        /* Barra de Pesquisa */
-        .search-container { padding: 15px 20px; max-width: 1000px; margin: auto; }
+        /* Fundo Dinâmico */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            z-index: -1;
+        }
+
+        .header { 
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            padding: 40px 20px; 
+            text-align: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logo { 
+            width: 100px; height: 100px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 3px solid var(--s); 
+            box-shadow: 0 0 20px rgba(69, 123, 157, 0.3);
+            margin-bottom: 15px;
+        }
+
+        .search-container { padding: 20px; max-width: 800px; margin: auto; }
         #search-input { 
-            width: 100%; padding: 12px 15px; border-radius: 25px; border: 1px solid #ddd; 
-            font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 100%; padding: 15px 25px; 
+            border-radius: 30px; border: none; 
+            background: rgba(255,255,255,0.1);
+            color: white; font-size: 16px; outline: none;
+            transition: 0.3s; border: 1px solid rgba(255,255,255,0.1);
         }
-        #search-input:focus { border-color: var(--s); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        #search-input:focus { background: rgba(255,255,255,0.15); border-color: var(--s); }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 0 20px 20px; max-width: 1000px; margin: auto; }
-        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; transition: transform 0.2s; }
-        .card:active { transform: scale(0.98); }
-        
-        .img-container { 
-            width: 100%; aspect-ratio: 1/1; background: #eee; position: relative; 
-            display: flex; align-items: center; justify-content: center;
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 25px; padding: 20px; max-width: 1200px; margin: auto; 
         }
-        .card img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
-        
-        .badge-tag { position: absolute; top: 8px; left: 8px; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; color: white; z-index: 5; text-transform: uppercase; }
-        .tag-promo { background: var(--err); }
-        .tag-novo { background: #f39c12; }
-        .tag-destaque { background: var(--p); }
-        .tag-hoje { background: #9b59b6; }
 
-        .info { padding: 12px; text-align: center; }
-        .info strong { display: block; color: #222; font-size: 0.95em; margin-bottom: 5px; min-height: 2.2em; }
-        
-        .price-area { display: flex; flex-direction: column; align-items: center; }
-        .old-price { text-decoration: line-through; color: #999; font-size: 0.85em; }
-        .price { color: var(--p); font-weight: 800; font-size: 1.1em; }
-
-        .btn-wpp { 
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--ok); color: white; padding: 15px 30px; border-radius: 50px;
-            text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3); z-index: 1000; width: 80%; max-width: 300px; justify-content: center;
+        .card { 
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px; overflow: hidden; 
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
         }
+        .card:hover { transform: translateY(-10px); border-color: var(--s); }
+
+        .img-container { width: 100%; aspect-ratio: 16/10; position: relative; background: #1e293b; }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+
+        .badge-tag { 
+            position: absolute; top: 12px; left: 12px; 
+            padding: 5px 12px; border-radius: 8px; 
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        }
+
+        .info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .info strong { font-size: 1.2em; color: white; display: block; margin-bottom: 10px; }
+
+        .price-box { margin: 15px 0; }
+        .old-price { color: #94a3b8; text-decoration: line-through; font-size: 0.9em; margin-right: 8px; }
+        .price { color: #38bdf8; font-weight: 800; font-size: 1.4em; }
+        .discount-badge { 
+            background: var(--accent); color: white; 
+            padding: 2px 8px; border-radius: 5px; font-size: 0.8em; margin-left: 10px;
+        }
+
+        .btn-item-wpp {
+            background: var(--ok); color: white; 
+            text-decoration: none; padding: 12px; 
+            border-radius: 12px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.3s; margin-top: 10px;
+        }
+        .btn-item-wpp:hover { filter: brightness(1.1); }
+
     </style>
 </head>
 <body>
 
 <div class="header">
     <img id="v-logo" class="logo" src="" style="display:none;">
-    <h2 id="v-nome">A carregar...</h2>
-    <span id="v-morada" class="morada"></span>
+    <h2 id="v-nome" style="margin:0; font-size: 2em; letter-spacing: 1px;">A carregar...</h2>
+    <span id="v-morada" class="morada" style="color: #94a3b8;"></span>
 </div>
 
 <div class="search-container">
-    <input type="text" id="search-input" placeholder="Procurar no catálogo...">
+    <input type="text" id="search-input" placeholder="O que lhe apetece hoje?">
 </div>
 
 <div id="lista-produtos" class="grid"></div>
 
-<a id="btn-whatsapp" href="#" class="btn-wpp" style="display: none;">
-    <span>Encomendar via WhatsApp</span>
-</a>
-
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
-
     let todosProdutos = [];
-    const tagNomes = { 'promo': 'Promoção', 'novo': 'Novidade', 'destaque': 'Destaque', 'hoje': 'Produto do Dia' };
+    let whatsappLoja = "";
+
+    const tagEstilos = {
+        'promo': { texto: 'Promoção', cor: '#e63946' },
+        'novo': { texto: 'Novidade', cor: '#f39c12' },
+        'destaque': { texto: 'Destaque', cor: '#3498db' },
+        'hoje': { texto: 'Prato do Dia', cor: '#9b59b6' }
+    };
 
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -86,6 +139,7 @@
         const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
         
         if (loja) {
+            whatsappLoja = (loja.telefone || "").replace(/\s/g, "");
             document.getElementById('v-nome').innerText = loja.nome;
             document.getElementById('v-morada').innerText = loja.morada || "";
             if (loja.logo_url) {
@@ -93,11 +147,6 @@
                 logoImg.src = loja.logo_url;
                 logoImg.style.display = 'inline-block';
             }
-
-            const btnWpp = document.getElementById('btn-whatsapp');
-            const telLimpo = (loja.telefone || "").replace(/\s/g, "");
-            btnWpp.href = `https://wa.me/${telLimpo}?text=Olá! Vi o vosso catálogo digital e gostaria de fazer um pedido.`;
-            btnWpp.style.display = 'flex';
 
             const { data: produtos } = await _sb.from('produtos')
                 .select('*').eq('loja_id', loja.id).eq('oculto', false).order('created_at', {ascending: false});
@@ -109,46 +158,39 @@
 
     function renderizar(lista) {
         const container = document.getElementById('lista-produtos');
-        if (lista.length === 0) {
-            container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#999; padding: 20px;'>Nenhum resultado encontrado.</p>";
-            return;
-        }
-
         container.innerHTML = lista.map(p => {
             const precoBase = parseFloat(p.preco) || 0;
             const desc = parseInt(p.desconto_percent) || 0;
             const precoFinal = desc > 0 ? (precoBase * (1 - desc / 100)).toFixed(2) : precoBase.toFixed(2);
-            const tagKey = Array.isArray(p.tipo_tag) ? p.tipo_tag[0] : p.tipo_tag;
-            const tagLabel = tagNomes[tagKey] || "";
+            const tagData = tagEstilos[p.tipo_tag] || null;
 
             return `
                 <div class="card">
-                    ${tagLabel ? `<div class="badge-tag tag-${tagKey}">${tagLabel}</div>` : ''}
                     <div class="img-container">
-                        <img src="${p.imagem_url || ''}" 
-                             loading="lazy"
-                             onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=Sem+Foto'" 
-                             alt="${p.nome}">
+                        ${tagData ? `<div class="badge-tag" style="background:${tagData.cor}">${tagData.texto}</div>` : ''}
+                        <img src="${p.imagem_url || ''}" onerror="this.src='https://via.placeholder.com/400x250?text=Sem+Foto'" alt="${p.nome}">
                     </div>
                     <div class="info">
-                        <strong>${p.nome || 'Sem nome'}</strong>
-                        <div class="price-area">
-                            ${desc > 0 ? `<span class="old-price">${precoBase.toFixed(2)}€</span>` : ''}
-                            <span class="price">${precoFinal}€</span>
+                        <div>
+                            <strong>${p.nome || 'Sem nome'}</strong>
+                            <div class="price-box">
+                                ${desc > 0 ? `<span class="old-price">${precoBase.toFixed(2)}€</span>` : ''}
+                                <span class="price">${precoFinal}€</span>
+                                ${desc > 0 ? `<span class="discount-badge">-${desc}%</span>` : ''}
+                            </div>
                         </div>
+                        <a href="https://wa.me/${whatsappLoja}?text=Olá! Gostaria de encomendar: ${p.nome}" target="_blank" class="btn-item-wpp">
+                            <i class="fab fa-whatsapp"></i> Pedir agora
+                        </a>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    // Lógica da Barra de Pesquisa
     document.getElementById('search-input').addEventListener('input', (e) => {
         const termo = e.target.value.toLowerCase();
-        const filtrados = todosProdutos.filter(p => 
-            p.nome.toLowerCase().includes(termo)
-        );
-        renderizar(filtrados);
+        renderizar(todosProdutos.filter(p => p.nome.toLowerCase().includes(termo)));
     });
 
     init();
