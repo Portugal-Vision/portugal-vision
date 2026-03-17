@@ -22,22 +22,17 @@
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .stat-card { background: var(--p); color: white; padding: 15px; border-radius: 12px; text-align: center; }
         .stat-card b { display: block; font-size: 1.5rem; }
-        
-        /* Estilos do QR Code e Link */
         .qr-section { text-align: center; border-top: 1px dashed #ddd; padding-top: 20px; margin-top: 10px; }
         .link-box { display: flex; gap: 5px; margin: 10px 0; }
         #img-qrcode { width: 150px; background: white; padding: 10px; border: 1px solid #eee; border-radius: 10px; }
-
         .dia-config { background: #f9f9f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #ccc; }
         .dia-config.aberto { border-left-color: var(--ok); }
         .dia-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .inputs-tempo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .periodo { font-size: 11px; color: #666; margin-bottom: 4px; display: block; }
-        
         .tags-group { background: #fdfdfd; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-top: 5px; }
         .tag-item { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 5px; cursor: pointer; }
         .tag-item input { width: auto; margin: 0; }
-
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .prod-card { background: white; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #ddd; transition: 0.3s; }
         .prod-card.oculto { opacity: 0.5; filter: grayscale(1); }
@@ -60,12 +55,15 @@
         <div class="tabs">
             <div id="t-login" class="tab active" onclick="selTab('login')">ENTRAR</div>
             <div id="t-reg" class="tab" onclick="selTab('reg')">REGISTAR</div>
+            <div id="t-reset" class="tab" onclick="selTab('reset')">RECUPERAR</div>
         </div>
+        
         <div id="f-login">
             <input type="email" id="l-email" placeholder="E-mail">
             <input type="password" id="l-pass" placeholder="Password">
             <button onclick="login()">ENTRAR</button>
         </div>
+
         <div id="f-reg" class="hidden">
             <input type="text" id="r-nome" placeholder="Nome do Negócio">
             <input type="email" id="r-email" placeholder="E-mail">
@@ -74,6 +72,17 @@
             <input type="text" id="r-nif" placeholder="NIF (Obrigatório)">
             <input type="password" id="r-pass" placeholder="Password">
             <button style="background:var(--ok)" onclick="registar()">CRIAR CONTA</button>
+        </div>
+
+        <div id="f-reset" class="hidden">
+            <p style="font-size: 12px; color: #666; text-align: center;">Valide os dados para recuperar a sua password.</p>
+            <input type="email" id="reset-email" placeholder="E-mail da Conta">
+            <input type="text" id="reset-nif" placeholder="NIF Registado">
+            <button style="background:var(--s)" onclick="recuperarAcesso()">VERIFICAR DADOS</button>
+            <div id="result-recuperacao" class="hidden" style="margin-top:15px; padding:10px; background:#f0f7ff; border-radius:10px; font-size:13px; border:1px solid var(--s); text-align: center;">
+                <strong>A sua password é:</strong> <br>
+                <span id="txt-pass-recuperada" style="font-size:18px; color:var(--p); font-weight:bold;">---</span>
+            </div>
         </div>
     </div>
 
@@ -182,54 +191,61 @@
             </div>
         </div>`).join('');
 
+    function selTab(m) {
+        document.getElementById('f-login').classList.toggle('hidden', m !== 'login');
+        document.getElementById('f-reg').classList.toggle('hidden', m !== 'reg');
+        document.getElementById('f-reset').classList.toggle('hidden', m !== 'reset');
+        
+        document.getElementById('t-login').classList.toggle('active', m === 'login');
+        document.getElementById('t-reg').classList.toggle('active', m === 'reg');
+        document.getElementById('t-reset').classList.toggle('active', m === 'reset');
+        document.getElementById('result-recuperacao').classList.add('hidden');
+    }
+
+    async function recuperarAcesso() {
+        const email = document.getElementById('reset-email').value;
+        const nif = document.getElementById('reset-nif').value;
+        if (!email || !nif) return alert("Preencha e-mail e NIF.");
+
+        const { data, error } = await _sb.from('lojas').select('password').eq('email', email).eq('nif', nif).maybeSingle();
+        if (data) {
+            document.getElementById('result-recuperacao').classList.remove('hidden');
+            document.getElementById('txt-pass-recuperada').innerText = data.password;
+        } else {
+            alert("Dados não encontrados.");
+        }
+    }
+
     async function registar() {
         const nome = document.getElementById('r-nome').value;
         const email = document.getElementById('r-email').value;
         const pass = document.getElementById('r-pass').value;
         const zap = document.getElementById('r-zap').value;
         const nif = document.getElementById('r-nif').value;
-        
-        const slug = nome.toLowerCase().trim()
-                         .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
-                         .replace(/[^a-z0-9]/g, '-')
-                         .replace(/-+/g, '-');
+        const slug = nome.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
 
-        const { data, error } = await _sb.from('lojas').insert([{
-            nome: nome,
-            email: email,
-            password: pass,
-            telefone: zap,
-            nif: nif,
-            slug: slug
-        }]).select().single();
-
-        if(!error) { alert("Conta criada! Já pode entrar."); selTab('login'); }
-        else { alert("Erro ao registar. NIF ou E-mail já podem existir."); }
+        const { data, error } = await _sb.from('lojas').insert([{ nome, email, password: pass, telefone: zap, nif, slug }]).select().single();
+        if(!error) { alert("Conta criada!"); selTab('login'); }
+        else { alert("Erro ao registar."); }
     }
 
     async function login() {
         const email = document.getElementById('l-email').value;
         const pass = document.getElementById('l-pass').value;
         const { data } = await _sb.from('lojas').select('*').eq('email', email).eq('password', pass).maybeSingle();
-        if (data) { 
-            lojaAtiva = data; 
-            abrirPainel(); 
-        } else { alert("Credenciais inválidas."); }
+        if (data) { lojaAtiva = data; abrirPainel(); } else { alert("Credenciais inválidas."); }
     }
 
     function abrirPainel() {
         document.getElementById('auth-area').classList.add('hidden');
         document.getElementById('dash-area').classList.remove('hidden');
-        
         document.getElementById('v-nome-edit').value = lojaAtiva.nome;
         document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
         document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
         document.getElementById('v-ferias-inicio').value = lojaAtiva.ferias_inicio || "";
         document.getElementById('v-ferias-fim').value = lojaAtiva.ferias_fim || "";
-        
         if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
         
-        // CORREÇÃO: Link ajustado para o caminho do repositório no GitHub
         if(lojaAtiva.slug) {
             const link = "https://portugal-vision.github.io/portugal-vision/catalogo_digital.html?loja=" + lojaAtiva.slug;
             document.getElementById('link-catalogo').value = link;
@@ -309,13 +325,6 @@
             btn.innerText = "ATUALIZADO COM SUCESSO";
             setTimeout(() => { btn.innerText = "ATUALIZAR FUNCIONAMENTO"; }, 2000);
         }
-    }
-
-    function selTab(m) {
-        document.getElementById('f-login').classList.toggle('hidden', m==='reg');
-        document.getElementById('f-reg').classList.toggle('hidden', m==='login');
-        document.getElementById('t-login').classList.toggle('active', m==='login');
-        document.getElementById('t-reg').classList.toggle('active', m==='reg');
     }
 
     function atualizarEstiloDia(i) {
