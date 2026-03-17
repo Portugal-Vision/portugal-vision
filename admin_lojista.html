@@ -177,7 +177,6 @@
     let lojaAtiva = null;
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // Iniciar Horários
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -208,10 +207,7 @@
     async function solicitarRecuperacao() {
         const email = document.getElementById('reset-email').value;
         if (!email) return alert("Por favor, introduza o seu e-mail.");
-        
-        // Link atualizado para admin_lojista.html
         const linkRedir = "https://portugal-vision.github.io/portugal-vision/admin_lojista.html";
-        
         const { error } = await _sb.auth.resetPasswordForEmail(email, { redirectTo: linkRedir });
         if (error) alert("Erro: " + error.message);
         else {
@@ -223,12 +219,9 @@
     async function atualizarPasswordFinal() {
         const newPass = document.getElementById('new-pass').value;
         if (newPass.length < 6) return alert("A password deve ter pelo menos 6 caracteres.");
-
         const { data: { user }, error: authError } = await _sb.auth.updateUser({ password: newPass });
-        
         if (authError) alert("Erro: " + authError.message);
         else {
-            // Sincroniza com a tabela lojas
             await _sb.from('lojas').update({ password: newPass }).eq('email', user.email);
             alert("Password atualizada com sucesso!");
             location.href = "https://portugal-vision.github.io/portugal-vision/admin_lojista.html";
@@ -398,15 +391,18 @@
             nome: document.getElementById('p-nome').value,
             preco: parseFloat(document.getElementById('p-preco').value),
             desconto_percent: parseInt(document.getElementById('p-desc').value) || 0,
-            tipo_tag: tagsMarcadas,
+            // Mantém a primeira tag selecionada ou 'normal' como padrão para o catálogo ler bem
+            tipo_tag: tagsMarcadas.length > 0 ? tagsMarcadas[0] : 'normal',
             loja_id: lojaAtiva.id
         };
 
         if (file) {
             const path = `p_${Date.now()}.webp`;
-            await _sb.storage.from('produtos').upload(path, file);
-            const { data: url } = _sb.storage.from('produtos').getPublicUrl(path);
-            dados.imagem_url = url.publicUrl;
+            const { data: uploadData, error: uploadErr } = await _sb.storage.from('produtos').upload(path, file, { upsert: true });
+            if (!uploadErr) {
+                const { data: url } = _sb.storage.from('produtos').getPublicUrl(path);
+                dados.imagem_url = url.publicUrl;
+            }
         }
 
         if(id) await _sb.from('produtos').update(dados).eq('id', id);
@@ -456,7 +452,6 @@
         const zap = document.getElementById('r-zap').value;
         const nif = document.getElementById('r-nif').value;
         const slug = nome.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-
         const { error } = await _sb.from('lojas').insert([{ nome, email, password: pass, telefone: zap, nif, slug }]);
         if(!error) { alert("Conta criada com sucesso!"); selTab('login'); }
         else alert("Erro ao registar conta.");
