@@ -195,14 +195,11 @@
             </div>
         </div>`).join('');
 
-    // --- SISTEMA DE LOGIN E RECUPERAÇÃO ---
-
     function selTab(m) {
         document.getElementById('f-login').classList.toggle('hidden', m !== 'login');
         document.getElementById('f-reg').classList.toggle('hidden', m !== 'reg');
         document.getElementById('f-reset').classList.toggle('hidden', m !== 'reset');
         document.getElementById('f-new-pass').classList.add('hidden');
-        
         document.getElementById('t-login').classList.toggle('active', m === 'login');
         document.getElementById('t-reg').classList.toggle('active', m === 'reg');
         document.getElementById('t-reset').classList.toggle('active', m === 'reset');
@@ -211,11 +208,15 @@
     async function solicitarRecuperacao() {
         const email = document.getElementById('reset-email').value;
         if (!email) return alert("Por favor, introduza o seu e-mail.");
-        const { error } = await _sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+        
+        // Link atualizado para admin_lojista.html
+        const linkRedir = "https://portugal-vision.github.io/portugal-vision/admin_lojista.html";
+        
+        const { error } = await _sb.auth.resetPasswordForEmail(email, { redirectTo: linkRedir });
         if (error) alert("Erro: " + error.message);
         else {
             document.getElementById('result-recuperacao').classList.remove('hidden');
-            document.getElementById('txt-status-envio').innerText = "Link enviado! Verifique o seu e-mail.";
+            document.getElementById('txt-status-envio').innerText = "Link enviado! Verifique o seu e-mail e SPAM.";
         }
     }
 
@@ -227,9 +228,10 @@
         
         if (authError) alert("Erro: " + authError.message);
         else {
+            // Sincroniza com a tabela lojas
             await _sb.from('lojas').update({ password: newPass }).eq('email', user.email);
             alert("Password atualizada com sucesso!");
-            location.href = window.location.pathname;
+            location.href = "https://portugal-vision.github.io/portugal-vision/admin_lojista.html";
         }
     }
 
@@ -246,8 +248,6 @@
         const { data } = await _sb.from('lojas').select('*').eq('email', email).eq('password', pass).maybeSingle();
         if (data) { lojaAtiva = data; abrirPainel(); } else { alert("Dados de acesso incorretos."); }
     }
-
-    // --- GESTÃO DO PAINEL ---
 
     function abrirPainel() {
         document.getElementById('auth-area').classList.add('hidden');
@@ -320,8 +320,6 @@
             setTimeout(() => { btn.innerText = "ATUALIZAR FUNCIONAMENTO"; }, 2000);
         }
     }
-
-    // --- FUNÇÕES AUXILIARES ---
 
     function marcarAltConfig() { document.getElementById('btn-save-config').innerText = "PENDENTE DE GRAVAÇÃO"; }
     function marcarAlteracao() { document.getElementById('btn-save-profile').innerText = "Guardar Alterações *"; }
