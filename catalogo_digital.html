@@ -53,16 +53,29 @@
         .google-maps { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
         .waze { background: #33ccff; color: white; }
 
-        /* Estilos para os Links Legais */
+        /* Estilos Legais e Modais */
         .legal-footer { border-top: 1px solid #f0f0f0; padding-top: 25px; margin-top: 20px; }
-        .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; list-style: none; padding: 0; }
-        .legal-links a { color: #95a5a6; text-decoration: none; font-size: 0.85em; transition: 0.3s; display: flex; align-items: center; gap: 6px; }
+        .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; list-style: none; padding: 0; margin-bottom: 20px; }
+        .legal-links a { color: #95a5a6; text-decoration: none; font-size: 0.85em; transition: 0.3s; cursor: pointer; }
         .legal-links a:hover { color: var(--p); }
-        .complaints-book img { height: 35px; margin-top: 10px; transition: 0.3s; }
-        .complaints-book img:hover { opacity: 0.8; }
+        
+        .complaints-book img { height: 45px; transition: 0.3s; filter: grayscale(0.2); }
+        .complaints-book img:hover { filter: grayscale(0); transform: scale(1.05); }
+
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; position: relative; text-align: left; line-height: 1.6; }
+        .close-modal { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; color: #999; }
+        .modal-content h3 { font-family: 'Playfair Display'; color: var(--p); margin-top: 0; }
     </style>
 </head>
 <body>
+
+<div id="legalModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div id="modalText"></div>
+    </div>
+</div>
 
 <div class="header">
     <img id="v-logo" class="logo" src="" style="display:none;">
@@ -91,19 +104,19 @@
 
     <div class="legal-footer">
         <ul class="legal-links">
-            <li><a href="#"><i class="fas fa-file-contract"></i> Termos e Condições</a></li>
-            <li><a href="#"><i class="fas fa-user-shield"></i> Política de Privacidade</a></li>
-            <li><a href="#"><i class="fas fa-cookie-bite"></i> Política de Cookies</a></li>
+            <li><a onclick="showLegal('termos')">Termos e Condições</a></li>
+            <li><a onclick="showLegal('privacidade')">Política de Privacidade</a></li>
+            <li><a onclick="showLegal('cookies')">Política de Cookies</a></li>
         </ul>
         
         <div class="complaints-book">
-            <a href="https://www.livroreclamacoes.pt" target="_blank">
-                <img src="https://www.livroreclamacoes.pt/assets/img/logo-livro-reclamacoes.png" alt="Livro de Reclamações Eletrónico">
+            <a href="https://www.livroreclamacoes.pt/Inicio/" target="_blank">
+                <img src="https://www.livroreclamacoes.pt/assets/img/logo-livro-reclamacoes.png" alt="Livro de Reclamações Eletrónico" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Livro_de_Reclama%C3%A7%C3%B5es.png/320px-Livro_de_Reclama%C3%A7%C3%B5es.png'">
             </a>
         </div>
         
         <p style="font-size: 0.75em; color: #bdc3c7; margin-top: 20px;">
-            &copy; 2026 Portugal Vision. Todos os direitos reservados.
+            © 2026 Portugal Vision. Todos os direitos reservados.
         </p>
     </div>
 </div>
@@ -114,6 +127,41 @@
     let categoriaSelecionada = 'todos';
     let whatsappLoja = "";
     let idDaLoja = null;
+
+    // TEXTOS LEGAIS RECOMENDADOS
+    const legalTexts = {
+        termos: `
+            <h3>Termos e Condições</h3>
+            <p>1. <strong>Âmbito:</strong> Este catálogo digital é uma plataforma de exposição de produtos da Portugal Vision.</p>
+            <p>2. <strong>Reservas:</strong> O clique em "Reservar" redireciona para o WhatsApp. A reserva só é confirmada após resposta direta da loja.</p>
+            <p>3. <strong>Preços:</strong> Todos os preços incluem IVA à taxa legal em vigor. Erros tipográficos podem ocorrer.</p>
+            <p>4. <strong>Litígios:</strong> Em caso de litígio, o consumidor pode recorrer a uma Entidade de Resolução Alternativa de Litígios de Consumo (RAL).</p>
+        `,
+        privacidade: `
+            <h3>Política de Privacidade</h3>
+            <p><strong>Responsável:</strong> Portugal Vision.</p>
+            <p><strong>Dados:</strong> Não recolhemos dados pessoais sensíveis neste catálogo, exceto métricas anónimas de visualização. Ao contactar via WhatsApp, os seus dados serão tratados apenas para a finalidade da reserva.</p>
+            <p><strong>Direitos:</strong> Tem o direito de acesso, retificação ou eliminação dos seus dados contactando-nos diretamente.</p>
+        `,
+        cookies: `
+            <h3>Política de Cookies</h3>
+            <p>Este site utiliza apenas cookies técnicos essenciais para o funcionamento da plataforma e cookies analíticos anónimos (via Supabase) para medir o tráfego e popularidade dos produtos. Não utilizamos cookies para fins publicitários de terceiros.</p>
+        `
+    };
+
+    function showLegal(type) {
+        document.getElementById('modalText').innerHTML = legalTexts[type];
+        document.getElementById('legalModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('legalModal').style.display = 'none';
+    }
+
+    // Fechar ao clicar fora do modal
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('legalModal')) closeModal();
+    }
 
     async function registarClique(tipo) {
         if (!idDaLoja) return;
@@ -132,7 +180,6 @@
             idDaLoja = loja.id;
             whatsappLoja = (loja.telefone || "").replace(/\s/g, "");
             document.getElementById('v-nome').innerText = loja.nome;
-            
             registarClique('view_loja');
 
             const morada = loja.morada || "Rua Dom Dinis, 2560-433 Silveira Torres Vedras";
@@ -203,15 +250,12 @@
     function aplicarFiltros() {
         const termo = document.getElementById('search-input').value.toLowerCase();
         let filtrados = todosProdutos;
-        
         if (categoriaSelecionada !== 'todos') {
             filtrados = filtrados.filter(p => p.categoria === categoriaSelecionada);
         }
-        
         if (termo) {
             filtrados = filtrados.filter(p => p.nome.toLowerCase().includes(termo));
         }
-        
         renderizar(filtrados);
     }
 
