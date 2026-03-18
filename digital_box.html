@@ -42,9 +42,10 @@
 
         .slide.active .overlay { transform: translateY(0); }
 
-        .overlay p { font-size: 1.8em; opacity: 0.9; margin: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
-        .overlay h1 { font-size: 5em; margin: 10px 0; font-weight: 800; line-height: 1; }
-        .overlay h2 { font-size: 3.5em; color: #38bdf8; margin: 0; font-weight: 700; }
+        /* Ajustes no Nome do Produto */
+        .overlay p { font-size: 1.5em; opacity: 0.8; margin: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+        .overlay h1 { font-size: 3.5em; margin: 5px 0; font-weight: 600; line-height: 1.1; letter-spacing: -1px; }
+        .overlay h2 { font-size: 2.8em; color: #38bdf8; margin: 0; font-weight: 600; }
 
         .promo-badge {
             position: absolute; top: 50px; right: 50px;
@@ -89,9 +90,8 @@
     <script>
         const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
         let currentIndex = 0;
-        let lastDataHash = ""; // Armazena o estado anterior dos dados
+        let lastDataHash = "";
 
-        // Ativar Fullscreen ao clicar
         document.body.addEventListener('click', () => {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
         });
@@ -101,7 +101,6 @@
             const slug = urlParams.get('loja');
             if (!slug) return;
 
-            // Busca os dados da loja e produtos
             const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
             if (loja) {
                 const { data: produtos } = await _sb.from('produtos')
@@ -111,7 +110,6 @@
 
                 if (!produtos) return;
 
-                // Verifica se os dados mudaram (compara como string JSON)
                 const currentDataHash = JSON.stringify(produtos);
                 if (currentDataHash !== lastDataHash) {
                     lastDataHash = currentDataHash;
@@ -123,8 +121,6 @@
         function renderSlides(produtos, nomeLoja) {
             const slider = document.getElementById('slider');
             const totalProdutos = produtos.length;
-            
-            // Ajusta o currentIndex se o número de produtos diminuir
             if (currentIndex >= totalProdutos) currentIndex = 0;
 
             slider.innerHTML = produtos.map((p, i) => {
@@ -155,10 +151,9 @@
             }
         }
 
-        // Configuração dos intervalos
-        updateDigitalBox(); // Carga inicial
-        setInterval(nextSlide, 8000); // Muda o slide a cada 8 segundos
-        setInterval(updateDigitalBox, 30000); // Verifica novos produtos a cada 30 segundos
+        updateDigitalBox();
+        setInterval(nextSlide, 8000);
+        setInterval(updateDigitalBox, 30000);
     </script>
 </body>
 </html>
