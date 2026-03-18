@@ -58,7 +58,9 @@
         .legal-links a { color: #95a5a6; text-decoration: none; font-size: 0.85em; transition: 0.3s; cursor: pointer; }
         .legal-links a:hover { color: var(--p); }
         
-        .complaints-book img { height: 45px; transition: 0.3s; }
+        /* Ajuste do Livro de Reclamações */
+        .complaints-book { margin: 20px 0; display: block; }
+        .complaints-book img { height: 45px; width: auto; transition: 0.3s; display: inline-block; }
 
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; position: relative; text-align: left; line-height: 1.6; }
@@ -110,7 +112,7 @@
         
         <div class="complaints-book">
             <a href="https://www.livroreclamacoes.pt" target="_blank">
-                <img src="https://www.livroreclamacoes.pt/assets/img/logo-livro-reclamacoes.png" alt="Livro de Reclamações" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Livro_de_Reclama%C3%A7%C3%B5es.png/320px-Livro_de_Reclama%C3%A7%C3%B5es.png'">
+                <img src="https://www.livroreclamacoes.pt/assets/img/logo-livro-reclamacoes.png" alt="Livro de Reclamações" onerror="this.src='https://raw.githubusercontent.com/pjandrade/livro-reclamacoes/master/logo-livro-reclamacoes.png'">
             </a>
         </div>
         
@@ -130,20 +132,20 @@
     const legalTexts = {
         termos: `
             <h3>Termos e Condições</h3>
-            <p><strong>1. Natureza do Serviço:</strong> A Portugal Vision atua exclusivamente como Prestador de Serviço Intermediário (Rede de Transmissão), nos termos do <strong>Artigo 12.º do Decreto-Lei n.º 7/2004</strong>. Este catálogo digital é uma plataforma de mera exposição e promoção de produtos de terceiros (lojistas).</p>
-            <p><strong>2. Exclusão de Responsabilidade:</strong> A Portugal Vision não é proprietária, não vende, não possui o stock e não entrega os produtos aqui listados. A responsabilidade por qualquer transação, garantia, defeito ou incumprimento contratual é <strong>exclusiva do lojista</strong> e do cliente final.</p>
-            <p><strong>3. Processo de Reserva:</strong> A funcionalidade "Reservar" redireciona o utilizador para o WhatsApp direto do lojista. A Portugal Vision não intervém na negociação, pagamento ou conclusão da venda.</p>
-            <p><strong>4. Informação de Preços:</strong> Os preços são indicativos e da inteira responsabilidade do lojista, incluindo o IVA aplicável. Nos termos do <strong>DL n.º 24/2014</strong>, o direito de livre resolução deve ser exercido diretamente junto do lojista vendedor.</p>
+            <p><strong>1. Natureza do Serviço:</strong> A Portugal Vision atua exclusivamente como Prestador de Serviço Intermediário, nos termos do <strong>Artigo 12.º do Decreto-Lei n.º 7/2004</strong>.</p>
+            <p><strong>2. Exclusão de Responsabilidade:</strong> A Portugal Vision não é proprietária nem vende os produtos listados. A responsabilidade por transações e garantias é <strong>exclusiva do lojista</strong>.</p>
+            <p><strong>3. Reservas:</strong> O catálogo apenas facilita o contacto via WhatsApp. Não processamos pagamentos nem garantimos stock.</p>
+            <p><strong>4. Litígios:</strong> O consumidor pode recorrer a entidades RAL para resolução de conflitos diretamente com o lojista vendedor.</p>
         `,
         privacidade: `
             <h3>Política de Privacidade</h3>
-            <p><strong>Responsável pelo Tratamento:</strong> Portugal Vision.</p>
-            <p><strong>Recolha de Dados:</strong> Em conformidade com o <strong>RGPD</strong>, informamos que este catálogo não armazena dados pessoais dos visitantes, exceto métricas analíticas anónimas (IP e comportamento de clique) para fins estatísticos da plataforma.</p>
-            <p><strong>Interações via WhatsApp:</strong> Ao iniciar um contacto com o lojista, o utilizador partilha os seus dados voluntariamente com esse terceiro. A Portugal Vision não tem acesso nem armazena as conversas privadas entre cliente e lojista.</p>
+            <p><strong>Responsável:</strong> Portugal Vision.</p>
+            <p><strong>Dados:</strong> Em conformidade com o <strong>RGPD</strong>, não armazenamos dados pessoais identificáveis. Métricas de clique são anónimas.</p>
+            <p><strong>WhatsApp:</strong> Ao contactar o lojista, a privacidade da conversa é gerida pela plataforma WhatsApp e pelo lojista, sem intervenção da Portugal Vision.</p>
         `,
         cookies: `
             <h3>Política de Cookies</h3>
-            <p>Utilizamos apenas cookies estritamente necessários para a navegação e cookies de desempenho (via Supabase) que recolhem dados estatísticos agregados sem identificar o utilizador. Ao continuar a navegar, concorda com a nossa política de gestão mínima de dados.</p>
+            <p>Utilizamos cookies técnicos essenciais e analíticos anónimos para melhorar a experiência do catálogo. Não utilizamos cookies de rastreio publicitário.</p>
         `
     };
 
@@ -211,14 +213,16 @@
             const desc = parseInt(p.desconto_percent) || 0;
             const final = desc > 0 ? (preco * (1 - desc / 100)).toFixed(2) : preco.toFixed(2);
             
-            const textoWpp = `Olá, vi o seu produto ${p.nome} ${p.imagem_url || ''}, gostaria de reservar?`;
+            // CORREÇÃO WHATSAPP: Texto limpo e link no final para gerar pré-visualização
+            const imgUrl = p.imagem_url || '';
+            const textoWpp = `Olá, vi o seu produto ${p.nome}, gostaria de reservar? \n\n${imgUrl}`;
             const msg = encodeURIComponent(textoWpp);
             const wppUrl = `https://wa.me/${whatsappLoja}?text=${msg}`;
 
             return `
                 <div class="card">
                     <div class="img-container">
-                        <img src="${p.imagem_url || ''}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=Portugal+Vision'">
+                        <img src="${imgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=Portugal+Vision'">
                     </div>
                     <div class="info">
                         <strong>${p.nome}</strong>
