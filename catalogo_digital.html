@@ -48,10 +48,18 @@
         .btn-item-wpp:hover { opacity: 0.9; }
 
         .footer { background: white; padding: 60px 20px; text-align: center; border-top: 1px solid #eee; margin-top: 50px; }
-        .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
+        .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 25px; margin-bottom: 30px; }
         .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
         .google-maps { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
         .waze { background: #33ccff; color: white; }
+
+        /* Estilos para os Links Legais */
+        .legal-footer { border-top: 1px solid #f0f0f0; padding-top: 25px; margin-top: 20px; }
+        .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; list-style: none; padding: 0; }
+        .legal-links a { color: #95a5a6; text-decoration: none; font-size: 0.85em; transition: 0.3s; display: flex; align-items: center; gap: 6px; }
+        .legal-links a:hover { color: var(--p); }
+        .complaints-book img { height: 35px; margin-top: 10px; transition: 0.3s; }
+        .complaints-book img:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -80,6 +88,24 @@
             <i class="fab fa-waze"></i> Waze
         </a>
     </div>
+
+    <div class="legal-footer">
+        <ul class="legal-links">
+            <li><a href="#"><i class="fas fa-file-contract"></i> Termos e Condições</a></li>
+            <li><a href="#"><i class="fas fa-user-shield"></i> Política de Privacidade</a></li>
+            <li><a href="#"><i class="fas fa-cookie-bite"></i> Política de Cookies</a></li>
+        </ul>
+        
+        <div class="complaints-book">
+            <a href="https://www.livroreclamacoes.pt" target="_blank">
+                <img src="https://www.livroreclamacoes.pt/assets/img/logo-livro-reclamacoes.png" alt="Livro de Reclamações Eletrónico">
+            </a>
+        </div>
+        
+        <p style="font-size: 0.75em; color: #bdc3c7; margin-top: 20px;">
+            &copy; 2026 Portugal Vision. Todos os direitos reservados.
+        </p>
+    </div>
 </div>
 
 <script>
@@ -89,7 +115,6 @@
     let whatsappLoja = "";
     let idDaLoja = null;
 
-    // FUNÇÃO PARA REGISTAR MÉTRICAS
     async function registarClique(tipo) {
         if (!idDaLoja) return;
         try {
@@ -108,7 +133,6 @@
             whatsappLoja = (loja.telefone || "").replace(/\s/g, "");
             document.getElementById('v-nome').innerText = loja.nome;
             
-            // Registar visualização da loja
             registarClique('view_loja');
 
             const morada = loja.morada || "Rua Dom Dinis, 2560-433 Silveira Torres Vedras";
@@ -143,7 +167,6 @@
             const desc = parseInt(p.desconto_percent) || 0;
             const final = desc > 0 ? (preco * (1 - desc / 100)).toFixed(2) : preco.toFixed(2);
             
-            // NOVA MENSAGEM WHATSAPP SOLICITADA
             const textoWpp = `Olá, vi o seu produto ${p.nome} ${p.imagem_url || ''}, gostaria de reservar?`;
             const msg = encodeURIComponent(textoWpp);
             const wppUrl = `https://wa.me/${whatsappLoja}?text=${msg}`;
