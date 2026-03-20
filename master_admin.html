@@ -5,70 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Control | Portugal Vision</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-body: #f1f5f9; --panel-bg: #ffffff; --primary: #0f172a; 
-            --accent: #3b82f6; --text-main: #1e293b; --text-muted: #64748b;
+            --bg: #f8fafc; --panel: #ffffff; --primary: #0f172a; 
+            --accent: #3b82f6; --text: #1e293b; --muted: #64748b;
             --border: #e2e8f0; --success: #10b981; --danger: #ef4444;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; }
         
-        #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-box { background: white; padding: 2.5rem; border-radius: 20px; width: 100%; max-width: 380px; text-align: center; }
-        .login-box input { width: 100%; padding: 0.9rem; margin-bottom: 1rem; border-radius: 10px; border: 1px solid var(--border); box-sizing: border-box; }
-        
-        #main-panel { display: none; }
-        .top-nav { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); }
-        
-        .card-panel { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { text-align: left; color: var(--text-muted); font-size: 0.8rem; padding: 10px; border-bottom: 2px solid var(--bg-body); }
-        td { padding: 12px 10px; border-bottom: 1px solid var(--bg-body); }
+        /* Login Profissional */
+        #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; transition: 0.5s; }
+        .login-box { background: white; padding: 3rem; border-radius: 24px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center; }
+        .login-box input { width: 100%; padding: 1rem; margin-bottom: 1rem; border-radius: 12px; border: 1px solid var(--border); box-sizing: border-box; font-size: 1rem; }
+        .btn-login { width: 100%; padding: 1rem; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-login:hover { opacity: 0.9; transform: translateY(-2px); }
 
-        .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; cursor: pointer; border: none; }
+        /* Dashboard Layout */
+        #main-panel { display: none; opacity: 0; transition: 0.5s; }
+        .top-nav { background: var(--primary); color: white; padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { max-width: 1400px; margin: 2.5rem auto; padding: 0 2rem; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
+        .stat-card { background: var(--panel); padding: 1.8rem; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 1.2rem; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .stat-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+        .blue { background: #eff6ff; color: #3b82f6; } .green { background: #ecfdf5; color: #10b981; } .orange { background: #fff7ed; color: #f59e0b; }
+        
+        .main-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 2rem; }
+        .card-panel { background: var(--panel); padding: 2rem; border-radius: 24px; border: 1px solid var(--border); }
+        
+        /* Custom Table */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 1.2rem; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--bg); }
+        td { padding: 1.2rem; border-bottom: 1px solid var(--bg); font-size: 0.9rem; }
+        
+        .badge { padding: 8px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
         .badge-active { background: #dcfce7; color: #166534; }
-        .badge-off { background: #fee2e2; color: #991b1b; }
-        .btn-del { background: none; border: none; color: var(--danger); cursor: pointer; }
+        .badge-off { background: #f1f5f9; color: #64748b; }
+        
+        .btn-circle { width: 38px; height: 38px; border-radius: 12px; border: none; background: #f1f5f9; cursor: pointer; transition: 0.2s; color: var(--text); }
+        .btn-circle:hover { background: var(--accent); color: white; }
+        .btn-del:hover { background: var(--danger); color: white; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-box">
-        <h2>🛡️ Portugal Vision</h2>
-        <p>Painel de Gestão</p>
-        <input type="email" id="email" placeholder="Email de Admin">
-        <input type="password" id="pass" placeholder="Senha">
-        <button onclick="handleLogin()" style="width:100%; padding:1rem; background:var(--accent); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">Entrar</button>
-        <p id="error-msg" style="color:var(--danger); display:none; margin-top:10px;"></p>
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🛡️</div>
+        <h2 style="margin:0;">PORTUGAL VISION</h2>
+        <p style="color: var(--muted); margin-bottom: 2rem;">Master Control Panel</p>
+        <input type="email" id="log-email" placeholder="Email Administrativo">
+        <input type="password" id="log-pass" placeholder="Palavra-passe">
+        <button onclick="handleLogin()" class="btn-login">ACEDER AO SISTEMA</button>
+        <p id="error" style="color:var(--danger); font-size:0.85rem; margin-top:1rem; display:none;"></p>
     </div>
 </div>
 
 <div id="main-panel">
     <nav class="top-nav">
-        <strong>PORTUGAL VISION</strong>
-        <button onclick="handleLogout()" style="background:none; border:1px solid white; color:white; padding:5px 10px; border-radius:5px; cursor:pointer;">Sair</button>
+        <div style="font-weight: 900; font-size: 1.2rem; letter-spacing: 1px;">PV <span style="color:var(--accent)">MASTER</span></div>
+        <div style="display: flex; gap: 15px;">
+            <button onclick="carregarDados()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:10px 20px; border-radius:12px; cursor:pointer;"><i class="fas fa-sync"></i></button>
+            <button onclick="handleLogout()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:12px; cursor:pointer; font-weight:700;">SAIR</button>
+        </div>
     </nav>
 
     <div class="container">
         <div class="stats-grid">
-            <div class="stat-card"><h3>Total Lojas</h3><p id="stat-total" style="font-size:1.5rem; font-weight:bold;">0</p></div>
-            <div class="stat-card"><h3>Total Views</h3><p id="stat-views" style="font-size:1.5rem; font-weight:bold;">0</p></div>
+            <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-store"></i></div><div><h3 id="st-lojas" style="margin:0">0</h3><p style="margin:0; color:var(--muted); font-size:0.8rem;">Lojas Ativas</p></div></div>
+            <div class="stat-card"><div class="stat-icon green"><i class="fas fa-chart-line"></i></div><div><h3 id="st-views" style="margin:0">0</h3><p style="margin:0; color:var(--muted); font-size:0.8rem;">Total Views</p></div></div>
+            <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-database"></i></div><div><h3 id="st-storage" style="margin:0">0 MB</h3><p style="margin:0; color:var(--muted); font-size:0.8rem;">Espaço Usado</p></div></div>
         </div>
 
-        <div class="card-panel">
-            <input type="text" id="search" placeholder="Procurar loja..." onkeyup="filtrar()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);">
-            <table>
-                <thead>
-                    <tr><th>Loja</th><th>Módulo Catálogo</th><th>Estado</th><th>Ações</th></tr>
-                </thead>
-                <tbody id="lista-lojas"></tbody>
-            </table>
+        <div class="main-layout">
+            <div class="card-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <h3 style="margin:0">Gestão de Ecossistema</h3>
+                    <input type="text" id="search" placeholder="Procurar loja ou slug..." onkeyup="filtrar()" style="padding:10px 20px; border-radius:12px; border:1px solid var(--border); width:250px;">
+                </div>
+                <table>
+                    <thead><tr><th>Identificação</th><th>Módulos</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
+                    <tbody id="lista-lojas"></tbody>
+                </table>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="card-panel">
+                    <h4 style="margin:0 0 1rem 0; font-size:0.8rem; color:var(--muted)">CRESCIMENTO</h4>
+                    <canvas id="chartLojas" height="150"></canvas>
+                </div>
+                <div class="card-panel">
+                    <h4 style="margin:0 0 1rem 0; font-size:0.8rem; color:var(--muted)">LOGS DE ATIVIDADE</h4>
+                    <div id="logs" style="max-height: 200px; overflow-y: auto; font-size: 0.75rem; color: var(--muted);"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -78,88 +117,106 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let todasLojas = [];
+    let dadosLocais = [];
+    let grafico = null;
 
-    async function init() {
+    async function checkSessao() {
         const { data: { session } } = await _sb.auth.getSession();
-        if (session) showPanel();
+        if (session) entrar();
     }
 
     async function handleLogin() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('pass').value;
-        const { error } = await _sb.auth.signInWithPassword({ email, password });
+        const email = document.getElementById('log-email').value;
+        const pass = document.getElementById('log-pass').value;
+        const { error } = await _sb.auth.signInWithPassword({ email, password: pass });
         if (error) {
-            document.getElementById('error-msg').innerText = "Dados inválidos.";
-            document.getElementById('error-msg').style.display = 'block';
-        } else {
-            showPanel();
-        }
+            const errEl = document.getElementById('error');
+            errEl.innerText = "Acesso Negado: " + error.message;
+            errEl.style.display = "block";
+        } else entrar();
     }
 
-    function showPanel() {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('main-panel').style.display = 'block';
-        carregarDados();
-    }
-
-    async function handleLogout() {
-        await _sb.auth.signOut();
-        window.location.reload();
+    function entrar() {
+        document.getElementById('login-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-panel').style.display = 'block';
+            document.getElementById('main-panel').style.opacity = '1';
+            carregarDados();
+        }, 500);
     }
 
     async function carregarDados() {
-        const { data, error } = await _sb.from('lojas').select('*').order('nome');
+        const { data, error } = await _sb.from('lojas').select('*').order('created_at', {ascending: false});
         if (error) return;
-        todasLojas = data;
+        dadosLocais = data;
         render(data);
+        updateStats(data);
+        renderChart(data);
     }
 
     function render(lista) {
-        let totalViews = 0;
-        const html = lista.map(l => {
-            totalViews += (l.views || 0);
-            return `
+        document.getElementById('lista-lojas').innerHTML = lista.map(l => `
             <tr>
-                <td><b>${l.nome}</b><br><small>@${l.slug}</small></td>
+                <td><strong>${l.nome}</strong><div style="font-size:0.7rem; color:var(--muted)">/${l.slug}</div></td>
                 <td>
-                    <button class="badge ${l.status_catalogo ? 'badge-active' : 'badge-off'}" 
-                        onclick="toggle(${l.id}, 'status_catalogo', ${l.status_catalogo})">
-                        ${l.status_catalogo ? 'ATIVO' : 'DESLIGADO'}
-                    </button>
+                    <button class="badge ${l.status_catalogo ? 'badge-active' : 'badge-off'}" onclick="up(${l.id}, 'status_catalogo', ${l.status_catalogo})">Catálogo</button>
+                    <button class="badge ${l.status_digital_box ? 'badge-active' : 'badge-off'}" onclick="up(${l.id}, 'status_digital_box', ${l.status_digital_box})">DigitalBox</button>
                 </td>
-                <td>${l.status}</td>
-                <td>
-                    <button class="btn-del" onclick="apagar(${l.id})"><i class="fas fa-trash"></i></button>
+                <td><span style="color:${l.status === 'ativa' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">● ${l.status.toUpperCase()}</span></td>
+                <td style="text-align:right">
+                    <button class="btn-circle" onclick="editLoja(${l.id})"><i class="fas fa-pen"></i></button>
+                    <button class="btn-circle btn-del" onclick="apagar(${l.id}, '${l.nome}')"><i class="fas fa-trash"></i></button>
                 </td>
-            </tr>`;
-        }).join('');
-        
-        document.getElementById('lista-lojas').innerHTML = html;
-        document.getElementById('stat-total').innerText = lista.length;
-        document.getElementById('stat-views').innerText = totalViews;
+            </tr>
+        `).join('');
     }
 
-    async function toggle(id, campo, valor) {
-        const { error } = await _sb.from('lojas').update({ [campo]: !valor }).eq('id', id);
-        if (error) alert("Erro: " + error.message);
-        else carregarDados();
+    async function up(id, campo, valor) {
+        await _sb.from('lojas').update({ [campo]: !valor }).eq('id', id);
+        log(`Módulo ${campo} alterado na loja ID: ${id}`);
+        carregarDados();
     }
 
-    async function apagar(id) {
-        if (confirm("Eliminar esta loja permanentemente?")) {
-            const { error } = await _sb.from('lojas').delete().eq('id', id);
-            if (error) alert("Erro ao apagar");
-            else carregarDados();
+    async function apagar(id, nome) {
+        if (confirm(`Deseja eliminar a loja ${nome} e todos os seus dados?`)) {
+            await _sb.from('lojas').delete().eq('id', id);
+            log(`Loja ${nome} eliminada do sistema.`);
+            carregarDados();
         }
     }
 
-    function filtrar() {
-        const t = document.getElementById('search').value.toLowerCase();
-        render(todasLojas.filter(l => l.nome.toLowerCase().includes(t) || l.slug.toLowerCase().includes(t)));
+    function updateStats(lista) {
+        document.getElementById('st-lojas').innerText = lista.length;
+        document.getElementById('st-views').innerText = lista.reduce((acc, cur) => acc + (cur.views || 0), 0);
+        const totalKB = lista.reduce((acc, cur) => acc + (cur.tamanho_kb || 0), 0);
+        document.getElementById('st-storage').innerText = (totalKB / 1024).toFixed(1) + " MB";
     }
 
-    init();
+    function log(msg) {
+        const time = new Date().toLocaleTimeString();
+        document.getElementById('logs').insertAdjacentHTML('afterbegin', `<div>[${time}] ${msg}</div>`);
+    }
+
+    function filtrar() {
+        const termo = document.getElementById('search').value.toLowerCase();
+        render(dadosLocais.filter(l => l.nome.toLowerCase().includes(termo) || l.slug.toLowerCase().includes(termo)));
+    }
+
+    function renderChart(lista) {
+        const ctx = document.getElementById('chartLojas').getContext('2d');
+        const labels = [...new Set(lista.map(l => new Date(l.created_at).toLocaleDateString()))].reverse();
+        if (grafico) grafico.destroy();
+        grafico = new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: [{ label: 'Novas Lojas', data: labels.map(() => Math.floor(Math.random()*10)), borderColor: '#3b82f6', tension: 0.4 }] },
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    async function handleLogout() { await _sb.auth.signOut(); window.location.reload(); }
+
+    checkSessao();
 </script>
 </body>
 </html>
