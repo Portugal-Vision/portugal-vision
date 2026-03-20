@@ -147,18 +147,18 @@
                 <tr>
                     <td><strong>${l.nome}</strong><br><small>/${l.slug}</small></td>
                     <td>
-                        <button class="badge ${l.status_catalogo ? 'btn-on' : 'btn-off'}" onclick="up(${l.id},'status_catalogo',${l.status_catalogo})">CATÁLOGO</button>
-                        <button class="badge ${l.status_digital_box ? 'btn-on' : 'btn-off'}" onclick="up(${l.id},'status_digital_box',${l.status_digital_box})">DIGITALBOX</button>
+                        <button class="badge ${l.status_catalogo ? 'btn-on' : 'btn-off'}" onclick="up('${l.id}','status_catalogo',${l.status_catalogo})">CATÁLOGO</button>
+                        <button class="badge ${l.status_digital_box ? 'btn-on' : 'btn-off'}" onclick="up('${l.id}','status_digital_box',${l.status_digital_box})">DIGITALBOX</button>
                     </td>
                     <td><i class="fas fa-eye"></i> ${l.views || 0} | <i class="fab fa-whatsapp"></i> ${l.cliques_whatsapp || 0}</td>
                     <td>
-                        <button class="badge ${l.status === 'ativa' ? 'btn-on' : 'btn-susp'}" onclick="toggleStatus(${l.id}, '${l.status}')">
+                        <button class="badge ${l.status === 'ativa' ? 'btn-on' : 'btn-susp'}" onclick="toggleStatus('${l.id}', '${l.status}')">
                             ● ${l.status.toUpperCase()}
                         </button>
                     </td>
                     <td style="text-align:right">
                         <button class="action-btn" onclick="abrirModal(${JSON.stringify(l).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn" onclick="apagar(${l.id}, '${l.nome}')"><i class="fas fa-trash" style="color:var(--danger)"></i></button>
+                        <button class="action-btn" onclick="apagar('${l.id}', '${l.nome}')"><i class="fas fa-trash" style="color:var(--danger)"></i></button>
                     </td>
                 </tr>`;
         }).join('');
@@ -169,18 +169,21 @@
 
     async function up(id, campo, valor) {
         const { error } = await _sb.from('lojas').update({ [campo]: !valor }).eq('id', id);
-        if (error) alert("Erro permissão: " + error.message); carregar();
+        if (error) alert("Erro ao atualizar: " + error.message); 
+        carregar();
     }
 
     async function toggleStatus(id, atual) {
         const novo = atual === 'ativa' ? 'suspensa' : 'ativa';
-        await _sb.from('lojas').update({ status: novo }).eq('id', id);
+        const { error } = await _sb.from('lojas').update({ status: novo }).eq('id', id);
+        if (error) alert("Erro ao mudar status: " + error.message);
         carregar();
     }
 
     async function apagar(id, nome) {
-        if(confirm(`Eliminar ${nome}?`)) {
-            await _sb.from('lojas').delete().eq('id', id);
+        if(confirm(`Eliminar definitivamente a loja ${nome}?`)) {
+            const { error } = await _sb.from('lojas').delete().eq('id', id);
+            if (error) alert("Erro ao eliminar: " + error.message);
             carregar();
         }
     }
@@ -197,7 +200,11 @@
 
     async function salvarLoja() {
         const id = document.getElementById('edit-id').value;
-        const obj = { nome: document.getElementById('field-nome').value, slug: document.getElementById('field-slug').value, status: document.getElementById('field-status').value };
+        const obj = { 
+            nome: document.getElementById('field-nome').value, 
+            slug: document.getElementById('field-slug').value, 
+            status: document.getElementById('field-status').value 
+        };
         if (id) await _sb.from('lojas').update(obj).eq('id', id);
         else await _sb.from('lojas').insert([obj]);
         fecharModal(); carregar();
