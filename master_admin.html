@@ -18,6 +18,7 @@
             --border: #e2e8f0;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
         }
 
         body { 
@@ -26,8 +27,10 @@
             color: var(--text-main); 
             margin: 0; 
             display: none; 
+            transition: opacity 0.3s;
         }
 
+        /* Top Navigation */
         .top-nav {
             background: var(--primary);
             color: white;
@@ -36,14 +39,17 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .container { max-width: 1400px; margin: 2rem auto; padding: 0 2rem; }
+        .container { max-width: 1440px; margin: 2rem auto; padding: 0 2rem; }
 
         /* Stats Section */
         .stats-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
             gap: 1.5rem; 
             margin-bottom: 2rem;
         }
@@ -56,26 +62,30 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
 
         .stat-icon {
-            width: 48px; height: 48px;
+            width: 52px; height: 52px;
             border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
         }
 
         .blue { background: #eff6ff; color: #3b82f6; }
         .green { background: #ecfdf5; color: #10b981; }
         .red { background: #fef2f2; color: #ef4444; }
+        .orange { background: #fff7ed; color: #f59e0b; }
 
-        .stat-info h3 { margin: 0; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-info p { margin: 0.2rem 0 0; font-size: 1.5rem; font-weight: 700; }
+        .stat-info h3 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-info p { margin: 0.2rem 0 0; font-size: 1.6rem; font-weight: 800; }
 
-        .main-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        /* Main Layout */
+        .main-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+
+        @media (max-width: 1100px) { .main-layout { grid-template-columns: 1fr; } }
 
         .card-panel { 
             background: var(--panel-bg); 
@@ -83,62 +93,90 @@
             border-radius: 16px; 
             border: 1px solid var(--border); 
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            position: relative;
         }
 
+        .search-container { position: relative; margin-bottom: 1.5rem; }
         .search-bar {
-            width: 100%; padding: 0.8rem 1rem;
-            border-radius: 10px; border: 1px solid var(--border);
-            margin-bottom: 1.5rem; font-size: 1rem; outline: none;
+            width: 100%; padding: 0.9rem 1rem 0.9rem 2.8rem;
+            border-radius: 12px; border: 1px solid var(--border);
+            font-size: 1rem; outline: none; transition: 0.2s;
             box-sizing: border-box;
         }
+        .search-bar:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-        table { width: 100%; border-collapse: collapse; }
+        /* Table Styles */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { 
-            text-align: left; padding: 1rem; 
+            text-align: left; padding: 1.2rem 1rem; 
             border-bottom: 2px solid var(--border); 
-            color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; 
+            color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; 
+            font-weight: 700;
         }
-        td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        td { padding: 1.2rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
         tr:hover { background: #f8fafc; }
 
-        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        /* Status & Badges */
+        .badge { 
+            padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; 
+            display: inline-flex; align-items: center; gap: 5px; border: none; cursor: pointer;
+            transition: 0.2s;
+        }
         .badge-active { background: #dcfce7; color: #166534; }
         .badge-off { background: #f1f5f9; color: #475569; }
+        .badge-suspended { background: #fee2e2; color: #991b1b; }
 
+        /* Actions */
         .btn-action {
-            border: none; background: none; cursor: pointer; color: var(--text-muted);
-            padding: 5px; font-size: 1rem; transition: 0.2s;
+            border: none; background: #f1f5f9; cursor: pointer; color: var(--text-muted);
+            width: 36px; height: 36px; border-radius: 8px; font-size: 1rem; 
+            transition: 0.2s; display: inline-flex; align-items: center; justify-content: center;
         }
-        .btn-action:hover { color: var(--accent); }
-        .btn-del:hover { color: var(--danger); }
+        .btn-action:hover { background: var(--accent); color: white; }
+        .btn-del:hover { background: var(--danger); color: white; }
 
-        /* Animação do Botão Atualizar */
-        .loading i {
-            animation: spin 1s linear infinite;
-        }
+        /* Storage Bar */
+        .storage-container { width: 120px; }
+        .storage-text { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        .bar-bg { background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--accent); transition: width 0.5s; }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+        /* Loading States */
+        .loading i { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+        /* Modal */
         #modal { 
             display: none; position: fixed; inset: 0; 
-            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px);
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px);
             z-index: 1000; align-items: center; justify-content: center; 
         }
         .modal-content { 
-            background: white; padding: 2rem; border-radius: 20px; width: 450px; 
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            background: white; padding: 2.5rem; border-radius: 24px; width: 480px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            max-width: 90%;
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
+        .form-input { 
+            width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--border); 
+            box-sizing: border-box; font-family: inherit; font-size: 0.95rem;
+        }
+
+        .btn-save { 
+            width: 100%; background: var(--primary); color: white; padding: 1rem; 
+            border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 1rem;
         }
     </style>
 </head>
 <body>
 
 <nav class="top-nav">
-    <div style="font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px;">PORTUGAL VISION <span style="font-weight: 300; opacity: 0.6;">| ADMIN</span></div>
-    <button id="btn-refresh" class="btn-action" style="color:white; background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 8px;" onclick="carregarDados()">
-        <i class="fas fa-sync-alt"></i> <span id="text-refresh">Atualizar</span>
+    <div style="font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px;">PORTUGAL VISION <span style="font-weight: 300; opacity: 0.6;">| MASTER CONTROL</span></div>
+    <button id="btn-refresh" class="btn-action" style="width: auto; height: auto; color:white; background: rgba(255,255,255,0.15); padding: 10px 20px; border-radius: 10px;" onclick="carregarDados()">
+        <i class="fas fa-sync-alt"></i> <span id="text-refresh" style="margin-left: 8px;">Atualizar Sistema</span>
     </button>
 </nav>
 
@@ -146,131 +184,186 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon blue"><i class="fas fa-store"></i></div>
-            <div class="stat-info"><h3>Total Lojas</h3><p id="stat-total">0</p></div>
+            <div class="stat-info"><h3>Lojas Ativas</h3><p id="stat-total">0</p></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon green"><i class="fas fa-eye"></i></div>
-            <div class="stat-info"><h3>Total Views</h3><p id="stat-cliques">0</p></div>
+            <div class="stat-info"><h3>Total Views</h3><p id="stat-views">0</p></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon red"><i class="fab fa-whatsapp"></i></div>
             <div class="stat-info"><h3>Cliques WhatsApp</h3><p id="stat-waps">0</p></div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon blue"><i class="fas fa-check-circle"></i></div>
-            <div class="stat-info"><h3>Catálogos Ativos</h3><p id="stat-cats">0</p></div>
+            <div class="stat-icon orange"><i class="fas fa-hdd"></i></div>
+            <div class="stat-info"><h3>Armazenamento</h3><p id="stat-storage">0 MB</p></div>
         </div>
     </div>
 
     <div class="main-layout">
         <div class="card-panel">
-            <input type="text" id="search" class="search-bar" placeholder="🔍 Pesquisar por loja, email ou slug..." onkeyup="filtrarLojas()">
-            <table>
-                <thead>
-                    <tr><th>Loja</th><th>Recursos</th><th>Status</th><th>Métricas</th><th></th></tr>
-                </thead>
-                <tbody id="lista-lojas"></tbody>
-            </table>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="search" class="search-bar" placeholder="Procurar por nome da loja, slug ou e-mail..." onkeyup="filtrarLojas()">
+            </div>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Identificação da Loja</th>
+                            <th>Serviços / Módulos</th>
+                            <th>Estado</th>
+                            <th>Dados (Img)</th>
+                            <th>Performance</th>
+                            <th style="text-align: right;">Gestão</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-lojas"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="card-panel">
-            <h3 style="margin-top:0; font-size: 1rem;">Crescimento da Rede</h3>
-            <div style="height: 300px;"><canvas id="growthChart"></canvas></div>
+            <h3 style="margin: 0 0 1.5rem 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-chart-line" style="color: var(--accent);"></i> Crescimento de Rede
+            </h3>
+            <div style="height: 350px; position: relative;"><canvas id="growthChart"></canvas></div>
         </div>
     </div>
 </div>
 
 <div id="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0; font-size: 1.5rem;">Configurações da Loja</h2>
+        <h2 style="margin: 0 0 1.5rem 0; font-size: 1.4rem;">Configurações Avançadas</h2>
         <input type="hidden" id="edit-id">
-        <div style="margin-bottom: 1rem;">
-            <label style="font-size: 0.8rem; font-weight: 600;">Nome Comercial</label>
-            <input type="text" id="edit-nome" class="search-bar" style="margin: 5px 0 0;">
+        
+        <div class="form-group">
+            <label>Nome Comercial da Empresa</label>
+            <input type="text" id="edit-nome" class="form-input">
         </div>
-        <div style="margin-bottom: 1rem;">
-            <label style="font-size: 0.8rem; font-weight: 600;">E-mail de Contacto</label>
-            <input type="email" id="edit-email" class="search-bar" style="margin: 5px 0 0;">
+
+        <div class="form-group">
+            <label>Slug / URL do Sistema (@loja)</label>
+            <input type="text" id="edit-slug" class="form-input">
         </div>
-        <div style="margin-bottom: 1rem;">
-            <label style="font-size: 0.8rem; font-weight: 600;">Nova Password (vazio para não alterar)</label>
-            <input type="password" id="edit-pass" class="search-bar" style="margin: 5px 0 0;" placeholder="••••••••">
+
+        <div class="form-group">
+            <label>E-mail de Administração</label>
+            <input type="email" id="edit-email" class="form-input">
         </div>
-        <button class="btn-action" style="width:100%; background:var(--accent); color:white; padding: 12px; border-radius: 10px; margin-top: 10px;" onclick="salvarEdicao()">Salvar Alterações</button>
-        <button class="btn-action" style="width:100%; margin-top: 10px;" onclick="fecharModal()">Cancelar</button>
+
+        <div class="form-group">
+            <label>Alterar Palavra-Passe (opcional)</label>
+            <input type="password" id="edit-pass" class="form-input" placeholder="Manter atual...">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 2rem;">
+            <button class="btn-save" onclick="salvarEdicao()">Atualizar Loja</button>
+            <button class="btn-save" style="background: #e2e8f0; color: var(--text-main);" onclick="fecharModal()">Cancelar</button>
+        </div>
     </div>
 </div>
 
 <script>
+    // Configurações Supabase
     const SB_URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
-    const SENHA_MESTRA = "1234";
-
-    const acesso = prompt("Acesso Portugal Vision Admin:");
-    if (acesso === SENHA_MESTRA) { document.body.style.display = "block"; } 
-    else { window.location.href = "about:blank"; }
-
     const _sb = supabase.createClient(SB_URL, SB_KEY);
+
     let todasAsLojas = [];
     let myChart = null;
+
+    // Acesso de Segurança
+    const senha = prompt("Credenciais Portugal Vision Master:");
+    if (senha === "1234") { document.body.style.display = "block"; carregarDados(); }
+    else { window.location.href = "about:blank"; }
 
     async function carregarDados() {
         const btn = document.getElementById('btn-refresh');
         const txt = document.getElementById('text-refresh');
-        
-        // Ativar estado de loading
         btn.classList.add('loading');
-        btn.disabled = true;
-        txt.innerText = "A carregar...";
+        txt.innerText = "Sincronizando...";
 
         try {
             const { data, error } = await _sb.from('lojas').select('*').order('created_at', {ascending: false});
             if (error) throw error;
             
             todasAsLojas = data || [];
-            atualizarStats(todasAsLojas);
             renderizar(todasAsLojas);
+            atualizarStats(todasAsLojas);
             gerarGrafico(todasAsLojas);
         } catch (err) {
-            console.error(err.message);
+            alert("Erro ao conectar ao banco: " + err.message);
         } finally {
-            // Desativar estado de loading
             btn.classList.remove('loading');
-            btn.disabled = false;
-            txt.innerText = "Atualizar";
+            txt.innerText = "Atualizar Sistema";
         }
     }
 
     function renderizar(lista) {
-        document.getElementById('lista-lojas').innerHTML = lista.map(l => `
+        document.getElementById('lista-lojas').innerHTML = lista.map(l => {
+            const sizeMB = ((l.tamanho_kb || 0) / 1024).toFixed(2);
+            const perc = Math.min((sizeMB / 500) * 100, 100); // Ex: Limite de 500MB
+
+            return `
             <tr>
-                <td><div style="font-weight: 700;">${l.nome}</div><div style="font-size: 0.75rem; color: var(--text-muted);">@${l.slug}</div></td>
                 <td>
-                    <span class="badge ${l.status_catalogo ? 'badge-active' : 'badge-off'}" onclick="toggleFeature(${l.id}, 'status_catalogo', ${l.status_catalogo})" style="cursor:pointer"><i class="fas fa-list-ul"></i> Catálogo</span>
-                    <span class="badge ${l.status_digital_box ? 'badge-active' : 'badge-off'}" onclick="toggleFeature(${l.id}, 'status_digital_box', ${l.status_digital_box})" style="cursor:pointer"><i class="fas fa-cube"></i> Box</span>
+                    <div style="font-weight: 700; color: var(--primary);">${l.nome}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); display:flex; gap:8px;">
+                        <span><i class="fas fa-at"></i> ${l.slug}</span>
+                        <span><i class="fas fa-envelope"></i> ${l.email || 'N/A'}</span>
+                    </div>
                 </td>
-                <td><span class="badge ${l.status === 'ativa' ? 'badge-active' : 'badge-off'}" onclick="toggleStatus(${l.id}, '${l.status}')" style="cursor:pointer">${l.status || 'pendente'}</span></td>
-                <td><div style="font-size: 0.8rem;"><b>${l.views || 0}</b> v | <b>${l.waps || 0}</b> w</div></td>
+                <td>
+                    <button class="badge ${l.status_catalogo ? 'badge-active' : 'badge-off'}" onclick="toggleFeature(${l.id}, 'status_catalogo', ${l.status_catalogo})">
+                        <i class="fas fa-book-open"></i> Catálogo
+                    </button>
+                    <button class="badge ${l.status_digital_box ? 'badge-active' : 'badge-off'}" onclick="toggleFeature(${l.id}, 'status_digital_box', ${l.status_digital_box})">
+                        <i class="fas fa-box"></i> Digital Box
+                    </button>
+                </td>
+                <td>
+                    <select onchange="alterarStatusLoja(${l.id}, this.value)" style="border: 1px solid var(--border); border-radius: 6px; padding: 4px; font-size: 0.8rem;">
+                        <option value="ativa" ${l.status === 'ativa' ? 'selected' : ''}>Ativa</option>
+                        <option value="suspensa" ${l.status === 'suspensa' ? 'selected' : ''}>Suspensa</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="storage-container">
+                        <span class="storage-text">${sizeMB} MB / 500MB</span>
+                        <div class="bar-bg"><div class="bar-fill" style="width: ${perc}%"></div></div>
+                    </div>
+                </td>
+                <td>
+                    <div style="font-size: 0.85rem;">
+                        <i class="fas fa-eye" style="color:var(--accent)"></i> <b>${l.views || 0}</b>
+                        <span style="margin: 0 8px; color: var(--border)">|</span>
+                        <i class="fab fa-whatsapp" style="color:var(--success)"></i> <b>${l.waps || 0}</b>
+                    </div>
+                </td>
                 <td style="text-align: right;">
-                    <button class="btn-action" onclick='abrirModal(${JSON.stringify(l)})'><i class="fas fa-edit"></i></button>
-                    <button class="btn-action btn-del" onclick="apagarLoja(${l.id})"><i class="fas fa-trash"></i></button>
+                    <button class="btn-action" onclick='abrirModal(${JSON.stringify(l)})' title="Editar Loja"><i class="fas fa-cog"></i></button>
+                    <button class="btn-action btn-del" onclick="apagarLoja(${l.id})" title="Eliminar Permanentemente"><i class="fas fa-trash"></i></button>
                 </td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
     }
 
-    async function toggleFeature(id, campo, val) { 
-        await _sb.from('lojas').update({ [campo]: !val }).eq('id', id); carregarDados(); 
+    async function toggleFeature(id, campo, valor) {
+        await _sb.from('lojas').update({ [campo]: !valor }).eq('id', id);
+        carregarDados();
     }
 
-    async function toggleStatus(id, st) { 
-        const novo = (st === 'ativa' ? 'suspensa' : 'ativa');
-        await _sb.from('lojas').update({ status: novo }).eq('id', id); carregarDados(); 
+    async function alterarStatusLoja(id, novoStatus) {
+        await _sb.from('lojas').update({ status: novoStatus }).eq('id', id);
+        carregarDados();
     }
 
     function abrirModal(l) {
         document.getElementById('edit-id').value = l.id;
         document.getElementById('edit-nome').value = l.nome;
+        document.getElementById('edit-slug').value = l.slug;
         document.getElementById('edit-email').value = l.email || '';
         document.getElementById('edit-pass').value = '';
         document.getElementById('modal').style.display = 'flex';
@@ -280,55 +373,73 @@
 
     async function salvarEdicao() {
         const id = document.getElementById('edit-id').value;
-        const upd = { 
-            nome: document.getElementById('edit-nome').value, 
-            email: document.getElementById('edit-email').value 
+        const up = {
+            nome: document.getElementById('edit-nome').value,
+            slug: document.getElementById('edit-slug').value,
+            email: document.getElementById('edit-email').value
         };
-        const pass = document.getElementById('edit-pass').value;
-        if(pass) upd.password = pass;
+        const p = document.getElementById('edit-pass').value;
+        if(p) up.password = p;
 
-        const { error } = await _sb.from('lojas').update(upd).eq('id', id);
-        if (error) alert("Erro: " + error.message);
+        const { error } = await _sb.from('lojas').update(up).eq('id', id);
+        if(error) alert(error.message);
         else { fecharModal(); carregarDados(); }
     }
 
-    async function apagarLoja(id) { 
-        if(confirm("Deseja apagar definitivamente?")) { 
-            await _sb.from('lojas').delete().eq('id', id); carregarDados(); 
-        } 
+    async function apagarLoja(id) {
+        if(confirm("ATENÇÃO: Deseja apagar esta loja definitivamente? Todos os produtos e acessos serão perdidos.")) {
+            await _sb.from('lojas').delete().eq('id', id);
+            carregarDados();
+        }
     }
 
     function atualizarStats(lista) {
-        document.getElementById('stat-total').innerText = lista.length;
-        document.getElementById('stat-cliques').innerText = lista.reduce((acc, l) => acc + (Number(l.views) || 0), 0);
-        document.getElementById('stat-waps').innerText = lista.reduce((acc, l) => acc + (Number(l.waps) || 0), 0);
-        document.getElementById('stat-cats').innerText = lista.filter(l => l.status_catalogo).length;
+        document.getElementById('stat-total').innerText = lista.filter(l => l.status === 'ativa').length;
+        document.getElementById('stat-views').innerText = lista.reduce((a, b) => a + (Number(b.views) || 0), 0).toLocaleString();
+        document.getElementById('stat-waps').innerText = lista.reduce((a, b) => a + (Number(b.waps) || 0), 0).toLocaleString();
+        const totalKB = lista.reduce((a, b) => a + (Number(b.tamanho_kb) || 0), 0);
+        document.getElementById('stat-storage').innerText = (totalKB / 1024).toFixed(1) + " MB";
     }
 
     function gerarGrafico(lista) {
         const ctx = document.getElementById('growthChart').getContext('2d');
-        const contagem = {};
+        const labels = {};
         [...lista].reverse().forEach(l => {
-            const d = new Date(l.created_at).toLocaleDateString();
-            contagem[d] = (contagem[d] || 0) + 1;
+            const data = new Date(l.created_at).toLocaleDateString('pt-PT', {month:'short', day:'numeric'});
+            labels[data] = (labels[data] || 0) + 1;
         });
+
         if (myChart) myChart.destroy();
         myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: Object.keys(contagem),
-                datasets: [{ data: Object.values(contagem), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 }]
+                labels: Object.keys(labels),
+                datasets: [{
+                    label: 'Novas Lojas',
+                    data: Object.values(labels),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
             },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } } }
+            }
         });
     }
 
     function filtrarLojas() {
-        const t = document.getElementById('search').value.toLowerCase();
-        renderizar(todasAsLojas.filter(l => l.nome.toLowerCase().includes(t) || l.slug.toLowerCase().includes(t)));
+        const term = document.getElementById('search').value.toLowerCase();
+        renderizar(todasAsLojas.filter(l => 
+            l.nome.toLowerCase().includes(term) || 
+            l.slug.toLowerCase().includes(term) || 
+            (l.email && l.email.toLowerCase().includes(term))
+        ));
     }
-
-    carregarDados();
 </script>
 </body>
 </html>
