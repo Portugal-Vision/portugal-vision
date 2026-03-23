@@ -50,10 +50,10 @@
 
         .auth-card {
             background: var(--white);
-            padding: 3rem;
+            padding: 2.5rem;
             border-radius: 24px;
             width: 100%;
-            max-width: 420px;
+            max-width: 400px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             text-align: center;
         }
@@ -66,7 +66,19 @@
             letter-spacing: -1px;
         }
 
-        .auth-card h2 { margin-bottom: 2rem; font-weight: 700; color: var(--primary); }
+        .auth-card h2 { margin-bottom: 1.5rem; font-weight: 700; color: var(--primary); }
+
+        .auth-toggle {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .auth-toggle span {
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: 600;
+        }
 
         /* --- NAVIGATION --- */
         nav {
@@ -80,6 +92,7 @@
             top: 0;
             z-index: 1000;
             box-shadow: var(--shadow);
+            display: none; /* Escondido até login */
         }
 
         .nav-brand {
@@ -313,7 +326,6 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- BADGES --- */
         .badge-status {
             position: absolute;
             top: 15px;
@@ -323,7 +335,6 @@
             font-size: 0.7rem;
             font-weight: 800;
             text-transform: uppercase;
-            box-shadow: var(--shadow);
         }
 
         .status-on { background: #dcfce7; color: #166534; }
@@ -341,7 +352,15 @@
 <div id="auth-container">
     <div class="auth-card">
         <div class="auth-logo">PORTUGAL VISION</div>
-        <h2>Acesso Lojista</h2>
+        <h2 id="auth-title">Acesso Lojista</h2>
+        
+        <div id="register-fields" style="display:none;">
+            <div class="form-group" style="text-align:left">
+                <label>Nome da Loja</label>
+                <input type="text" id="reg-loja-nome" placeholder="Ex: Boutique Central">
+            </div>
+        </div>
+
         <div class="form-group" style="text-align:left">
             <label>Email da Conta</label>
             <input type="email" id="login-email" placeholder="ex: contacto@loja.pt">
@@ -350,13 +369,18 @@
             <label>Palavra-passe</label>
             <input type="password" id="login-pass" placeholder="••••••••">
         </div>
-        <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="handleLogin()">
+
+        <button class="btn btn-primary" style="width:100%; margin-top:1rem;" id="auth-main-btn" onclick="handleAuth()">
             ENTRAR NO PAINEL
         </button>
+
+        <div class="auth-toggle" id="auth-switcher">
+            Não tem conta? <span onclick="toggleAuthMode(true)">Criar conta de Lojista</span>
+        </div>
     </div>
 </div>
 
-<nav>
+<nav id="main-nav">
     <div class="nav-brand">
         <i class="fas fa-store"></i>
         PORTUGAL VISION <span style="font-weight:300; opacity:0.6;">| LOJISTA</span>
@@ -378,8 +402,7 @@
         </button>
     </div>
 
-    <div class="products-grid" id="products-list">
-        </div>
+    <div class="products-grid" id="products-list"></div>
 </main>
 
 <div class="modal-overlay" id="productModal">
@@ -401,17 +424,14 @@
                     <label>Nome do Produto</label>
                     <input type="text" id="p-nome" required placeholder="Ex: Relógio Digital Sports">
                 </div>
-                
                 <div class="form-group">
                     <label>Preço (€)</label>
                     <input type="number" id="p-preco" step="0.01" required placeholder="0.00">
                 </div>
-                
                 <div class="form-group">
                     <label>Desconto (%)</label>
                     <input type="number" id="p-desc" value="0" min="0" max="99">
                 </div>
-
                 <div class="form-group">
                     <label>Categoria</label>
                     <select id="p-cat">
@@ -421,7 +441,6 @@
                         <option value="Stock Off">Stock Off</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label>Visibilidade</label>
                     <select id="p-oculto">
@@ -429,7 +448,6 @@
                         <option value="true">Ocultar Produto</option>
                     </select>
                 </div>
-
                 <div class="form-group full-width">
                     <label>Descrição Curta (Opcional)</label>
                     <textarea id="p-desc-text" rows="3" placeholder="Detalhes que ajudam a vender..."></textarea>
@@ -448,20 +466,62 @@
 </div>
 
 <script>
-    // --- CONFIGURAÇÃO SUPABASE ---
     const SB_URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
     const SB_KEY = "SUA_KEY_AQUI"; // Inserir a Key Anonima
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
     let currentLoja = null;
     let productsData = [];
+    let isRegisterMode = false;
 
-    // --- AUTENTICAÇÃO ---
-    async function handleLogin() {
+    // --- LÓGICA DE ALTERNÂNCIA DE MODO ---
+    function toggleAuthMode(toRegister) {
+        isRegisterMode = toRegister;
+        const title = document.getElementById('auth-title');
+        const btn = document.getElementById('auth-main-btn');
+        const fields = document.getElementById('register-fields');
+        const switcher = document.getElementById('auth-switcher');
+
+        if(toRegister) {
+            title.innerText = "Criar Nova Conta";
+            btn.innerText = "REGISTAR E ENTRAR";
+            fields.style.display = 'block';
+            switcher.innerHTML = 'Já tem conta? <span onclick="toggleAuthMode(false)">Fazer Login</span>';
+        } else {
+            title.innerText = "Acesso Lojista";
+            btn.innerText = "ENTRAR NO PAINEL";
+            fields.style.display = 'none';
+            switcher.innerHTML = 'Não tem conta? <span onclick="toggleAuthMode(true)">Criar conta de Lojista</span>';
+        }
+    }
+
+    // --- AUTENTICAÇÃO E REGISTO ---
+    async function handleAuth() {
         const email = document.getElementById('login-email').value;
         const pass = document.getElementById('login-pass').value;
-        const { data, error } = await _sb.auth.signInWithPassword({ email, password: pass });
-        if(error) alert("Erro: " + error.message); else checkSession();
+
+        if(isRegisterMode) {
+            const nomeLoja = document.getElementById('reg-loja-nome').value;
+            if(!nomeLoja) return alert("Insira o nome da sua loja.");
+            
+            // 1. Criar Utilizador
+            const { data: authData, error: authErr } = await _sb.auth.signUp({ email, password: pass });
+            if(authErr) return alert("Erro no registo: " + authErr.message);
+
+            // 2. Criar Registo na Tabela Lojas
+            const { error: dbErr } = await _sb.from('lojas').insert([{
+                nome: nomeLoja,
+                email_dono: email,
+                slug: nomeLoja.toLowerCase().replace(/ /g, '-')
+            }]);
+            
+            if(dbErr) return alert("Erro ao criar perfil da loja: " + dbErr.message);
+            alert("Conta criada com sucesso!");
+            checkSession();
+        } else {
+            const { error } = await _sb.auth.signInWithPassword({ email, password: pass });
+            if(error) alert("Erro: " + error.message); else checkSession();
+        }
     }
 
     async function checkSession() {
@@ -471,6 +531,7 @@
             if(loja) {
                 currentLoja = loja;
                 document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('main-nav').style.display = 'flex';
                 document.getElementById('main-panel').style.display = 'block';
                 document.getElementById('loja-name-display').innerText = loja.nome;
                 loadProducts();
@@ -499,7 +560,7 @@
                     <div class="badge-status ${p.oculto ? 'status-off' : 'status-on'}">${p.oculto ? 'Oculto' : 'Ativo'}</div>
                     <img src="${p.imagem_url || 'https://via.placeholder.com/400x300'}" class="product-img">
                     <div class="card-body">
-                        <div class="category-tag">${p.categoria || 'Geral'}</div>
+                        <div class="category-tag">${p.category || 'Geral'}</div>
                         <div class="product-name">${p.nome}</div>
                         <div class="price-wrapper">
                             <div class="current-price">${final}€</div>
@@ -515,9 +576,7 @@
         }).join('');
     }
 
-    // --- FORMULÁRIO E IMAGEM ---
     let tempImgFile = null;
-
     function previewFile(input) {
         if (input.files && input.files[0]) {
             tempImgFile = input.files[0];
@@ -543,7 +602,6 @@
 
         let imgUrl = document.getElementById('preview-img-box').dataset.url || "";
 
-        // Upload se houver nova imagem
         if (tempImgFile) {
             const ext = tempImgFile.name.split('.').pop();
             const path = `${currentLoja.id}/${Date.now()}.${ext}`;
@@ -581,7 +639,6 @@
         text.innerText = "GUARDAR PRODUTO";
     };
 
-    // --- UTILITÁRIOS ---
     function openProductModal() {
         document.getElementById('productForm').reset();
         document.getElementById('edit-id').value = "";
@@ -592,14 +649,11 @@
         tempImgFile = null;
     }
 
-    function closeProductModal() {
-        document.getElementById('productModal').style.display = 'none';
-    }
+    function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
 
     function editProduct(id) {
         const p = productsData.find(x => x.id === id);
         if(!p) return;
-
         openProductModal();
         document.getElementById('modal-title').innerText = "Editar Produto";
         document.getElementById('edit-id').value = p.id;
@@ -609,7 +663,6 @@
         document.getElementById('p-cat').value = p.categoria || "Geral";
         document.getElementById('p-oculto').value = p.oculto.toString();
         document.getElementById('p-desc-text').value = p.descricao || "";
-        
         if(p.imagem_url) {
             const box = document.getElementById('preview-img-box');
             box.style.display = 'block';
@@ -629,9 +682,7 @@
         _sb.auth.signOut().then(() => location.reload());
     }
 
-    // Inicialização
     checkSession();
-
 </script>
 </body>
 </html>
