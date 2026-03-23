@@ -15,7 +15,7 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         
         #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
-        .login-box { background: white; padding: 2.5rem; border-radius: 20px; width: 350px; text-align: center; }
+        .login-box { background: white; padding: 2.5rem; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
         
         #main-panel { display: none; }
         .top-nav { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
@@ -30,27 +30,30 @@
         th { text-align: left; padding: 12px; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid var(--bg); }
         td { padding: 14px 12px; border-bottom: 1px solid var(--bg); font-size: 0.85rem; }
         
-        .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
+        .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; text-transform: uppercase; }
         .btn-on { background: #dcfce7; color: #15803d; }
         .btn-off { background: #fee2e2; color: #b91c1c; }
         .btn-susp { background: #fef3c7; color: #92400e; }
         
-        .action-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f8fafc; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; justify-content: center; }
-        .action-btn:hover { background: var(--accent); color: white; }
+        .action-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f8fafc; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .action-btn:hover { background: var(--accent); color: white; transform: translateY(-2px); }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: white; padding: 2rem; border-radius: 20px; width: 400px; }
-        input, select { width: 100%; padding: 10px; margin: 8px 0 16px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 2rem; border-radius: 20px; width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        input, select { width: 100%; padding: 10px; margin: 8px 0 16px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        
+        .loading-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-box">
-        <h2 style="color: var(--primary)">Portugal Vision</h2>
-        <input type="email" id="log-email" placeholder="Email">
+        <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Portugal Vision</h2>
+        <input type="email" id="log-email" placeholder="Email de Administrador">
         <input type="password" id="log-pass" placeholder="Senha">
-        <button onclick="handleLogin()" class="badge btn-on" style="width:100%; padding:14px; margin-top:10px;">ENTRAR</button>
+        <button onclick="handleLogin()" class="badge btn-on" style="width:100%; padding:14px; margin-top:10px;">ACEDER AO PAINEL</button>
     </div>
 </div>
 
@@ -58,7 +61,7 @@
     <nav class="top-nav">
         <div style="display:flex; align-items:center; gap:15px;">
             <strong id="nav-title">PORTUGAL VISION MASTER CONTROL</strong>
-            <button onclick="carregar()" class="action-btn" title="Atualizar Dados" style="background:rgba(255,255,255,0.2); color:white;">
+            <button onclick="carregar()" class="action-btn" id="btn-refresh" title="Atualizar Dados" style="background:rgba(255,255,255,0.2); color:white;">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
@@ -69,52 +72,56 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="icon-box" style="background:#eff6ff; color:#3b82f6;"><i class="fas fa-store"></i></div>
-                <div><small>Total Lojas</small><h3 id="st-lojas" style="margin:0">0</h3></div>
+                <div><small>Lojas Registadas</small><h3 id="st-lojas" style="margin:0">0</h3></div>
             </div>
             <div class="stat-card">
                 <div class="icon-box" style="background:#ecfdf5; color:#10b981;"><i class="fas fa-eye"></i></div>
-                <div><small>Total Views</small><h3 id="st-views" style="margin:0">0</h3></div>
+                <div><small>Total Visualizações</small><h3 id="st-views" style="margin:0">0</h3></div>
             </div>
             <div class="stat-card">
                 <div class="icon-box" style="background:#fff7ed; color:#f59e0b;"><i class="fab fa-whatsapp"></i></div>
-                <div><small>Total WhatsApp</small><h3 id="st-wpp" style="margin:0">0</h3></div>
+                <div><small>Cliques WhatsApp</small><h3 id="st-wpp" style="margin:0">0</h3></div>
             </div>
         </div>
 
         <div class="card-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <input type="text" id="search" placeholder="Procurar loja..." onkeyup="filtrar()" style="max-width:250px; margin:0">
-                <button onclick="abrirModal()" class="badge btn-on" style="height: fit-content;">+ NOVA LOJA</button>
+                <input type="text" id="search" placeholder="Procurar por nome ou slug..." onkeyup="filtrar()" style="max-width:300px; margin:0">
+                <button onclick="abrirModal()" class="badge btn-on" style="height: fit-content; padding: 10px 20px;">+ NOVA LOJA</button>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Loja / Slug</th>
-                        <th>Módulos Ativos</th>
-                        <th>Views / Wpp</th>
-                        <th>Estado</th>
-                        <th style="text-align:right">Gestão</th>
-                    </tr>
-                </thead>
-                <tbody id="lista-lojas"></tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Loja / Link</th>
+                            <th>Módulos Ativos</th>
+                            <th>Métricas (Views/Wpp)</th>
+                            <th>Estado Geral</th>
+                            <th style="text-align:right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-lojas"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 <div id="modalLoja" class="modal">
     <div class="modal-content">
-        <h3 id="modal-title">Configurar Loja</h3>
+        <h3 id="modal-title" style="margin-top:0">Configurar Loja</h3>
         <input type="hidden" id="edit-id">
-        <label>Nome Comercial</label><input type="text" id="field-nome">
-        <label>Slug (URL personalizada)</label><input type="text" id="field-slug">
+        <label>Nome da Loja</label><input type="text" id="field-nome" placeholder="Ex: Óptica Central">
+        <label>Slug (URL)</label><input type="text" id="field-slug" placeholder="ex-optica-central">
         <label>Estado da Conta</label>
         <select id="field-status">
-            <option value="ativa">Ativa</option>
-            <option value="suspensa">Suspensa</option>
+            <option value="ativa">Ativa (Acesso Total)</option>
+            <option value="suspensa">Suspensa (Acesso Bloqueado)</option>
         </select>
-        <button onclick="salvarLoja()" class="badge btn-on" style="width:100%; padding:12px;">GUARDAR</button>
-        <button onclick="fecharModal()" class="badge btn-off" style="width:100%; margin-top:5px; background: #eee; color: #333;">CANCELAR</button>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button onclick="salvarLoja()" class="badge btn-on" style="flex:1; padding:12px;">GUARDAR</button>
+            <button onclick="fecharModal()" class="badge" style="flex:1; background:#eee; color:#333;">CANCELAR</button>
+        </div>
     </div>
 </div>
 
@@ -122,12 +129,15 @@
     const _URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
     const _sb = supabase.createClient(_URL, _KEY);
+    
+    let dadosLocais = []; // Correção: Variável global para busca funcional
 
     async function handleLogin() {
         const email = document.getElementById('log-email').value;
         const password = document.getElementById('log-pass').value;
         const { error } = await _sb.auth.signInWithPassword({ email, password });
-        if (error) alert("Erro: " + error.message); else entrar();
+        if (error) alert("Erro de Autenticação: " + error.message); 
+        else entrar();
     }
 
     async function entrar() {
@@ -136,15 +146,21 @@
         carregar();
     }
 
-    // CORREÇÃO SINCRONIZAÇÃO: Carregar força a busca de dados novos
     async function carregar() {
+        const btn = document.querySelector('#btn-refresh i');
+        if(btn) btn.classList.add('loading-spin');
+
         const { data, error } = await _sb.from('lojas').select('*').order('nome');
+        
         if (error) {
-            console.error("Erro ao carregar:", error);
-            return;
+            console.error("Erro Supabase:", error);
+            alert("Erro ao ligar à base de dados.");
+        } else {
+            dadosLocais = data;
+            render(data);
         }
-        dadosLocais = data;
-        render(data);
+
+        if(btn) setTimeout(() => btn.classList.remove('loading-spin'), 500);
     }
 
     function render(lista) {
@@ -154,18 +170,21 @@
             const w = Number(l.whatsapp_total || 0);
             tV += v; tW += w;
             
-            // Garantir que os valores booleanos sejam interpretados corretamente para as classes de CSS
             const catClass = l.status_catalogo ? 'btn-on' : 'btn-off';
             const digClass = l.status_digital_box ? 'btn-on' : 'btn-off';
 
             return `
                 <tr>
-                    <td><strong>${l.nome}</strong><br><small style="color:var(--muted)">/${l.slug}</small></td>
+                    <td><strong>${l.nome}</strong><br><small style="color:var(--muted)">portugalvision.pt/${l.slug}</small></td>
                     <td>
-                        <button class="badge ${catClass}" onclick="up('${l.id}','status_catalogo',${l.status_catalogo})">CATÁLOGO</button>
-                        <button class="badge ${digClass}" onclick="up('${l.id}','status_digital_box',${l.status_digital_box})">DIGITALBOX</button>
+                        <button class="badge ${catClass}" onclick="up('${l.id}','status_catalogo',${l.status_catalogo})">
+                            <i class="fas fa-book-open"></i> Catálogo
+                        </button>
+                        <button class="badge ${digClass}" onclick="up('${l.id}','status_digital_box',${l.status_digital_box})">
+                            <i class="fas fa-tv"></i> DigitalBox
+                        </button>
                     </td>
-                    <td><i class="fas fa-eye"></i> ${v} | <i class="fab fa-whatsapp"></i> ${w}</td>
+                    <td><i class="fas fa-eye"></i> ${v} <span style="margin:0 8px; opacity:0.3">|</span> <i class="fab fa-whatsapp"></i> ${w}</td>
                     <td>
                         <button class="badge ${l.status === 'ativa' ? 'btn-on' : 'btn-susp'}" onclick="toggleStatus('${l.id}', '${l.status}')">
                             ● ${(l.status || 'ativa').toUpperCase()}
@@ -178,17 +197,16 @@
                 </tr>`;
         }).join('');
 
-        document.getElementById('lista-lojas').innerHTML = listaHtml;
+        document.getElementById('lista-lojas').innerHTML = listaHtml || '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted)">Nenhuma loja encontrada.</td></tr>';
         document.getElementById('st-lojas').innerText = lista.length;
         document.getElementById('st-views').innerText = tV;
         document.getElementById('st-wpp').innerText = tW;
     }
 
-    // CORREÇÃO SINCRONIZAÇÃO: Função 'up' atualiza e recarrega imediatamente
-    async function up(id, campo, valor) {
-        const novoValor = !valor;
+    async function up(id, campo, valorAtual) {
+        const novoValor = !valorAtual; // Inverte o booleano
         const { error } = await _sb.from('lojas').update({ [campo]: novoValor }).eq('id', id);
-        if (error) alert("Erro ao atualizar: " + error.message); 
+        if (error) alert("Erro: " + error.message); 
         else carregar(); 
     }
 
@@ -200,7 +218,7 @@
     }
 
     async function apagar(id, nome) {
-        if(confirm(`Deseja apagar definitivamente a loja ${nome}?`)) {
+        if(confirm(`ATENÇÃO: Deseja apagar definitivamente a loja "${nome}"? Esta ação não pode ser revertida.`)) {
             const { error } = await _sb.from('lojas').delete().eq('id', id);
             if (error) alert("Erro ao eliminar: " + error.message);
             else carregar();
@@ -229,17 +247,29 @@
 
     async function salvarLoja() {
         const id = document.getElementById('edit-id').value;
+        const slugFormatada = document.getElementById('field-slug').value.toLowerCase().trim().replace(/\s+/g, '-');
+        
         const obj = { 
             nome: document.getElementById('field-nome').value, 
-            slug: document.getElementById('field-slug').value, 
+            slug: slugFormatada, 
             status: document.getElementById('field-status').value 
         };
         
-        let res;
-        if (id) res = await _sb.from('lojas').update(obj).eq('id', id);
-        else res = await _sb.from('lojas').insert([obj]);
+        if(!obj.nome || !obj.slug) return alert("Preencha o nome e o slug.");
 
-        if (res.error) alert("Erro ao guardar: " + res.error.message);
+        let erro;
+        if (id) {
+            const { error } = await _sb.from('lojas').update(obj).eq('id', id);
+            erro = error;
+        } else {
+            // Se for nova loja, define módulos como inativos por padrão
+            obj.status_catalogo = false;
+            obj.status_digital_box = false;
+            const { error } = await _sb.from('lojas').insert([obj]);
+            erro = error;
+        }
+
+        if (erro) alert("Erro ao guardar: " + erro.message);
         else {
             fecharModal(); 
             carregar();
@@ -248,10 +278,16 @@
 
     function filtrar() {
         const t = document.getElementById('search').value.toLowerCase();
-        render(dadosLocais.filter(l => l.nome.toLowerCase().includes(t) || l.slug.toLowerCase().includes(t)));
+        const filtrados = dadosLocais.filter(l => 
+            l.nome.toLowerCase().includes(t) || 
+            l.slug.toLowerCase().includes(t)
+        );
+        render(filtrados);
     }
 
-    function logout() { _sb.auth.signOut().then(() => location.reload()); }
+    function logout() { 
+        _sb.auth.signOut().then(() => location.reload()); 
+    }
     
     _sb.auth.getSession().then(({data}) => { 
         if (data.session) entrar(); 
