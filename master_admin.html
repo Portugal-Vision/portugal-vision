@@ -128,7 +128,7 @@
 <script>
     // Configurações Supabase
     const SB_URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
+    const SB_KEY = "SUA_KEY_AQUI"; // Substituir pela sua chave real
     const _sb = supabase.createClient(SB_URL, SB_KEY);
     let dadosLocais = [];
 
@@ -159,9 +159,9 @@
     function render(lista) {
         let tV = 0, tW = 0;
         const listaHtml = lista.map(l => {
-            // CORREÇÃO MÉTRICAS: Verifica vários nomes possíveis de colunas
-            const v = Number(l.views || l.visitas || 0);
-            const w = Number(l.cliques_whatsapp || l.whatsapp || 0);
+            // CORREÇÃO MÉTRICAS: Vinculado ao novo sistema automático (views_total)
+            const v = Number(l.views_total || 0);
+            const w = Number(l.whatsapp_total || 0);
             tV += v; 
             tW += w;
             
@@ -185,7 +185,7 @@
                 </tr>`;
         }).join('');
 
-        // CORREÇÃO ATUALIZAR: Limpa e insere para garantir refresh visual
+        // Atualizar interface
         document.getElementById('lista-lojas').innerHTML = listaHtml;
         document.getElementById('st-lojas').innerText = lista.length;
         document.getElementById('st-views').innerText = tV;
