@@ -210,7 +210,11 @@
         document.getElementById('v-nif-edit').value = lojaAtiva.nif || "";
         document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
         document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
-        if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
+        
+        // CORREÇÃO: Forçar exibição do logo
+        const logoImg = document.getElementById('v-logo');
+        if(lojaAtiva.logo_url) logoImg.src = lojaAtiva.logo_url;
+        else logoImg.src = "https://via.placeholder.com/80";
 
         if(lojaAtiva.horarios) {
             lojaAtiva.horarios.forEach((h, i) => {
@@ -227,6 +231,25 @@
         document.getElementById('link-catalogo').value = link;
         QRCode.toDataURL(link, { width: 150 }, (err, url) => { document.getElementById('img-qrcode').src = url; });
         carregarDados();
+    }
+
+    // CORREÇÃO: Função de logo melhorada
+    async function subirLogo(input) {
+        const file = input.files[0];
+        if (!file) return;
+        try {
+            const options = { maxSizeMB: 0.1, maxWidthOrHeight: 400, useWebWorker: true };
+            const compressed = await imageCompression(file, options);
+            const path = `logos/${lojaAtiva.id}_${Date.now()}.webp`;
+            
+            await _sb.storage.from('produtos').upload(path, compressed);
+            const { data } = _sb.storage.from('produtos').getPublicUrl(path);
+            
+            await _sb.from('lojas').update({ logo_url: data.publicUrl }).eq('id', lojaAtiva.id);
+            document.getElementById('v-logo').src = data.publicUrl;
+            lojaAtiva.logo_url = data.publicUrl;
+            alert("Logótipo atualizado!");
+        } catch (e) { alert("Erro ao subir logótipo."); }
     }
 
     function marcarAltPerfil() { document.getElementById('btn-save-profile').classList.add('pendente'); }
@@ -260,29 +283,43 @@
         alert("Horários Gravados!");
     }
 
+    // CORREÇÃO: Função salvar produto com reset do botão
     async function salvarProduto() {
         const id = document.getElementById('edit-id').value;
         const file = document.getElementById('p-media').files[0];
         const tags = Array.from(document.querySelectorAll('#p-tags-container input:checked')).map(el => el.value);
         const btn = document.getElementById('btn-save-prod');
+        
+        const originalText = id ? "GUARDAR ALTERAÇÕES" : "GUARDAR ARTIGO";
+        btn.innerText = "A ENVIAR...";
+        btn.disabled = true;
+
         const dados = { nome: document.getElementById('p-nome').value, preco: parseFloat(document.getElementById('p-preco').value), desconto_percent: parseInt(document.getElementById('p-desc').value) || 0, tipo_tag: tags, loja_id: lojaAtiva.id };
 
-        if (file) {
-            btn.innerText = "A ENVIAR...";
-            let fileToUpload = file;
-            let fileName = `m_${Date.now()}`;
-            if (file.type.startsWith('image/')) {
-                fileToUpload = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 1200, useWebWorker: true, fileType: 'image/webp' });
-                fileName += ".webp";
-            } else { fileName += file.name.substring(file.name.lastIndexOf('.')); }
-            await _sb.storage.from('produtos').upload(fileName, fileToUpload);
-            const { data } = _sb.storage.from('produtos').getPublicUrl(fileName);
-            dados.imagem_url = data.publicUrl;
-        }
+        try {
+            if (file) {
+                let fileToUpload = file;
+                let fileName = `m_${Date.now()}`;
+                if (file.type.startsWith('image/')) {
+                    fileToUpload = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 1200, useWebWorker: true, fileType: 'image/webp' });
+                    fileName += ".webp";
+                } else { fileName += file.name.substring(file.name.lastIndexOf('.')); }
+                await _sb.storage.from('produtos').upload(fileName, fileToUpload);
+                const { data } = _sb.storage.from('produtos').getPublicUrl(fileName);
+                dados.imagem_url = data.publicUrl;
+            }
 
-        if(id) await _sb.from('produtos').update(dados).eq('id', id);
-        else await _sb.from('produtos').insert([dados]);
-        cancelarEdicao(); carregarDados();
+            if(id) await _sb.from('produtos').update(dados).eq('id', id);
+            else await _sb.from('produtos').insert([dados]);
+            
+            cancelarEdicao(); 
+            carregarDados();
+        } catch (err) {
+            alert("Erro ao guardar.");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
     }
 
     async function carregarDados() {
@@ -319,10 +356,14 @@
     }
 
     function cancelarEdicao() {
-        document.getElementById('edit-id').value = ""; document.getElementById('p-nome').value = "";
-        document.getElementById('p-preco').value = ""; document.getElementById('p-desc').value = "";
-        document.getElementById('p-media').value = ""; document.getElementById('btn-cancel').classList.add('hidden');
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('p-nome').value = "";
+        document.getElementById('p-preco').value = ""; 
+        document.getElementById('p-desc').value = "";
+        document.getElementById('p-media').value = ""; 
+        document.getElementById('btn-cancel').classList.add('hidden');
         document.getElementById('form-title').innerText = "📸 Publicar Artigo";
+        document.querySelectorAll('#p-tags-container input').forEach(cb => cb.checked = false);
     }
 
     function atualizarEstiloDia(i) {
