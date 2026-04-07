@@ -25,7 +25,6 @@
         .logo-box img { width: 100%; height: 100%; object-fit: cover; }
         .logo-box input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
         
-        /* Stats com 3 colunas para caber o Peso */
         .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .stat-card { background: var(--p); color: white; padding: 15px; border-radius: 12px; text-align: center; }
         .stat-card b { display: block; font-size: 1.2rem; }
@@ -46,7 +45,6 @@
         .btn-save-main.pendente { background: var(--err) !important; }
         .hidden { display: none !important; }
         
-        /* Estilo do Aviso de Férias */
         .ferias-box { background: #fff5f5; border: 1px solid #feb2b2; padding: 12px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid #e63946; }
     </style>
 </head>
@@ -106,17 +104,6 @@
                 <button onclick="location.reload()" style="width:auto; background:var(--err); padding: 5px 10px; font-size:11px; position:absolute; top:0; right:0">Sair</button>
             </div>
 
-            <div class="ferias-box">
-                <h4 style="margin:0 0 10px 0">📅 Período de Férias</h4>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-                    <input type="date" id="f-inicio" oninput="marcarAltPerfil()">
-                    <input type="date" id="f-fim" oninput="marcarAltPerfil()">
-                </div>
-                <label style="font-size:12px; margin-top:5px; display:block">
-                    <input type="checkbox" id="f-ativa" onchange="marcarAltPerfil()" style="width:auto"> Ativar aviso de férias no catálogo
-                </label>
-            </div>
-
             <button id="btn-save-profile" class="btn-save-main" onclick="atualizarPerfil()">Guardar Alterações do Perfil</button>
             
             <div class="stats" style="margin-top:15px">
@@ -154,7 +141,19 @@
 
         <div class="card">
             <h3>⚙️ Horário de Funcionamento</h3>
-            <button onclick="replicarSegunda()" style="background:#eee; color:#333; font-size:10px; margin-bottom:10px; border:1px solid #ddd">📋 Copiar Segunda para todos os dias</button>
+            
+            <div class="ferias-box">
+                <h4 style="margin:0 0 10px 0">📅 Período de Férias</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                    <input type="date" id="f-inicio" oninput="marcarAltPerfil()">
+                    <input type="date" id="f-fim" oninput="marcarAltPerfil()">
+                </div>
+                <label style="font-size:12px; margin-top:5px; display:block">
+                    <input type="checkbox" id="f-ativa" onchange="marcarAltPerfil()" style="width:auto"> Ativar aviso de férias no catálogo
+                </label>
+            </div>
+
+            <button onclick="replicarSegunda()" style="background:var(--s); color:white; font-size:10px; margin-bottom:10px; border:none">📋 Copiar Segunda para todos os dias</button>
             <div id="horarios-lista"></div>
             <button id="btn-save-config" class="btn-save-main" onclick="salvarHorarios()">ATUALIZAR HORÁRIOS</button>
         </div>
@@ -177,7 +176,6 @@
     let lojaAtiva = null;
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // Gera o painel de horários
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -200,7 +198,6 @@
         document.getElementById('f-' + m).classList.remove('hidden');
     }
 
-    // NOVO: Busca moradas reais em Portugal enquanto escreve
     async function buscarSugestoes(texto) {
         if (texto.length < 5) return;
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${texto}&countrycodes=pt&limit=5`);
@@ -208,7 +205,6 @@
         document.getElementById('lista-moradas').innerHTML = dados.map(l => `<option value="${l.display_name}">`).join('');
     }
 
-    // Registo com validação de morada obrigatória
     async function registar() {
         const morada = document.getElementById('r-morada').value;
         const check = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${morada}&limit=1`);
@@ -243,7 +239,6 @@
         document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
         document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
         
-        // NOVO: Carregar Datas de Férias
         document.getElementById('f-inicio').value = lojaAtiva.ferias_inicio || "";
         document.getElementById('f-fim').value = lojaAtiva.ferias_fim || "";
         document.getElementById('f-ativa').checked = lojaAtiva.ferias_ativa || false;
@@ -293,9 +288,12 @@
         const t2 = document.getElementById('h-0-t2').value;
         const st = document.getElementById('h-0-status').value;
         for(let i=1; i<7; i++) {
-            document.getElementById(`h-${i}-m1`).value = m1; document.getElementById(`h-${i}-m2`).value = m2;
-            document.getElementById(`h-${i}-t1`).value = t1; document.getElementById(`h-${i}-t2`).value = t2;
-            document.getElementById(`h-${i}-status`).value = st; atualizarEstiloDia(i);
+            document.getElementById(`h-${i}-m1`).value = m1; 
+            document.getElementById(`h-${i}-m2`).value = m2;
+            document.getElementById(`h-${i}-t1`).value = t1; 
+            document.getElementById(`h-${i}-t2`).value = t2;
+            document.getElementById(`h-${i}-status`).value = st; 
+            atualizarEstiloDia(i);
         }
         marcarAltHoras();
     }
@@ -307,17 +305,23 @@
             nif: document.getElementById('v-nif-edit').value, 
             telefone: document.getElementById('v-tel-edit').value, 
             morada: document.getElementById('v-morada-edit').value,
-            ferias_inicio: document.getElementById('f-inicio').value, // SALVAR FÉRIAS
+            ferias_inicio: document.getElementById('f-inicio').value, 
             ferias_fim: document.getElementById('f-fim').value,
             ferias_ativa: document.getElementById('f-ativa').checked
         };
         await _sb.from('lojas').update(d).eq('id', lojaAtiva.id);
         document.getElementById('btn-save-profile').classList.remove('pendente');
-        alert("Perfil e Férias Gravados!");
+        alert("Dados Gravados!");
     }
 
     async function salvarHorarios() {
-        const hores = diasSemana.map((_, i) => ({ m1: document.getElementById(`h-${i}-m1`).value, m2: document.getElementById(`h-${i}-m2`).value, t1: document.getElementById(`h-${i}-t1`).value, t2: document.getElementById(`h-${i}-t2`).value, status: document.getElementById(`h-${i}-status`).value }));
+        const hores = diasSemana.map((_, i) => ({ 
+            m1: document.getElementById(`h-${i}-m1`).value, 
+            m2: document.getElementById(`h-${i}-m2`).value, 
+            t1: document.getElementById(`h-${i}-t1`).value, 
+            t2: document.getElementById(`h-${i}-t2`).value, 
+            status: document.getElementById(`h-${i}-status`).value 
+        }));
         await _sb.from('lojas').update({ horarios: hores }).eq('id', lojaAtiva.id);
         document.getElementById('btn-save-config').classList.remove('pendente');
         alert("Horários Gravados!");
@@ -328,28 +332,56 @@
         const file = document.getElementById('p-media').files[0];
         const tags = Array.from(document.querySelectorAll('#p-tags-container input:checked')).map(el => el.value);
         const btn = document.getElementById('btn-save-prod');
-        btn.disabled = true;
+        
+        const dados = { 
+            nome: document.getElementById('p-nome').value, 
+            preco: parseFloat(document.getElementById('p-preco').value) || 0, 
+            desconto_percent: parseInt(document.getElementById('p-desc').value) || 0, 
+            tipo_tag: tags, 
+            loja_id: lojaAtiva.id 
+        };
 
-        const dados = { nome: document.getElementById('p-nome').value, preco: parseFloat(document.getElementById('p-preco').value), desconto_percent: parseInt(document.getElementById('p-desc').value) || 0, tipo_tag: tags, loja_id: lojaAtiva.id };
+        if(!dados.nome) return alert("Indique o nome do artigo.");
+
+        btn.disabled = true;
+        btn.innerText = "A GUARDAR...";
 
         try {
             if (file) {
-                dados.tamanho_bytes = file.size; // NOVO: Captura o peso do vídeo/imagem
+                dados.tamanho_bytes = file.size;
                 let fileToUpload = file;
                 let fileName = `m_${Date.now()}`;
                 if (file.type.startsWith('image/')) {
                     fileToUpload = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 1200, useWebWorker: true, fileType: 'image/webp' });
                     fileName += ".webp";
                 } else { fileName += file.name.substring(file.name.lastIndexOf('.')); }
-                await _sb.storage.from('produtos').upload(fileName, fileToUpload);
+                
+                const { error: upErr } = await _sb.storage.from('produtos').upload(fileName, fileToUpload);
+                if(upErr) throw upErr;
+                
                 const { data } = _sb.storage.from('produtos').getPublicUrl(fileName);
                 dados.imagem_url = data.publicUrl;
             }
-            if(id) await _sb.from('produtos').update(dados).eq('id', id);
-            else await _sb.from('produtos').insert([dados]);
-            cancelarEdicao(); carregarDados();
-        } catch (err) { alert("Erro ao guardar."); }
-        btn.disabled = false;
+
+            let res;
+            if(id) {
+                res = await _sb.from('produtos').update(dados).eq('id', id);
+            } else {
+                res = await _sb.from('produtos').insert([dados]);
+            }
+
+            if(res.error) throw res.error;
+
+            alert("Artigo guardado com sucesso!");
+            cancelarEdicao(); 
+            carregarDados();
+        } catch (err) { 
+            console.error(err);
+            alert("Erro ao guardar artigo: " + err.message); 
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "GUARDAR ARTIGO";
+        }
     }
 
     async function carregarDados() {
@@ -359,7 +391,6 @@
         document.getElementById('s-views').innerText = m?.filter(i => i.tipo === 'view_loja').length || 0;
         document.getElementById('s-waps').innerText = m?.filter(i => i.tipo === 'click_whatsapp').length || 0;
 
-        // NOVO: Calcula e mostra o Peso Total ocupado
         const totalBytes = (prods || []).reduce((acc, p) => acc + (p.tamanho_bytes || 0), 0);
         document.getElementById('s-storage').innerText = totalBytes > 1048576 ? (totalBytes/1048576).toFixed(1) + " MB" : (totalBytes/1024).toFixed(0) + " KB";
 
@@ -392,9 +423,12 @@
     }
 
     function cancelarEdicao() {
-        document.getElementById('edit-id').value = ""; document.getElementById('p-nome').value = "";
-        document.getElementById('p-preco').value = ""; document.getElementById('p-desc').value = "";
-        document.getElementById('p-media').value = ""; document.getElementById('btn-cancel').classList.add('hidden');
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('p-nome').value = "";
+        document.getElementById('p-preco').value = ""; 
+        document.getElementById('p-desc').value = "";
+        document.getElementById('p-media').value = ""; 
+        document.getElementById('btn-cancel').classList.add('hidden');
         document.getElementById('form-title').innerText = "📸 Publicar Artigo";
         document.querySelectorAll('#p-tags-container input').forEach(cb => cb.checked = false);
     }
