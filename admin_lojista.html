@@ -10,45 +10,44 @@
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     
     <style>
-        /* Variáveis de design e cores do Portugal Vision */
         :root { --p: #1d3557; --s: #457b9d; --ok: #27ae60; --err: #e63946; --gray: #f4f4f9; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray); margin: 0; padding: 10px; color: #333; }
         .container { max-width: 900px; margin: 0 auto; }
         
-        /* Estilos dos Cards (Caixas brancas) */
         .auth-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; margin: 50px auto; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
         .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: bold; color: #999; }
         .tab.active { color: var(--p); border-bottom: 3px solid var(--p); }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* Header e Logo da Loja */
         .header-loja { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; position: relative; }
         .logo-box { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--p); overflow: hidden; position: relative; background: #eee; flex-shrink: 0; }
         .logo-box img { width: 100%; height: 100%; object-fit: cover; }
         .logo-box input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
         
-        /* Grelha de Produtos e Status */
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        /* Stats com 3 colunas para caber o Peso */
+        .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .stat-card { background: var(--p); color: white; padding: 15px; border-radius: 12px; text-align: center; }
-        .stat-card b { display: block; font-size: 1.5rem; }
+        .stat-card b { display: block; font-size: 1.2rem; }
+
         .dia-config { background: #f9f9f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #ccc; }
         .dia-config.aberto { border-left-color: var(--ok); }
         .inputs-tempo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
         
-        /* Cards de Produto Individuais */
         .prod-card { background: white; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #ddd; }
         .prod-card.oculto { opacity: 0.4; filter: grayscale(1); }
         .prod-img, .prod-video { width: 100%; height: 140px; object-fit: cover; background: #f9f9f9; }
         .prod-actions { position: absolute; top: 5px; right: 5px; display: flex; flex-direction: column; gap: 5px; z-index: 5; }
         .btn-circle { width: 28px; height: 28px; border-radius: 50%; border: none; color: white; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
 
-        /* Estilos de Botão e Estado de Pendente */
         input, select, button { width: 100%; padding: 10px; margin: 4px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
         button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; }
         .btn-save-main.pendente { background: var(--err) !important; }
         .hidden { display: none !important; }
+        
+        /* Estilo do Aviso de Férias */
+        .ferias-box { background: #fff5f5; border: 1px solid #feb2b2; padding: 12px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid #e63946; }
     </style>
 </head>
 <body>
@@ -74,7 +73,10 @@
             <input type="email" id="r-email" placeholder="E-mail">
             <input type="text" id="r-nif" placeholder="NIF (Obrigatório)">
             <input type="text" id="r-tel" placeholder="Telefone">
-            <input type="text" id="r-morada" placeholder="Morada/Localidade">
+            
+            <input type="text" id="r-morada" placeholder="Morada/Localidade" list="lista-moradas" oninput="buscarSugestoes(this.value)">
+            <datalist id="lista-moradas"></datalist>
+            
             <input type="password" id="r-pass" placeholder="Password">
             <button style="background:var(--ok)" onclick="registar()">CRIAR CONTA</button>
         </div>
@@ -103,11 +105,24 @@
                 </div>
                 <button onclick="location.reload()" style="width:auto; background:var(--err); padding: 5px 10px; font-size:11px; position:absolute; top:0; right:0">Sair</button>
             </div>
+
+            <div class="ferias-box">
+                <h4 style="margin:0 0 10px 0">📅 Período de Férias</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                    <input type="date" id="f-inicio" oninput="marcarAltPerfil()">
+                    <input type="date" id="f-fim" oninput="marcarAltPerfil()">
+                </div>
+                <label style="font-size:12px; margin-top:5px; display:block">
+                    <input type="checkbox" id="f-ativa" onchange="marcarAltPerfil()" style="width:auto"> Ativar aviso de férias no catálogo
+                </label>
+            </div>
+
             <button id="btn-save-profile" class="btn-save-main" onclick="atualizarPerfil()">Guardar Alterações do Perfil</button>
             
             <div class="stats" style="margin-top:15px">
                 <div class="stat-card">Visitas <b id="s-views">0</b></div>
                 <div class="stat-card">WhatsApp <b id="s-waps">0</b></div>
+                <div class="stat-card" style="background:#2d3748">Espaço <b id="s-storage">0 KB</b></div>
             </div>
         </div>
 
@@ -155,7 +170,6 @@
 </div>
 
 <script>
-    // Configurações do Supabase (Atenção: A chave deve ser a sua)
     const _URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
     const _sb = supabase.createClient(_URL, _KEY);
@@ -163,7 +177,7 @@
     let lojaAtiva = null;
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // Gera o HTML para cada dia da semana no painel de horários
+    // Gera o painel de horários
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -181,21 +195,33 @@
             </div>
         </div>`).join('');
 
-    // Troca entre abas de login/registo
     function selTab(m) {
         ['f-login', 'f-reg', 'f-reset'].forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById('f-' + m).classList.remove('hidden');
     }
 
-    // Registo de nova conta
+    // NOVO: Busca moradas reais em Portugal enquanto escreve
+    async function buscarSugestoes(texto) {
+        if (texto.length < 5) return;
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${texto}&countrycodes=pt&limit=5`);
+        const dados = await res.json();
+        document.getElementById('lista-moradas').innerHTML = dados.map(l => `<option value="${l.display_name}">`).join('');
+    }
+
+    // Registo com validação de morada obrigatória
     async function registar() {
+        const morada = document.getElementById('r-morada').value;
+        const check = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${morada}&limit=1`);
+        const res = await check.json();
+        if(res.length === 0) return alert("Por favor, selecione uma morada válida da lista.");
+
         const dados = {
             nome: document.getElementById('r-nome').value,
             gerente: document.getElementById('r-gerente').value,
             email: document.getElementById('r-email').value,
             nif: document.getElementById('r-nif').value,
             telefone: document.getElementById('r-tel').value,
-            morada: document.getElementById('r-morada').value,
+            morada: morada,
             password: document.getElementById('r-pass').value,
             slug: document.getElementById('r-nome').value.toLowerCase().trim().replace(/\s+/g, '-')
         };
@@ -203,13 +229,11 @@
         if (error) alert("Erro: " + error.message); else { lojaAtiva = data; abrirPainel(); }
     }
 
-    // Login na conta
     async function login() {
         const { data } = await _sb.from('lojas').select('*').eq('email', document.getElementById('l-email').value).eq('password', document.getElementById('l-pass').value).maybeSingle();
         if (data) { lojaAtiva = data; abrirPainel(); } else alert("Credenciais erradas.");
     }
 
-    // Inicializa o Dashboard após login
     function abrirPainel() {
         document.getElementById('auth-area').classList.add('hidden');
         document.getElementById('dash-area').classList.remove('hidden');
@@ -219,9 +243,12 @@
         document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
         document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
         
-        if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
+        // NOVO: Carregar Datas de Férias
+        document.getElementById('f-inicio').value = lojaAtiva.ferias_inicio || "";
+        document.getElementById('f-fim').value = lojaAtiva.ferias_fim || "";
+        document.getElementById('f-ativa').checked = lojaAtiva.ferias_ativa || false;
 
-        // Se houver horários guardados, preenche os inputs
+        if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
         if(lojaAtiva.horarios) {
             lojaAtiva.horarios.forEach((h, i) => {
                 if(!h) return;
@@ -234,14 +261,12 @@
             });
         }
         
-        // Gera o link do catálogo digital baseado no slug
         const link = window.location.origin + "/catalogo_digital.html?loja=" + lojaAtiva.slug;
         document.getElementById('link-catalogo').value = link;
         QRCode.toDataURL(link, { width: 150 }, (err, url) => { document.getElementById('img-qrcode').src = url; });
         carregarDados();
     }
 
-    // Upload e compressão do Logótipo
     async function subirLogo(input) {
         const file = input.files[0];
         if (!file) return;
@@ -258,11 +283,9 @@
         } catch (e) { alert("Erro ao subir logótipo."); }
     }
 
-    // Funções visuais para avisar que há mudanças não gravadas (botão vermelho)
     function marcarAltPerfil() { document.getElementById('btn-save-profile').classList.add('pendente'); }
     function marcarAltHoras() { document.getElementById('btn-save-config').classList.add('pendente'); }
 
-    // Utilitário para preencher todos os horários iguais à Segunda
     function replicarSegunda() {
         const m1 = document.getElementById('h-0-m1').value;
         const m2 = document.getElementById('h-0-m2').value;
@@ -277,15 +300,22 @@
         marcarAltHoras();
     }
 
-    // Atualiza os dados de texto da loja
     async function atualizarPerfil() {
-        const d = { nome: document.getElementById('v-nome-edit').value, gerente: document.getElementById('v-gerente-edit').value, nif: document.getElementById('v-nif-edit').value, telefone: document.getElementById('v-tel-edit').value, morada: document.getElementById('v-morada-edit').value };
+        const d = { 
+            nome: document.getElementById('v-nome-edit').value, 
+            gerente: document.getElementById('v-gerente-edit').value, 
+            nif: document.getElementById('v-nif-edit').value, 
+            telefone: document.getElementById('v-tel-edit').value, 
+            morada: document.getElementById('v-morada-edit').value,
+            ferias_inicio: document.getElementById('f-inicio').value, // SALVAR FÉRIAS
+            ferias_fim: document.getElementById('f-fim').value,
+            ferias_ativa: document.getElementById('f-ativa').checked
+        };
         await _sb.from('lojas').update(d).eq('id', lojaAtiva.id);
         document.getElementById('btn-save-profile').classList.remove('pendente');
-        alert("Perfil Atualizado!");
+        alert("Perfil e Férias Gravados!");
     }
 
-    // Grava o JSON de horários na base de dados
     async function salvarHorarios() {
         const hores = diasSemana.map((_, i) => ({ m1: document.getElementById(`h-${i}-m1`).value, m2: document.getElementById(`h-${i}-m2`).value, t1: document.getElementById(`h-${i}-t1`).value, t2: document.getElementById(`h-${i}-t2`).value, status: document.getElementById(`h-${i}-status`).value }));
         await _sb.from('lojas').update({ horarios: hores }).eq('id', lojaAtiva.id);
@@ -293,25 +323,21 @@
         alert("Horários Gravados!");
     }
 
-    // Salva um novo produto ou edita um existente (incluindo compressão de imagem)
     async function salvarProduto() {
         const id = document.getElementById('edit-id').value;
         const file = document.getElementById('p-media').files[0];
         const tags = Array.from(document.querySelectorAll('#p-tags-container input:checked')).map(el => el.value);
         const btn = document.getElementById('btn-save-prod');
-        
-        const originalText = id ? "GUARDAR ALTERAÇÕES" : "GUARDAR ARTIGO";
-        btn.innerText = "A ENVIAR...";
         btn.disabled = true;
 
         const dados = { nome: document.getElementById('p-nome').value, preco: parseFloat(document.getElementById('p-preco').value), desconto_percent: parseInt(document.getElementById('p-desc').value) || 0, tipo_tag: tags, loja_id: lojaAtiva.id };
 
         try {
             if (file) {
+                dados.tamanho_bytes = file.size; // NOVO: Captura o peso do vídeo/imagem
                 let fileToUpload = file;
                 let fileName = `m_${Date.now()}`;
                 if (file.type.startsWith('image/')) {
-                    // Transforma para WebP para economizar espaço
                     fileToUpload = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 1200, useWebWorker: true, fileType: 'image/webp' });
                     fileName += ".webp";
                 } else { fileName += file.name.substring(file.name.lastIndexOf('.')); }
@@ -319,31 +345,26 @@
                 const { data } = _sb.storage.from('produtos').getPublicUrl(fileName);
                 dados.imagem_url = data.publicUrl;
             }
-
             if(id) await _sb.from('produtos').update(dados).eq('id', id);
             else await _sb.from('produtos').insert([dados]);
-            
-            cancelarEdicao(); 
-            carregarDados();
-        } catch (err) {
-            alert("Erro ao guardar.");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+            cancelarEdicao(); carregarDados();
+        } catch (err) { alert("Erro ao guardar."); }
+        btn.disabled = false;
     }
 
-    // Carrega a grelha de produtos e as estatísticas (cliques/views)
     async function carregarDados() {
         const { data: prods } = await _sb.from('produtos').select('*').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
         const { data: m } = await _sb.from('metricas_cliques').select('tipo').eq('loja_id', lojaAtiva.id);
         
-        // Contador simples baseado nos registos de métricas
         document.getElementById('s-views').innerText = m?.filter(i => i.tipo === 'view_loja').length || 0;
         document.getElementById('s-waps').innerText = m?.filter(i => i.tipo === 'click_whatsapp').length || 0;
 
+        // NOVO: Calcula e mostra o Peso Total ocupado
+        const totalBytes = (prods || []).reduce((acc, p) => acc + (p.tamanho_bytes || 0), 0);
+        document.getElementById('s-storage').innerText = totalBytes > 1048576 ? (totalBytes/1048576).toFixed(1) + " MB" : (totalBytes/1024).toFixed(0) + " KB";
+
         document.getElementById('grid-prods').innerHTML = (prods || []).map(p => {
-            const isVid = p.imagem_url?.endsWith('.mp4') || p.imagem_url?.endsWith('.webm');
+            const isVid = p.imagem_url?.toLowerCase().match(/\.(mp4|webm|mov)$/);
             return `
             <div class="prod-card ${p.oculto ? 'oculto' : ''}">
                 <div class="prod-actions">
@@ -357,10 +378,8 @@
         }).join('');
     }
 
-    // Função para esconder/mostrar produto sem apagar
     async function toggleOcultar(id, est) { await _sb.from('produtos').update({ oculto: !est }).eq('id', id); carregarDados(); }
     
-    // Preenche o formulário com dados do produto para editar
     function prepararEdicao(p) {
         document.getElementById('edit-id').value = p.id;
         document.getElementById('p-nome').value = p.nome;
@@ -372,27 +391,17 @@
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // Limpa o formulário de produtos
     function cancelarEdicao() {
-        document.getElementById('edit-id').value = ""; 
-        document.getElementById('p-nome').value = "";
-        document.getElementById('p-preco').value = ""; 
-        document.getElementById('p-desc').value = "";
-        document.getElementById('p-media').value = ""; 
-        document.getElementById('btn-cancel').classList.add('hidden');
+        document.getElementById('edit-id').value = ""; document.getElementById('p-nome').value = "";
+        document.getElementById('p-preco').value = ""; document.getElementById('p-desc').value = "";
+        document.getElementById('p-media').value = ""; document.getElementById('btn-cancel').classList.add('hidden');
         document.getElementById('form-title').innerText = "📸 Publicar Artigo";
         document.querySelectorAll('#p-tags-container input').forEach(cb => cb.checked = false);
     }
 
-    // Altera a cor do card do horário se estiver aberto ou fechado
-    function atualizarEstiloDia(i) {
-        const s = document.getElementById(`h-${i}-status`).value;
-        document.getElementById(`card-${i}`).classList.toggle('aberto', s === 'aberto');
-    }
-
-    // Elimina o produto do banco de dados
+    function atualizarEstiloDia(i) { document.getElementById(`card-${i}`).classList.toggle('aberto', document.getElementById(`h-${i}-status`).value === 'aberto'); }
     async function apagarProd(id) { if(confirm("Apagar?")) { await _sb.from('produtos').delete().eq('id', id); carregarDados(); } }
 </script>
 </body>
-</html>                                                                                                  <!DOCTYPE html>
+</html>
 
