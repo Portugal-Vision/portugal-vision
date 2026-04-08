@@ -256,7 +256,6 @@
             });
         }
         
-        // GERAÇÃO AUTOMÁTICA DO LINK E QR CODE BASEADO NO SLUG DA LOJA
         const link = window.location.origin + "/catalogo_digital.html?loja=" + lojaAtiva.slug;
         document.getElementById('link-catalogo').value = link;
         QRCode.toDataURL(link, { width: 200, margin: 2 }, (err, url) => { 
@@ -266,14 +265,26 @@
         carregarDados();
     }
 
+    // FUNÇÃO AUXILIAR PARA CRIAR NOMES DE FICHEIROS AMIGÁVEIS (SEO)
+    function criarSlug(texto) {
+        return texto.toLowerCase().trim()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-');
+    }
+
     async function subirLogo(input) {
         const file = input.files[0];
         if (!file) return;
         try {
             const options = { maxSizeMB: 0.1, maxWidthOrHeight: 400, useWebWorker: true };
             const compressed = await imageCompression(file, options);
-            const path = `logos/${lojaAtiva.id}_${Date.now()}.webp`;
-            await _sb.storage.from('produtos').upload(path, compressed);
+            
+            // ALTERAÇÃO: Pasta por loja e nome amigável
+            const slugLoja = criarSlug(lojaAtiva.nome);
+            const path = `loja_${lojaAtiva.id}/logotipo/logo-${slugLoja}.webp`;
+            
+            await _sb.storage.from('produtos').upload(path, compressed, { upsert: true });
             const { data } = _sb.storage.from('produtos').getPublicUrl(path);
             await _sb.from('lojas').update({ logo_url: data.publicUrl }).eq('id', lojaAtiva.id);
             document.getElementById('v-logo').src = data.publicUrl;
@@ -354,11 +365,17 @@
             if (file) {
                 dados.tamanho_bytes = file.size;
                 let fileToUpload = file;
-                let fileName = `m_${Date.now()}`;
+                
+                // ALTERAÇÃO: Nome amigável para SEO e organização em pastas
+                const slugProd = criarSlug(dados.nome);
+                let fileName = `loja_${lojaAtiva.id}/produtos/${slugProd}_${Date.now()}`;
+
                 if (file.type.startsWith('image/')) {
                     fileToUpload = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 1200, useWebWorker: true, fileType: 'image/webp' });
                     fileName += ".webp";
-                } else { fileName += file.name.substring(file.name.lastIndexOf('.')); }
+                } else { 
+                    fileName += file.name.substring(file.name.lastIndexOf('.')); 
+                }
                 
                 const { error: upErr } = await _sb.storage.from('produtos').upload(fileName, fileToUpload);
                 if(upErr) throw upErr;
@@ -372,12 +389,6 @@
                 res = await _sb.from('produtos').update(dados).eq('id', id);
             } else {
                 res = await _sb.from('produtos').insert([dados]);
-            }
-
-            if(res.error && res.error.message.includes("tamanho_bytes")) {
-                delete dados.tamanho_bytes;
-                if(id) res = await _sb.from('produtos').update(dados).eq('id', id);
-                else res = await _sb.from('produtos').insert([dados]);
             }
 
             if(res.error) throw res.error;
@@ -448,4 +459,3 @@
 </script>
 </body>
 </html>
-
