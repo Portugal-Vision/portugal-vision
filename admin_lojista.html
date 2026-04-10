@@ -93,7 +93,8 @@
 
         <div id="f-reset" class="hidden">
             <input type="email" id="reset-email" placeholder="E-mail da Conta">
-            <button onclick="alert('Link de recuperação enviado!')">ENVIAR LINK</button>
+            <button onclick="recuperarSenha()">ENVIAR LINK DE RECUPERAÇÃO</button>
+            <button onclick="selTab('login')" style="background:none; color:var(--s); font-size:12px; margin-top:10px">Voltar ao Login</button>
         </div>
     </div>
 
@@ -213,7 +214,7 @@
     let lojaAtiva = null;
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // Renderização dos cards de horário
+    // Renderização inicial dos horários
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -238,6 +239,15 @@
         if(m !== 'reset') document.getElementById('t-' + (m === 'login' ? 'login' : 'reg')).classList.add('active');
     }
 
+    // --- CORREÇÃO: RECUPERAR SENHA ---
+    async function recuperarSenha() {
+        const email = document.getElementById('reset-email').value;
+        if(!email) return alert("Insira o seu e-mail.");
+        const { error } = await _sb.auth.resetPasswordForEmail(email);
+        if(error) alert("Erro: " + error.message);
+        else alert("Se o e-mail existir na nossa base, receberá um link em breve.");
+    }
+
     async function registar() {
         const dados = {
             nome: document.getElementById('r-nome').value,
@@ -259,13 +269,19 @@
     }
 
     async function login() {
-        const { data } = await _sb.from('lojas').select('*')
+        const { data, error } = await _sb.from('lojas').select('*')
             .eq('email', document.getElementById('l-email').value)
             .eq('password', document.getElementById('l-pass').value).maybeSingle();
-        if (data) { lojaAtiva = data; abrirPainel(); } else alert("Credenciais erradas.");
+        
+        if (data) { 
+            lojaAtiva = data; 
+            abrirPainel(); 
+        } else {
+            alert("Credenciais erradas ou conta inexistente.");
+        }
     }
 
-    function abrirPainel() {
+    async function abrirPainel() {
         document.getElementById('auth-area').classList.add('hidden');
         document.getElementById('dash-area').classList.remove('hidden');
         
@@ -303,6 +319,7 @@
         carregarDados();
     }
 
+    // --- CORREÇÃO: ATUALIZAR PERFIL E REFRESCAR DADOS ---
     async function atualizarPerfil() {
         const btn = document.getElementById('btn-save-profile');
         const dados = {
@@ -316,7 +333,14 @@
             ferias_ativa: document.getElementById('f-ativa').checked
         };
         const { error } = await _sb.from('lojas').update(dados).eq('id', lojaAtiva.id);
-        if(!error) { btn.classList.remove('pendente'); alert("Perfil atualizado!"); }
+        if(!error) { 
+            // Atualiza o objeto local para refletir nas métricas/outros campos
+            lojaAtiva = {...lojaAtiva, ...dados};
+            btn.classList.remove('pendente'); 
+            alert("Perfil atualizado!"); 
+        } else {
+            alert("Erro ao guardar: " + error.message);
+        }
     }
 
     async function subirLogo(input) {
@@ -328,6 +352,7 @@
             await _sb.storage.from('produtos').upload(fileName, compressed);
             const { data } = _sb.storage.from('produtos').getPublicUrl(fileName);
             await _sb.from('lojas').update({ logo_url: data.publicUrl }).eq('id', lojaAtiva.id);
+            lojaAtiva.logo_url = data.publicUrl;
             document.getElementById('v-logo').src = data.publicUrl;
         } catch (e) { alert("Erro no logo."); }
     }
@@ -345,7 +370,11 @@
             };
         });
         const { error } = await _sb.from('lojas').update({ horarios }).eq('id', lojaAtiva.id);
-        if(!error) { btn.classList.remove('pendente'); alert("Horários guardados!"); }
+        if(!error) { 
+            lojaAtiva.horarios = horarios;
+            btn.classList.remove('pendente'); 
+            alert("Horários guardados!"); 
+        }
     }
 
     function replicarSegunda() {
@@ -357,11 +386,20 @@
         marcarAltHoras();
     }
 
+    // --- CORREÇÃO: CARREGAR MÉTRICAS E ESPAÇO REAL ---
     async function carregarDados() {
+        // Buscar dados frescos da loja para métricas
+        const { data: infoLoja } = await _sb.from('lojas').select('vistas, cliques_wa').eq('id', lojaAtiva.id).single();
+        if(infoLoja) {
+            document.getElementById('s-views').innerText = infoLoja.vistas || 0;
+            document.getElementById('s-waps').innerText = infoLoja.cliques_wa || 0;
+        }
+
+        // Buscar produtos e calcular espaço
         const { data: prods } = await _sb.from('produtos').select('*').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
         let totalBytes = 0;
         document.getElementById('grid-prods').innerHTML = (prods || []).map(p => {
-            totalBytes += (p.tamanho_bytes || 0);
+            totalBytes += (parseInt(p.tamanho_bytes) || 0);
             return `
             <div class="prod-card ${p.oculto ? 'oculto' : ''}">
                 <div class="prod-actions">
@@ -375,12 +413,12 @@
                 </div>
             </div>`;
         }).join('');
-        document.getElementById('s-storage').innerText = (totalBytes / 1024).toFixed(1) + " KB";
-        document.getElementById('s-views').innerText = lojaAtiva.vistas || 0;
-        document.getElementById('s-waps').innerText = lojaAtiva.cliques_wa || 0;
+        
+        // Converter bytes para KB ou MB para melhor leitura
+        const kb = totalBytes / 1024;
+        document.getElementById('s-storage').innerText = kb > 1000 ? (kb/1024).toFixed(2) + " MB" : kb.toFixed(1) + " KB";
     }
 
-    // --- Funções originais mantidas e conectadas ---
     function verificarPlano() {
         const banner = document.getElementById('status-banner');
         if (!lojaAtiva) return;
@@ -394,33 +432,48 @@
 
     async function buscarSugestoes(texto) {
         if (texto.length < 5) return;
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${texto}&countrycodes=pt&limit=5`);
-        const dados = await res.json();
-        document.getElementById('lista-moradas').innerHTML = dados.map(l => `<option value="${l.display_name}">`).join('');
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${texto}&countrycodes=pt&limit=5`);
+            const dados = await res.json();
+            document.getElementById('lista-moradas').innerHTML = dados.map(l => `<option value="${l.display_name}">`).join('');
+        } catch(e) {}
     }
 
     function criarSlug(texto) { return texto.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'); }
 
+    // --- CORREÇÃO: IA GEMINI ---
     async function gerarDescricaoIA() {
         const nomeProd = document.getElementById('p-nome').value;
         const btn = document.getElementById('btn-ia');
         if (!nomeProd) return alert("Escreve o nome do produto.");
+        
         btn.innerText = "..."; btn.disabled = true;
         try {
-            const { data } = await _sb.from('lojas').select('gemini_key').eq('id', lojaAtiva.id).single();
+            // Primeiro busca a chave na tabela lojas
+            const { data, error } = await _sb.from('lojas').select('gemini_key').eq('id', lojaAtiva.id).single();
+            if (error || !data.gemini_key) throw new Error("Sem chave");
+
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${data.gemini_key}`, {
-                method: "POST", body: JSON.stringify({contents: [{parts: [{text: `Descrição curta para: ${nomeProd}`}]}]})
+                method: "POST", 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({contents: [{parts: [{text: `Escreve uma descrição gastronómica curta e apelativa para: ${nomeProd}`}]}]})
             });
             const json = await res.json();
-            document.getElementById('p-ingredientes').value = json.candidates[0].content.parts[0].text;
-        } catch (e) { alert("IA Indisponível"); }
+            if(json.candidates) {
+                document.getElementById('p-ingredientes').value = json.candidates[0].content.parts[0].text;
+            } else {
+                alert("IA Indisponível (Limite ou Erro de Chave)");
+            }
+        } catch (e) { alert("IA Indisponível no momento."); }
         btn.innerText = "✨ Gerar com IA"; btn.disabled = false;
     }
 
+    // --- CORREÇÃO: SALVAR PRODUTO COM BYTES ---
     async function salvarProduto() {
         const id = document.getElementById('edit-id').value;
         const btn = document.getElementById('btn-save-prod');
-        const file = document.getElementById('p-media').files[0];
+        const fileInput = document.getElementById('p-media');
+        const file = fileInput.files[0];
         const tags = Array.from(document.querySelectorAll('#p-tags-container input:checked')).map(cb => cb.value);
         
         const dados = {
@@ -433,27 +486,51 @@
             loja_id: lojaAtiva.id
         };
 
-        if(!dados.nome || isNaN(dados.preco)) return alert("Nome e preço inválidos.");
+        if(!dados.nome || isNaN(dados.preco)) return alert("Nome e preço são obrigatórios.");
         btn.disabled = true;
+        btn.innerText = "A GUARDAR...";
 
         try {
             if (file) {
-                const compressed = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 1200 });
+                // Compressão para poupar espaço
+                const options = { maxSizeMB: 0.2, maxWidthOrHeight: 1200, useWebWorker: true };
+                const compressed = await imageCompression(file, options);
                 const fileName = `loja_${lojaAtiva.id}/${Date.now()}.webp`;
-                await _sb.storage.from('produtos').upload(fileName, compressed);
+                
+                const { error: upErr } = await _sb.storage.from('produtos').upload(fileName, compressed);
+                if(upErr) throw upErr;
+
                 dados.imagem_url = _sb.storage.from('produtos').getPublicUrl(fileName).data.publicUrl;
-                dados.tamanho_bytes = file.size;
+                dados.tamanho_bytes = compressed.size; // Guarda o tamanho real comprimido
             }
-            id ? await _sb.from('produtos').update(dados).eq('id', id) : await _sb.from('produtos').insert([dados]);
-            cancelarEdicao(); carregarDados();
-        } catch (err) { alert(err.message); }
-        btn.disabled = false;
+            
+            const { error: dbErr } = id ? 
+                await _sb.from('produtos').update(dados).eq('id', id) : 
+                await _sb.from('produtos').insert([dados]);
+
+            if(dbErr) throw dbErr;
+
+            cancelarEdicao(); 
+            carregarDados();
+            alert("Artigo guardado!");
+        } catch (err) { 
+            alert("Erro: " + err.message); 
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "GUARDAR ARTIGO";
+        }
     }
 
     function marcarAltPerfil() { document.getElementById('btn-save-profile').classList.add('pendente'); }
     function marcarAltHoras() { document.getElementById('btn-save-config').classList.add('pendente'); }
     function atualizarEstiloDia(i) { document.getElementById(`card-${i}`).classList.toggle('aberto', document.getElementById(`h-${i}-status`).value === 'aberto'); }
-    async function apagarProd(id) { if(confirm("Apagar?")) { await _sb.from('produtos').delete().eq('id', id); carregarDados(); } }
+    
+    async function apagarProd(id) { 
+        if(confirm("Tem a certeza que deseja apagar este artigo?")) { 
+            const { error } = await _sb.from('produtos').delete().eq('id', id); 
+            if(!error) carregarDados(); 
+        } 
+    }
     
     function cancelarEdicao() {
         ['edit-id', 'p-nome', 'p-preco', 'p-desc', 'p-categoria', 'p-ingredientes', 'p-media'].forEach(id => document.getElementById(id).value = "");
@@ -466,6 +543,7 @@
         document.getElementById('edit-id').value = p.id;
         document.getElementById('p-nome').value = p.nome;
         document.getElementById('p-preco').value = p.preco;
+        document.getElementById('p-desc').value = p.desconto_percent || 0;
         document.getElementById('p-categoria').value = p.categoria || "";
         document.getElementById('p-ingredientes').value = p.descricao || "";
         const tags = p.tipo_tag || [];
