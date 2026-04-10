@@ -510,7 +510,7 @@
 
             // CORREÇÃO: Versão estável v1 e modelo correto
            // Tenta este URL exato (usando v1beta e o sufixo -latest)
-     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${data.gemini_key}`; {
+     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash-latest:generateContent?key=${data.gemini_key}`; {
                 method: "POST", 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({contents: [{parts: [{text: `Escreve uma descrição gastronómica curta (máximo 20 palavras) e apelativa para: ${nomeProd}`}]}]})
