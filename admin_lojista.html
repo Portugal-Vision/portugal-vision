@@ -215,17 +215,15 @@
     const _sb = supabase.createClient(_URL, _KEY);
     
     let lojaAtiva = null;
-    let produtosLocais = []; // Global para evitar erro de JSON no HTML
+    let produtosLocais = []; 
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-    // Auxiliar para formatar número com indicativo PT
     function formatarNumeroPT(num) {
         let limpo = num.replace(/\D/g, '');
         if (limpo.length === 9) return '351' + limpo;
         return limpo;
     }
 
-    // Renderização inicial dos horários
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -244,10 +242,19 @@
         </div>`).join('');
 
     function selTab(m) {
-        ['f-login', 'f-reg', 'f-reset'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        document.getElementById('f-' + m).classList.remove('hidden');
+        ['f-login', 'f-reg', 'f-reset'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.classList.add('hidden');
+        });
+        const target = document.getElementById('f-' + m);
+        if(target) target.classList.remove('hidden');
+        
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        if(m !== 'reset') document.getElementById('t-' + (m === 'login' ? 'login' : 'reg')).classList.add('active');
+        if(m !== 'reset') {
+            const tabId = m === 'login' ? 't-login' : 't-reg';
+            const tabEl = document.getElementById(tabId);
+            if(tabEl) tabEl.classList.add('active');
+        }
     }
 
     async function recuperarSenha() {
@@ -268,7 +275,7 @@
             email: document.getElementById('r-email').value,
             nif: document.getElementById('r-nif').value,
             telefone: telFormatado,
-            whatsapp: telFormatado, // Sincronizado
+            whatsapp: telFormatado, 
             morada: document.getElementById('r-morada').value,
             password: document.getElementById('r-pass').value,
             slug: criarSlug(document.getElementById('r-nome').value),
@@ -341,7 +348,7 @@
             gerente: document.getElementById('v-gerente-edit').value,
             nif: document.getElementById('v-nif-edit').value,
             telefone: telFormatado,
-            whatsapp: telFormatado, // Sincronizado
+            whatsapp: telFormatado, 
             morada: document.getElementById('v-morada-edit').value,
             ferias_inicio: document.getElementById('f-inicio').value,
             ferias_fim: document.getElementById('f-fim').value,
@@ -400,11 +407,9 @@
         marcarAltHoras();
     }
 
-    // CORREÇÃO MÉTRICAS E GRID
     async function carregarDados() {
         if(!lojaAtiva) return;
 
-        // 1. Métricas corrigidas para os novos nomes de coluna
         const { data: infoLoja } = await _sb
             .from('lojas')
             .select('views_total, whatsapp_total')
@@ -416,7 +421,6 @@
             document.getElementById('s-waps').innerText = infoLoja.whatsapp_total || 0;
         }
 
-        // 2. Buscar produtos
         const { data: prods } = await _sb
             .from('produtos')
             .select('*')
@@ -563,7 +567,7 @@
     function atualizarEstiloDia(i) { 
         const card = document.getElementById(`card-${i}`);
         const status = document.getElementById(`h-${i}-status`).value;
-        card.classList.toggle('aberto', status === 'aberto'); 
+        if(card) card.classList.toggle('aberto', status === 'aberto'); 
     }
     
     async function apagarProd(id) { 
@@ -574,13 +578,15 @@
     }
     
     function cancelarEdicao() {
-        ['edit-id', 'p-nome', 'p-preco', 'p-desc', 'p-categoria', 'p-ingredientes', 'p-media'].forEach(id => document.getElementById(id).value = "");
+        ['edit-id', 'p-nome', 'p-preco', 'p-desc', 'p-categoria', 'p-ingredientes', 'p-media'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "";
+        });
         document.querySelectorAll('#p-tags-container input').forEach(c => c.checked = false);
         document.getElementById('form-title').innerText = "📸 Publicar Artigo";
         document.getElementById('btn-cancel').classList.add('hidden');
     }
 
-    // PREPARAR EDIÇÃO CORRIGIDO (Usa ID em vez de Objeto JSON)
     function prepararEdicao(id) {
         const p = produtosLocais.find(item => item.id === id);
         if(!p) return;
