@@ -561,7 +561,7 @@
             const { data, error } = await _sb.from('lojas').select('gemini_key').eq('id', lojaAtiva.id).single();
             if (error || !data.gemini_key) throw new Error("Chave não configurada no banco de dados.");
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${data.gemini_key}`; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${data.gemini_key}`; 
             
             const res = await fetch(url, {
                 method: "POST", 
