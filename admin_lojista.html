@@ -98,6 +98,25 @@
         .termos-box { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 12px; color: #475569; }
         .termos-box label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
         .termos-box input { width: 18px; height: 18px; margin: 0; flex-shrink: 0; cursor: pointer; }
+
+        /* Correção Responsiva para Ecrãs de Telemóvel */
+        @media (max-width: 600px) {
+            .header-loja {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            .logo-box {
+                margin: 0 auto;
+            }
+            .info-perfil > div {
+                grid-template-columns: 1fr !important;
+            }
+            .header-loja > div:last-child {
+                flex-direction: row !important;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -347,7 +366,6 @@
     }
 
     async function registar() {
-        // VALIDAÇÃO DOS TERMOS E RGPD
         const termos = document.getElementById('r-termos').checked;
         if(!termos) {
             return alert("É obrigatório aceitar os Termos e Condições e a Política de Privacidade para criar a conta.");
@@ -367,7 +385,7 @@
             password: document.getElementById('r-pass').value,
             slug: criarSlug(document.getElementById('r-nome').value),
             plano: 'free',
-            aceitou_termos: true, // Grava a aceitação na DB
+            aceitou_termos: true,
             created_at: new Date()
         };
 
@@ -529,7 +547,6 @@
         const grid = document.getElementById('grid-prods');
         grid.innerHTML = "";
 
-        // BOTÃO OCULTAR ADICIONADO AO CARTÃO
         produtosLocais.forEach(p => {
             totalBytes += (parseInt(p.tamanho_bytes) || 0);
             grid.innerHTML += `
@@ -576,7 +593,6 @@
 
     function criarSlug(texto) { return texto.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'); }
 
-    // NOVA INSTRUÇÃO DE IA E MODELO ATUALIZADO
     async function gerarDescricaoIA() {
         const nomeProd = document.getElementById('p-nome').value;
         const btn = document.getElementById('btn-ia');
@@ -669,13 +685,12 @@
         }
     }
 
-    // NOVA FUNÇÃO DE OCULTAR ARTIGO
     async function alternarOculto(id, estadoAtual) {
         const novoEstado = !estadoAtual;
         const { error } = await _sb.from('produtos').update({ oculto: novoEstado }).eq('id', id);
         
         if (!error) {
-            carregarDados(); // Recarrega a grelha para mostrar as alterações
+            carregarDados();
         } else {
             alert("Erro ao alterar visibilidade: " + error.message);
         }
