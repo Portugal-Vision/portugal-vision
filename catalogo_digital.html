@@ -20,17 +20,35 @@
         body { 
             font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); margin: 0; padding-bottom: 80px;
             transition: background 0.5s ease;
-            overflow-x: hidden; /* Prevent horizontal scroll from particles */
+            overflow-x: hidden; /* Evita a barra de scroll horizontal pelas animações */
         }
 
-        /* Temas Sazonais Dinâmicos */
-        body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: #fbfdfc; background-image: radial-gradient(#c0392b 0.5px, transparent 0.5px); background-size: 20px 20px; }
-        body.tema-namorados { --p: #e84393; --ok: #fd79a8; background-color: #fff0f5; background-image: radial-gradient(#fd79a8 0.5px, transparent 0.5px); background-size: 20px 20px; }
-        body.tema-bruxas { --p: #d35400; --ok: #8e44ad; background-color: #1e272e; color: #f5f6fa; }
-        body.tema-bruxas .card-front, body.tema-bruxas .card-back { background: #2d3436; color: white; border-color: #d35400; }
-        body.tema-bruxas .header { background: #1e272e; border-bottom: 1px solid #d35400; color: #f5f6fa; }
-        body.tema-bruxas .header h2 { color: #d35400; }
+        /* --- TEMAS SAZONAIS (Cores e Fundos) --- */
+        body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: #f8fcfb; }
+        body.tema-namorados { --p: #d63031; --ok: #e84393; background-color: #fff5f5; }
+        body.tema-bruxas { --p: #e67e22; --ok: #8e44ad; background-color: #1a1a1a; color: #ecf0f1; }
+        body.tema-bruxas .card-front, body.tema-bruxas .card-back, body.tema-bruxas .header { background: #2c3e50; color: white; border-color: #444; }
         body.tema-pascoa { --p: #6c5ce7; --ok: #fab1a0; background-color: #f9f7ff; }
+        
+        /* Novos Temas Pedidos */
+        body.tema-anonovo { --p: #d4af37; --ok: #b8860b; background-color: #111; color: #fdfbf7; }
+        body.tema-anonovo .card-front, body.tema-anonovo .card-back, body.tema-anonovo .header { background: #1a1a1a; color: white; border-color: #d4af37; }
+        body.tema-carnaval { --p: #8e44ad; --ok: #f39c12; background-color: #fdfbf7; }
+        body.tema-pai { --p: #2980b9; --ok: #34495e; background-color: #f0f8ff; }
+        body.tema-mae { --p: #e84393; --ok: #fd79a8; background-color: #fff0f5; }
+
+        /* --- MOLDURAS DINÂMICAS (O Efeito "À Volta da Página") --- */
+        #seasonal-frame {
+            position: fixed; inset: 0; pointer-events: none; z-index: 9998; transition: 0.5s;
+        }
+        body.tema-natal #seasonal-frame { border: 12px solid #c0392b; border-radius: 10px; box-shadow: inset 0 0 40px rgba(192, 57, 43, 0.2); }
+        body.tema-namorados #seasonal-frame { border: 12px solid #fd79a8; border-radius: 10px; box-shadow: inset 0 0 40px rgba(253, 121, 168, 0.2); }
+        body.tema-bruxas #seasonal-frame { border: 12px solid #d35400; border-radius: 10px; box-shadow: inset 0 0 50px rgba(211, 84, 0, 0.4); }
+        body.tema-pascoa #seasonal-frame { border: 12px dotted #fab1a0; border-radius: 10px; }
+        body.tema-anonovo #seasonal-frame { border: 12px solid #d4af37; border-radius: 10px; box-shadow: inset 0 0 60px rgba(212, 175, 55, 0.3); }
+        body.tema-carnaval #seasonal-frame { border: 12px dashed #9b59b6; border-radius: 10px; }
+        body.tema-pai #seasonal-frame { border: 12px solid #2980b9; border-radius: 10px; box-shadow: inset 0 0 40px rgba(41, 128, 185, 0.2); }
+        body.tema-mae #seasonal-frame { border: 12px solid #e84393; border-radius: 10px; box-shadow: inset 0 0 40px rgba(232, 67, 147, 0.2); }
 
         /* --- ANIMAÇÕES DE ENFEITES PREMIUM --- */
         #seasonal-overlay { 
@@ -38,16 +56,21 @@
             pointer-events: none; z-index: 9999; overflow: hidden; 
         }
         .particle { 
-            position: absolute; top: -50px; font-size: 20px; 
-            animation: fall linear infinite; opacity: 0.8; 
+            position: absolute; font-size: 24px; opacity: 0.8; 
         }
         
         @keyframes fall {
+            from { transform: translateY(-50px) rotate(0deg); }
             to { transform: translateY(110vh) rotate(360deg); }
         }
         @keyframes floatUp {
-            from { transform: translateY(110vh); opacity: 1; }
+            from { transform: translateY(110vh) rotate(0deg); opacity: 1; }
             to { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+        }
+        @keyframes pulsePulse { 
+            0% { transform: scale(1); opacity: 0.6; } 
+            50% { transform: scale(1.3); opacity: 1; } 
+            100% { transform: scale(1); opacity: 0.6; } 
         }
 
         /* --- ECRÃ DE BLOQUEIO --- */
@@ -112,10 +135,10 @@
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
         .cart-item-info { flex-grow: 1; }
         
-        /* CORREÇÃO DO TEXTO EM NEGRITO */
-        .cart-item-title { font-weight: 500; font-size: 0.95em; color: #334155; }
+        /* CORREÇÃO DO TEXTO EM NEGRITO NO CARRINHO */
+        .cart-item-title { font-weight: 500; font-size: 0.95em; color: #334155; margin-bottom: 3px; }
+        .cart-item-price { color: var(--ok); font-weight: 700; font-size: 0.9em; }
         
-        .cart-item-price { color: var(--ok); font-weight: bold; }
         .cart-item-actions { display: flex; align-items: center; gap: 10px; }
         .btn-qty { background: #e2e8f0; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
         .btn-qty:hover { background: #cbd5e1; }
@@ -129,7 +152,7 @@
         .btn-checkout:hover { background: #219653; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
 
         /* FOOTER E LEGAL */
-        .footer { background: white; padding: 60px 20px; text-align: center; border-top: 1px solid #eee; margin-top: 50px; }
+        .footer { background: white; padding: 60px 20px; text-align: center; border-top: 1px solid #eee; margin-top: 50px; position: relative; z-index: 2;}
         .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 25px; margin-bottom: 30px; }
         .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
         .google-maps { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
@@ -142,6 +165,7 @@
 </head>
 <body>
 
+<div id="seasonal-frame"></div>
 <div id="seasonal-overlay"></div>
 
 <div id="block-screen">
@@ -182,7 +206,7 @@
 </div>
 
 <div class="header">
-    <div id="theme-icon" style="font-size: 2em; margin-bottom: 10px;"></div>
+    <div id="theme-icon" style="font-size: 2.5em; margin-bottom: 10px;"></div>
     <img id="v-logo" class="logo" src="" style="display:none;">
     <h2 id="v-nome">A carregar...</h2>
 </div>
@@ -226,7 +250,7 @@
     let todosProdutos = [];
     let categoriaSelecionada = 'todos';
     let lojaAtual = null;
-    let carrinho = []; // Memória do pedido
+    let carrinho = []; 
 
     const legalTexts = {
         termos: `<h3>Termos e Condições</h3><p>Este catálogo é uma plataforma de exposição da Portugal Vision...</p>`,
@@ -244,26 +268,45 @@
         try { await _sb.from('lojas').update({ views_total: currentViews + 1 }).eq('id', lojaId); } catch (e) {}
     }
 
-    // --- FUNÇÃO DE ANIMAÇÕES SAZONAIS ---
+    // --- FUNÇÃO MAGICA: MOLDURAS E EFEITOS NAS BORDAS ---
     function activarEfeitosSazonais(tema) {
         const overlay = document.getElementById('seasonal-overlay');
         const iconBox = document.getElementById('theme-icon');
-        let emoji = "❄️", anima = "fall", total = 30;
+        overlay.innerHTML = ''; // Limpar efeitos anteriores
+        
+        let emoji = "", anima = "", total = 0, isBorderOnly = false;
 
-        if(tema === 'natal') { emoji = "❄️"; iconBox.innerText = "🎄"; }
-        else if(tema === 'namorados') { emoji = "💖"; anima = "floatUp"; iconBox.innerText = "💘"; }
-        else if(tema === 'bruxas') { emoji = "🎃"; anima = "floatUp"; iconBox.innerText = "👻"; }
-        else if(tema === 'pascoa') { emoji = "🥚"; iconBox.innerText = "🐰"; }
+        if(tema === 'natal') { emoji = "❄️"; anima = "fall"; total = 35; iconBox.innerText = "🎄"; }
+        else if(tema === 'namorados') { emoji = "💖"; anima = "floatUp"; total = 25; iconBox.innerText = "💘"; }
+        else if(tema === 'bruxas') { emoji = "🎃"; anima = "floatUp"; total = 20; iconBox.innerText = "👻"; }
+        else if(tema === 'pascoa') { emoji = "🌸"; anima = "fall"; total = 25; iconBox.innerText = "🐰"; }
+        else if(tema === 'carnaval') { emoji = "🎊"; anima = "fall"; total = 35; iconBox.innerText = "🎭"; }
+        else if(tema === 'anonovo') { emoji = "🎆"; anima = "pulsePulse"; total = 16; isBorderOnly = true; iconBox.innerText = "🥂"; }
+        else if(tema === 'pai') { emoji = "👔"; anima = "pulsePulse"; total = 14; isBorderOnly = true; iconBox.innerText = "👨‍👧‍👦"; }
+        else if(tema === 'mae') { emoji = "🌷"; anima = "pulsePulse"; total = 16; isBorderOnly = true; iconBox.innerText = "👩‍👧‍👦"; }
         else { return; }
 
         for(let i=0; i<total; i++) {
             let p = document.createElement('div');
             p.className = 'particle';
             p.innerText = emoji;
-            p.style.left = Math.random() * 100 + "vw";
-            p.style.animationDuration = (Math.random() * 3 + 4) + "s";
-            p.style.animationDelay = Math.random() * 5 + "s";
-            p.style.animationName = anima;
+            
+            if (isBorderOnly) {
+                // Prende as partículas apenas aos cantos/bordas da página
+                p.style.left = (i % 2 === 0) ? (Math.random() * 8 + 2 + "vw") : (Math.random() * 8 + 85 + "vw");
+                p.style.top = Math.random() * 90 + "vh";
+                p.style.animationDuration = (Math.random() * 2 + 1.5) + "s";
+                p.style.animationName = 'pulsePulse';
+                p.style.animationIterationCount = 'infinite';
+            } else {
+                // Efeito de queda ou subida livre
+                p.style.left = Math.random() * 100 + "vw";
+                p.style.top = "-50px";
+                p.style.animationDuration = (Math.random() * 4 + 3) + "s";
+                p.style.animationDelay = Math.random() * 5 + "s";
+                p.style.animationName = anima;
+            }
+            
             overlay.appendChild(p);
         }
     }
@@ -281,6 +324,7 @@
 
         lojaAtual = loja;
         
+        // Ativar a magia da Moldura
         if(loja.tema_sazonal && loja.tema_sazonal !== 'padrao') { 
             document.body.classList.add(`tema-${loja.tema_sazonal}`); 
             activarEfeitosSazonais(loja.tema_sazonal);
@@ -298,7 +342,7 @@
             logo.src = loja.logo_url; logo.style.display = 'inline-block';
         }
 
-        // Setup MBWay info se ativo
+        // Setup MBWay
         if (loja.mbway_ativo && loja.mbway_num) {
             document.getElementById('mbway-zone').style.display = 'block';
             document.getElementById('mbway-phone').innerText = loja.mbway_num;
@@ -326,7 +370,7 @@
 
     // --- SISTEMA DO CARRINHO ---
     function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, event) {
-        event.stopPropagation(); // Impede o cartão de virar
+        event.stopPropagation();
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         
         const itemExistente = carrinho.find(item => item.id === idProduto);
@@ -338,11 +382,10 @@
         
         atualizarFloater();
         
-        // Efeito visual no botão clicado
         const btn = event.currentTarget;
         const originalText = btn.innerHTML;
         btn.innerHTML = `<i class="fas fa-check"></i> Adicionado!`;
-        btn.style.background = "#166534"; // Verde mais escuro
+        btn.style.background = "#166534"; 
         setTimeout(() => { btn.innerHTML = originalText; btn.style.background = "var(--ok)"; }, 1500);
     }
 
@@ -397,10 +440,8 @@
     async function finalizarPedido() {
         if(carrinho.length === 0) return;
         
-        // 1. Somar clique de WhatsApp na BD
         try { await _sb.from('lojas').update({ whatsapp_total: (lojaAtual.whatsapp_total || 0) + 1 }).eq('id', lojaAtual.id); } catch(e){}
 
-        // 2. Construir a mensagem formatada
         let textoWpp = `Olá! Queria fazer o seguinte pedido:\n\n`;
         let total = 0;
         
@@ -414,11 +455,9 @@
         
         if (lojaAtual.mbway_ativo) { textoWpp += `\n\nVou efetuar o pagamento por MBWay. Segue o comprovativo logo abaixo.`; }
         
-        // 3. Redirecionar para o WhatsApp
         const numLoja = (lojaAtual.whatsapp || "").replace(/\s/g, "");
         const url = `https://wa.me/${numLoja}?text=${encodeURIComponent(textoWpp)}`;
         
-        // Limpar carrinho e fechar modal
         carrinho = []; atualizarFloater(); fecharCarrinho();
         window.open(url, '_blank');
     }
