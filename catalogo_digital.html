@@ -20,15 +20,35 @@
         body { 
             font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); margin: 0; padding-bottom: 80px;
             transition: background 0.5s ease;
+            overflow-x: hidden; /* Prevent horizontal scroll from particles */
         }
 
         /* Temas Sazonais Dinâmicos */
-        body.tema-natal { --p: #c0392b; --ok: #27ae60; background-color: #fbfdfc; background-image: radial-gradient(#c0392b 0.5px, transparent 0.5px); background-size: 20px 20px; }
+        body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: #fbfdfc; background-image: radial-gradient(#c0392b 0.5px, transparent 0.5px); background-size: 20px 20px; }
         body.tema-namorados { --p: #e84393; --ok: #fd79a8; background-color: #fff0f5; background-image: radial-gradient(#fd79a8 0.5px, transparent 0.5px); background-size: 20px 20px; }
         body.tema-bruxas { --p: #d35400; --ok: #8e44ad; background-color: #1e272e; color: #f5f6fa; }
         body.tema-bruxas .card-front, body.tema-bruxas .card-back { background: #2d3436; color: white; border-color: #d35400; }
         body.tema-bruxas .header { background: #1e272e; border-bottom: 1px solid #d35400; color: #f5f6fa; }
         body.tema-bruxas .header h2 { color: #d35400; }
+        body.tema-pascoa { --p: #6c5ce7; --ok: #fab1a0; background-color: #f9f7ff; }
+
+        /* --- ANIMAÇÕES DE ENFEITES PREMIUM --- */
+        #seasonal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            pointer-events: none; z-index: 9999; overflow: hidden; 
+        }
+        .particle { 
+            position: absolute; top: -50px; font-size: 20px; 
+            animation: fall linear infinite; opacity: 0.8; 
+        }
+        
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+        @keyframes floatUp {
+            from { transform: translateY(110vh); opacity: 1; }
+            to { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+        }
 
         /* --- ECRÃ DE BLOQUEIO --- */
         #block-screen {
@@ -37,7 +57,7 @@
             padding: 40px; text-align: center;
         }
 
-        .header { background: white; padding: 50px 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); transition: 0.5s; }
+        .header { background: white; padding: 50px 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); transition: 0.5s; position: relative;}
         .logo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: var(--card-shadow); margin-bottom: 20px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 1px; transition: 0.5s;}
 
@@ -91,7 +111,10 @@
         
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
         .cart-item-info { flex-grow: 1; }
-        .cart-item-title { font-weight: 600; color: #334155; }
+        
+        /* CORREÇÃO DO TEXTO EM NEGRITO */
+        .cart-item-title { font-weight: 500; font-size: 0.95em; color: #334155; }
+        
         .cart-item-price { color: var(--ok); font-weight: bold; }
         .cart-item-actions { display: flex; align-items: center; gap: 10px; }
         .btn-qty { background: #e2e8f0; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
@@ -118,6 +141,8 @@
     </style>
 </head>
 <body>
+
+<div id="seasonal-overlay"></div>
 
 <div id="block-screen">
     <i class="fas fa-lock" style="font-size: 3rem; color: #ef4444; margin-bottom: 20px;"></i>
@@ -157,6 +182,7 @@
 </div>
 
 <div class="header">
+    <div id="theme-icon" style="font-size: 2em; margin-bottom: 10px;"></div>
     <img id="v-logo" class="logo" src="" style="display:none;">
     <h2 id="v-nome">A carregar...</h2>
 </div>
@@ -218,6 +244,30 @@
         try { await _sb.from('lojas').update({ views_total: currentViews + 1 }).eq('id', lojaId); } catch (e) {}
     }
 
+    // --- FUNÇÃO DE ANIMAÇÕES SAZONAIS ---
+    function activarEfeitosSazonais(tema) {
+        const overlay = document.getElementById('seasonal-overlay');
+        const iconBox = document.getElementById('theme-icon');
+        let emoji = "❄️", anima = "fall", total = 30;
+
+        if(tema === 'natal') { emoji = "❄️"; iconBox.innerText = "🎄"; }
+        else if(tema === 'namorados') { emoji = "💖"; anima = "floatUp"; iconBox.innerText = "💘"; }
+        else if(tema === 'bruxas') { emoji = "🎃"; anima = "floatUp"; iconBox.innerText = "👻"; }
+        else if(tema === 'pascoa') { emoji = "🥚"; iconBox.innerText = "🐰"; }
+        else { return; }
+
+        for(let i=0; i<total; i++) {
+            let p = document.createElement('div');
+            p.className = 'particle';
+            p.innerText = emoji;
+            p.style.left = Math.random() * 100 + "vw";
+            p.style.animationDuration = (Math.random() * 3 + 4) + "s";
+            p.style.animationDelay = Math.random() * 5 + "s";
+            p.style.animationName = anima;
+            overlay.appendChild(p);
+        }
+    }
+
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('loja');
@@ -231,7 +281,10 @@
 
         lojaAtual = loja;
         
-        if(loja.tema_sazonal && loja.tema_sazonal !== 'padrao') { document.body.classList.add(`tema-${loja.tema_sazonal}`); }
+        if(loja.tema_sazonal && loja.tema_sazonal !== 'padrao') { 
+            document.body.classList.add(`tema-${loja.tema_sazonal}`); 
+            activarEfeitosSazonais(loja.tema_sazonal);
+        }
 
         document.getElementById('v-nome').innerText = loja.nome;
         document.getElementById('footer-morada').innerText = loja.morada || "";
