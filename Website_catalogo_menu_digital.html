@@ -109,7 +109,7 @@
             padding: 40px; text-align: center;
         }
 
-        /* --- CABEÇALHO 100% TRANSPARENTE (SEM VIDRO) --- */
+        /* --- CABEÇALHO 100% TRANSPARENTE --- */
         .header { 
             background: transparent; 
             padding: 50px 20px; 
@@ -168,11 +168,11 @@
         .cart-badge { background: var(--accent); color: white; border-radius: 50%; padding: 4px 10px; font-size: 14px; }
         @keyframes slideUp { from { bottom: -100px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
 
-        /* --- MODAL DO CARRINHO (CHECKOUT) --- */
+        /* --- MODAL DO CARRINHO & LEGAL --- */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 10vh auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; position: relative; }
+        .modal-content { background: white; margin: 10vh auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);}
         .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #999; transition: 0.2s;}
-        .close-modal:hover { color: var(--err); }
+        .close-modal:hover { color: var(--accent); }
         .modal-content h3 { font-family: 'Playfair Display'; color: var(--p); margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.5em;}
         
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
@@ -193,7 +193,7 @@
         .btn-checkout { background: var(--ok); color: white; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 1.1em; display: block; width: 100%; border: none; cursor: pointer; margin-top: 25px; transition: 0.3s; }
         .btn-checkout:hover { background: #219653; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
 
-        /* --- RODAPÉ 100% TRANSPARENTE (SEM VIDRO) --- */
+        /* --- RODAPÉ 100% TRANSPARENTE --- */
         .footer { 
             background: transparent; 
             padding: 60px 20px; 
@@ -236,7 +236,7 @@
         <h3>O seu Pedido</h3>
         
         <div id="cart-items-container">
-            </div>
+        </div>
 
         <div class="cart-total-zone">
             <span>Total:</span>
@@ -301,10 +301,27 @@
     let lojaAtual = null;
     let carrinho = []; 
 
+    // TEXTOS LEGAIS BLINDADOS E FORMATADOS PARA O MODAL
     const legalTexts = {
-        termos: `<h3>Termos e Condições</h3><p>Este catálogo é uma plataforma de exposição da Portugal Vision...</p>`,
-        privacidade: `<h3>Política de Privacidade</h3><p>Não recolhemos dados sensíveis...</p>`,
-        cookies: `<h3>Política de Cookies</h3><p>Utilizamos apenas cookies essenciais...</p>`
+        termos: `
+            <h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Pedidos e Transações:</strong> Todos os pedidos realizados através desta plataforma são reencaminhados e finalizados diretamente na aplicação de mensagens WhatsApp do respetivo estabelecimento. A Portugal Vision não processa pagamentos diretos, não emite faturas e não se responsabiliza pela confeção, qualidade, entrega ou devolução dos artigos.</p>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>4. Pagamentos:</strong> Caso o estabelecimento disponibilize métodos de pagamento remoto (como MBWay), o cliente deverá enviar o comprovativo de transferência diretamente para o contacto do Lojista. A nossa plataforma não regista nem tem acesso a quaisquer dados bancários.</p>
+        `,
+        privacidade: `
+            <h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Privacidade e RGPD</h3>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Navegação Anónima:</strong> A privacidade do utilizador é a nossa prioridade. A navegação neste catálogo digital <strong>não exige registo, criação de conta, nem a introdução de dados pessoais sensíveis</strong> (como nome, morada ou email) na nossa plataforma.</p>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Envio do Pedido (WhatsApp):</strong> Ao clicar em "Confirmar e Enviar Pedido", o nosso sistema apenas compila os produtos escolhidos numa mensagem de texto formatada. O envio final é feito pelo próprio utilizador, utilizando a sua conta pessoal de WhatsApp. A partir desse momento, a partilha do seu número de telefone e respetivos dados para entrega é feita diretamente com o Estabelecimento (que atua como o Responsável pelo Tratamento desses dados para a execução do contrato).</p>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Dados Analíticos:</strong> A Portugal Vision recolhe apenas dados estatísticos totalmente anónimos (ex: número de visualizações do catálogo, cliques em categorias) para garantir o bom funcionamento do sistema e fornecer métricas de visualização ao Lojista, sem identificar o utilizador final.</p>
+        `,
+        cookies: `
+            <h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade (marketing) neste catálogo.</p>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do seu navegador) <strong>única e exclusivamente</strong> para gerir o seu "Carrinho de Compras". Isto permite que possa navegar pelas categorias e abrir produtos sem que os itens que já selecionou desapareçam.</p>
+            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Consentimento:</strong> Por utilizarmos apenas as tecnologias estritamente essenciais para o funcionamento básico e explícito do serviço que nos solicita (fazer um pedido), estas não requerem o seu consentimento prévio para serem ativadas. Se limpar a "cache" ou os dados do seu navegador, o seu carrinho de compras será esvaziado.</p>
+        `
     };
 
     function showLegal(type) {
