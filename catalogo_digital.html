@@ -24,67 +24,64 @@
         }
 
         /* --- TEMAS SAZONAIS (Cores e Fundos) --- */
-        body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: #f8fcfb; }
+        body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: transparent; } /* Fundo transparente para realçar a moldura */
         body.tema-namorados { --p: #d63031; --ok: #e84393; background-color: #fff5f5; }
         body.tema-bruxas { --p: #e67e22; --ok: #8e44ad; background-color: #1a1a1a; color: #ecf0f1; }
         body.tema-bruxas .card-front, body.tema-bruxas .card-back, body.tema-bruxas .header { background: #2c3e50; color: white; border-color: #444; }
         body.tema-pascoa { --p: #6c5ce7; --ok: #fab1a0; background-color: #f9f7ff; }
         
-        body.tema-anonovo { --p: #d4af37; --ok: #b8860b; background-color: #111; color: #fdfbf7; }
-        body.tema-anonovo .card-front, body.tema-anonovo .card-back, body.tema-anonovo .header { background: #1a1a1a; color: white; border-color: #d4af37; }
-        body.tema-carnaval { --p: #8e44ad; --ok: #f39c12; background-color: #fdfbf7; }
-        body.tema-pai { --p: #2980b9; --ok: #34495e; background-color: #f0f8ff; }
-        body.tema-mae { --p: #e84393; --ok: #fd79a8; background-color: #fff0f5; }
+        body.tema-anonovo { --p: #d4af37; --ok: #b8860b; background-color: transparent; color: #fdfbf7; } /* Fundo transparente */
+        body.tema-anonovo .card-front, body.tema-anonovo .card-back, body.tema-anonovo .header { background: rgba(26,26,26,0.9); color: white; border-color: #d4af37; }
+        body.tema-carnaval { --p: #8e44ad; --ok: #f39c12; background-color: transparent; }
+        body.tema-pai { --p: #2980b9; --ok: #34495e; background-color: transparent; }
+        body.tema-mae { --p: #e84393; --ok: #fd79a8; background-color: transparent; }
 
         /* --- MOLDURAS GRÁFICAS REAIS --- */
-        /* Z-INDEX AJUSTADO PARA FICAR ATRÁS DO CONTEÚDO MAS À FRENTE DO FUNDO */
         #seasonal-frame {
             position: fixed; 
-            inset: 0; 
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             pointer-events: none; /* Permite cliques através da moldura */
-            z-index: 1; /* AJUSTE CRUCIAL: De 9998 para 1 */
+            z-index: 1; /* Fica atrás do conteúdo, mas à frente do fundo base */
             transition: 0.5s;
             background-size: 100% 100%;
             background-position: center;
             background-repeat: no-repeat;
+            transform: translateZ(0); /* Fixa a camada para não tremer no scroll */
         }
 
         body.tema-natal #seasonal-frame { 
             background-image: url('https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Natal.png'); 
-            box-shadow: inset 0 0 40px rgba(192, 57, 43, 0.2);
         }
         body.tema-namorados #seasonal-frame { 
             background-image: url('URL_DA_IMAGEM_NAMORADOS.png');
-            box-shadow: inset 0 0 40px rgba(253, 121, 168, 0.2); 
         }
         body.tema-bruxas #seasonal-frame { 
             background-image: url('URL_DA_IMAGEM_HALLOWEEN.png');
-            box-shadow: inset 0 0 50px rgba(211, 84, 0, 0.4); 
         }
         body.tema-pascoa #seasonal-frame { 
             background-image: url('URL_DA_IMAGEM_PASCOA.png'); 
         }
         body.tema-anonovo #seasonal-frame { 
             background-image: url('URL_DA_IMAGEM_ANONOVO.png');
-            box-shadow: inset 0 0 60px rgba(212, 175, 55, 0.3); 
         }
         body.tema-carnaval #seasonal-frame { 
             background-image: url('URL_DA_IMAGEM_CARNAVAL.png'); 
         }
         body.tema-pai #seasonal-frame { 
             background-image: url('URL_DA_IMAGEM_PAI.png');
-            box-shadow: inset 0 0 40px rgba(41, 128, 185, 0.2); 
         }
         body.tema-mae #seasonal-frame { 
             background-image: url('URL_DA_IMAGEM_MAE.png');
-            box-shadow: inset 0 0 40px rgba(232, 67, 147, 0.2); 
         }
 
         /* --- ANIMAÇÕES DE ENFEITES PREMIUM --- */
         #seasonal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             pointer-events: none; 
-            z-index: 1; /* AJUSTE: Também reduzido para ficar atrás dos cartões */
+            z-index: 1; 
             overflow: hidden; 
         }
         .particle { 
@@ -112,27 +109,38 @@
             padding: 40px; text-align: center;
         }
 
-        .header { background: white; padding: 50px 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); transition: 0.5s; position: relative; z-index: 2;} /* AJUSTE: z-index adicionado */
+        /* --- CABEÇALHO COM VIDRO FOSCO --- */
+        .header { 
+            background: rgba(255, 255, 255, 0.85); /* Semi-transparente */
+            backdrop-filter: blur(12px); /* Efeito vidro fosco */
+            -webkit-backdrop-filter: blur(12px);
+            padding: 50px 20px; 
+            text-align: center; 
+            border-bottom: 1px solid rgba(0,0,0,0.05); 
+            transition: 0.5s; 
+            position: relative; 
+            z-index: 2; /* Fica acima da moldura */
+        }
         .logo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: var(--card-shadow); margin-bottom: 20px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 1px; transition: 0.5s;}
 
-        .categories-container { padding: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 2;} /* AJUSTE: z-index adicionado */
+        .categories-container { padding: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 2;}
         .cat-btn { background: white; border: 1px solid #eee; color: #777; padding: 10px 22px; border-radius: 30px; cursor: pointer; transition: 0.3s; font-weight: 500; }
         .cat-btn.active { background: var(--p); color: white; border-color: var(--p); }
 
-        .search-container { padding: 0 20px 30px; max-width: 600px; margin: auto; position: relative; z-index: 2;} /* AJUSTE: z-index adicionado */
+        .search-container { padding: 0 20px 30px; max-width: 600px; margin: auto; position: relative; z-index: 2;}
         #search-input { width: 100%; padding: 16px 25px; border-radius: 50px; border: 1px solid #eee; background: white; font-size: 16px; outline: none; box-shadow: var(--card-shadow); }
 
-        /* AJUSTE CRUCIAL NA GRADE PARA FICAR POR CIMA DA MOLDURA */
+        /* --- GRADE DE PRODUTOS --- */
         .grid { 
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
             gap: 30px; padding: 20px; max-width: 1200px; margin: auto; 
-            position: relative; /* Adicionado */
-            z-index: 2; /* Adicionado para flutuar sobre a moldura */
+            position: relative; 
+            z-index: 2; /* Flutua sobre a moldura */
         }
         
         /* --- MÁGICA DOS CARTÕES 3D (FLIP CARDS) --- */
-        .card-container { perspective: 1000px; height: 420px; position: relative; z-index: 3; } /* AJUSTE: z-index adicionado */
+        .card-container { perspective: 1000px; height: 420px; position: relative; z-index: 3; }
         .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; cursor: pointer; border-radius: 24px; box-shadow: var(--card-shadow); }
         .card-container:hover .card-inner { box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
         .card-container.flipped .card-inner { transform: rotateY(180deg); }
@@ -188,8 +196,18 @@
         .btn-checkout { background: var(--ok); color: white; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 1.1em; display: block; width: 100%; border: none; cursor: pointer; margin-top: 25px; transition: 0.3s; }
         .btn-checkout:hover { background: #219653; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
 
-        /* FOOTER E LEGAL */
-        .footer { background: white; padding: 60px 20px; text-align: center; border-top: 1px solid #eee; margin-top: 50px; position: relative; z-index: 2;} /* AJUSTE: z-index adicionado */
+        /* --- RODAPÉ COM VIDRO FOSCO --- */
+        .footer { 
+            background: rgba(255, 255, 255, 0.85); /* Semi-transparente */
+            backdrop-filter: blur(12px); /* Efeito vidro fosco */
+            -webkit-backdrop-filter: blur(12px);
+            padding: 60px 20px; 
+            text-align: center; 
+            border-top: 1px solid #eee; 
+            margin-top: 50px; 
+            position: relative; 
+            z-index: 2; /* Fica acima da moldura */
+        }
         .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 25px; margin-bottom: 30px; }
         .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
         .google-maps { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
