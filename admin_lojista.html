@@ -2,7 +2,17 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    
+    <link id="dynamic-favicon" rel="icon" type="image/png" sizes="192x192" href="">
+    <link id="dynamic-apple-icon" rel="apple-touch-icon" sizes="180x180" href="">
+    <link id="dynamic-manifest" rel="manifest" href="">
+
     <title>Painel Lojista | Portugal Vision</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -10,6 +20,11 @@
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     
     <style>
+        /* Regra de Ouro para evitar ecrãs a "dançar" lateralmente nos telemóveis */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         :root { 
             --p: #0f172a;      /* Azul escuro moderno (Primary) */
             --s: #3b82f6;      /* Azul vibrante (Secondary) */
@@ -27,6 +42,7 @@
             margin: 0; 
             padding: 20px 10px; 
             color: #334155; 
+            -webkit-tap-highlight-color: transparent; /* Remove flash azul no Android */
         }
 
         .container { max-width: 900px; margin: 0 auto; }
@@ -363,24 +379,17 @@
         const tipo = document.getElementById('v-tipo-negocio').value || 'restaurante';
         const config = configNegocios[tipo];
 
-        // 1. Atualizar Placeholder do Nome
         document.getElementById('p-nome').placeholder = config.placeholder;
-
-        // 2. Atualizar Categorias Sugeridas
         document.getElementById('lista-categorias').innerHTML = config.cats.map(c => `<option value="${c}"></option>`).join('');
-
-        // 3. Atualizar Tags
         document.getElementById('p-tags-container').innerHTML = config.tags.map(t => 
             `<label class="tag-item"><input type="checkbox" value="${t.val}"> ${t.txt}</label>`
         ).join('');
 
-        // 4. Mostrar/Esconder Alergénios
         const secAlergenios = document.getElementById('sec-alergenios');
         if (config.mostraAlergenios) {
             secAlergenios.classList.remove('hidden');
         } else {
             secAlergenios.classList.add('hidden');
-            // Desmarca todos se esconder
             document.querySelectorAll('#p-alergenios-container input').forEach(c => c.checked = false);
         }
     }
@@ -444,7 +453,6 @@
         else alert("Se o e-mail existir na nossa base, receberá um link de recuperação na sua caixa de entrada.");
     }
 
-    // REGISTO SEGURO COM SUPABASE AUTH E SIMPLIFICADO
     async function registar() {
         const termos = document.getElementById('r-termos').checked;
         if(!termos) return alert("É obrigatório aceitar os Termos e Condições e a Política de Privacidade.");
@@ -460,7 +468,6 @@
         btn.innerText = "A CRIAR CONTA...";
 
         try {
-            // 1. Criar o utilizador seguro no Supabase Auth
             const { data: authData, error: authError } = await _sb.auth.signUp({
                 email: emailInput,
                 password: passInput
@@ -469,7 +476,6 @@
             if (authError) throw new Error("Erro na Autenticação: " + authError.message);
             if (!authData.user) throw new Error("Erro desconhecido ao criar utilizador. Verifique as credenciais.");
 
-            // 2. Preparar os dados da loja (tipo_negocio por defeito fica restaurante na BD)
             const dadosLoja = {
                 auth_id: authData.user.id,
                 nome: nomeInput,
@@ -480,7 +486,6 @@
                 created_at: new Date()
             };
 
-            // 3. Guardar o perfil da loja na tabela
             const { data: lojaData, error: lojaError } = await _sb.from('lojas').insert([dadosLoja]).select().single();
             
             if (lojaError) throw new Error("Erro ao criar perfil da loja: " + lojaError.message);
@@ -496,7 +501,6 @@
         }
     }
 
-    // LOGIN SEGURO COM SUPABASE AUTH
     async function login() {
         const emailInput = document.getElementById('l-email').value;
         const passInput = document.getElementById('l-pass').value;
@@ -552,12 +556,32 @@
         document.getElementById('v-tel-edit').value = lojaAtiva.telefone || "";
         document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
         
-        // Atualizar Seletores
         document.getElementById('v-tipo-negocio').value = lojaAtiva.tipo_negocio || 'restaurante';
         document.getElementById('v-tema-sazonal').value = lojaAtiva.tema_sazonal || 'padrao';
         atualizarLayoutNegocio(); 
 
-        if(lojaAtiva.logo_url) document.getElementById('v-logo').src = lojaAtiva.logo_url;
+        if(lojaAtiva.logo_url) {
+            document.getElementById('v-logo').src = lojaAtiva.logo_url;
+            
+            // INJEÇÃO DINÂMICA PARA A APP NATIVA DO LOJISTA
+            document.getElementById('dynamic-favicon').href = lojaAtiva.logo_url;
+            document.getElementById('dynamic-apple-icon').href = lojaAtiva.logo_url;
+            document.title = "Gestão | " + (lojaAtiva.nome || "Portugal Vision");
+
+            const manifestData = {
+                "name": "Gestão " + (lojaAtiva.nome || "Loja"),
+                "short_name": "Gestão",
+                "display": "standalone",
+                "background_color": "#0f172a",
+                "theme_color": "#0f172a",
+                "icons": [
+                    { "src": lojaAtiva.logo_url, "sizes": "192x192", "type": "image/png" },
+                    { "src": lojaAtiva.logo_url, "sizes": "512x512", "type": "image/png" }
+                ]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+            document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+        }
 
         document.getElementById('f-inicio').value = lojaAtiva.ferias_inicio || "";
         document.getElementById('f-fim').value = lojaAtiva.ferias_fim || "";
@@ -612,6 +636,24 @@
         if(!error) { 
             lojaAtiva = {...lojaAtiva, ...dados};
             btn.classList.remove('pendente'); 
+            
+            if(lojaAtiva.logo_url) {
+                document.title = "Gestão | " + lojaAtiva.nome;
+                const manifestData = {
+                    "name": "Gestão " + lojaAtiva.nome,
+                    "short_name": "Gestão",
+                    "display": "standalone",
+                    "background_color": "#0f172a",
+                    "theme_color": "#0f172a",
+                    "icons": [
+                        { "src": lojaAtiva.logo_url, "sizes": "192x192", "type": "image/png" },
+                        { "src": lojaAtiva.logo_url, "sizes": "512x512", "type": "image/png" }
+                    ]
+                };
+                const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+                document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+            }
+            
             alert("Perfil e configurações atualizados com sucesso!"); 
         } else {
             alert("Erro ao guardar: " + error.message);
@@ -629,6 +671,24 @@
             await _sb.from('lojas').update({ logo_url: data.publicUrl }).eq('id', lojaAtiva.id);
             lojaAtiva.logo_url = data.publicUrl;
             document.getElementById('v-logo').src = data.publicUrl;
+            
+            document.getElementById('dynamic-favicon').href = data.publicUrl;
+            document.getElementById('dynamic-apple-icon').href = data.publicUrl;
+            const manifestData = {
+                "name": "Gestão " + (lojaAtiva.nome || "Loja"),
+                "short_name": "Gestão",
+                "display": "standalone",
+                "background_color": "#0f172a",
+                "theme_color": "#0f172a",
+                "icons": [
+                    { "src": data.publicUrl, "sizes": "192x192", "type": "image/png" },
+                    { "src": data.publicUrl, "sizes": "512x512", "type": "image/png" }
+                ]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+            document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+            
+            alert("Logótipo atualizado! Reabra a app no telemóvel para ver o novo ícone.");
         } catch (e) { alert("Erro ao fazer upload do logo."); }
     }
 
