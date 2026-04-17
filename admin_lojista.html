@@ -9,9 +9,29 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
     
-    <link id="dynamic-favicon" rel="icon" type="image/png" sizes="192x192" href="">
-    <link id="dynamic-apple-icon" rel="apple-touch-icon" sizes="180x180" href="">
-    <link id="dynamic-manifest" rel="manifest" href="">
+    <script>
+        // COLA AQUI O LINK DO LOGÓTIPO DA PORTUGAL VISION (Guardado no teu Supabase)
+        const LOGO_PADRAO_PV = "LINK_DA_PORTUGAL_VISION_AQUI.png"; 
+        
+        document.write(`
+            <link id="dynamic-favicon" rel="icon" type="image/png" sizes="192x192" href="${LOGO_PADRAO_PV}">
+            <link id="dynamic-apple-icon" rel="apple-touch-icon" sizes="180x180" href="${LOGO_PADRAO_PV}">
+        `);
+
+        const manifestPadrao = {
+            "name": "Portugal Vision",
+            "short_name": "Painel PV",
+            "display": "standalone",
+            "background_color": "#0f172a",
+            "theme_color": "#0f172a",
+            "icons": [
+                { "src": LOGO_PADRAO_PV, "sizes": "192x192", "type": "image/png" },
+                { "src": LOGO_PADRAO_PV, "sizes": "512x512", "type": "image/png" }
+            ]
+        };
+        const manifestBlobPadrao = new Blob([JSON.stringify(manifestPadrao)], {type: 'application/json'});
+        document.write(`<link id="dynamic-manifest" rel="manifest" href="${URL.createObjectURL(manifestBlobPadrao)}">`);
+    </script>
 
     <title>Painel Lojista | Portugal Vision</title>
     
@@ -721,6 +741,12 @@
         marcarAltHoras();
     }
 
+    function calcularPrecoFinal(preco, desconto) {
+        const p = parseFloat(preco) || 0;
+        const d = parseInt(desconto) || 0;
+        return d > 0 ? (p * (1 - d / 100)) : p;
+    }
+
     async function carregarDados() {
         if(!lojaAtiva) return;
 
@@ -761,6 +787,17 @@
                     alergeniosHtml = `<div style="margin-top: 4px; font-size: 11px; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; display: inline-block;">⚠️ ${p.alergenios.join(', ')}</div>`;
                 }
 
+                // CÁLCULO DE DESCONTO E IVA PARA PRÉ-VISUALIZAÇÃO
+                const precoFixo = parseFloat(p.preco) || 0;
+                const desc = parseInt(p.desconto_percent) || 0;
+                const precoCalculado = calcularPrecoFinal(precoFixo, desc).toFixed(2);
+                let htmlPreco = `<b style="color: var(--ok); font-size: 16px;">${precoCalculado}€</b>`;
+                
+                if(desc > 0) {
+                    htmlPreco += ` <span style="color: #94a3b8; text-decoration: line-through; font-size: 12px; margin-left: 6px;">${precoFixo.toFixed(2)}€</span>`;
+                    htmlPreco += ` <span style="color: var(--err); font-size: 12px; font-weight: bold; margin-left: 6px;">-${desc}%</span>`;
+                }
+
                 grid.innerHTML += `
                 <div class="prod-card ${p.oculto ? 'oculto' : ''}">
                     <div class="prod-actions">
@@ -774,7 +811,8 @@
                     <div style="padding:12px">
                         <small style="color: #64748b; font-weight: 600;">${p.categoria || 'Sem categoria'}</small><br>
                         <span style="font-weight: 600; font-size: 14px; display: block; margin: 4px 0;">${p.nome}</span>
-                        <b style="color: var(--ok); font-size: 16px;">${p.preco}€</b>
+                        ${htmlPreco}
+                        <br><span style="font-size: 11px; color: #94a3b8; font-weight: 500;">IVA incluído</span>
                         <br>${alergeniosHtml}
                     </div>
                 </div>`;
