@@ -6,11 +6,12 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Menu Digital">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Menu%20Digital%22%2C%22short_name%22%3A%22Menu%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%7D">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192.png?text=PV">
+    
+    <link id="dynamic-favicon" rel="icon" type="image/png" sizes="192x192" href="">
+    <link id="dynamic-apple-icon" rel="apple-touch-icon" sizes="180x180" href="">
+    <link id="dynamic-manifest" rel="manifest" href="">
 
     <title>Catálogo | Portugal Vision</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -286,25 +287,9 @@
     let carrinho = []; 
 
     const legalTexts = {
-        termos: `
-            <h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Pedidos e Transações:</strong> Todos os pedidos realizados através desta plataforma são reencaminhados e finalizados diretamente na aplicação de mensagens WhatsApp do respetivo estabelecimento. A Portugal Vision não processa pagamentos diretos, não emite faturas e não se responsabiliza pela confeção, qualidade, entrega ou devolução dos artigos.</p>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>4. Pagamentos:</strong> Caso o estabelecimento disponibilize métodos de pagamento remoto (como MBWay), o cliente deverá enviar o comprovativo de transferência diretamente para o contacto do Lojista. A nossa plataforma não regista nem tem acesso a quaisquer dados bancários.</p>
-        `,
-        privacidade: `
-            <h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Privacidade e RGPD</h3>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Navegação Anónima:</strong> A privacidade do utilizador é a nossa prioridade. A navegação neste catálogo digital <strong>não exige registo, criação de conta, nem a introdução de dados pessoais sensíveis</strong> (como nome, morada ou email) na nossa plataforma.</p>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Envio do Pedido (WhatsApp):</strong> Ao clicar em "Confirmar e Enviar Pedido", o nosso sistema apenas compila os produtos escolhidos numa mensagem de texto formatada. O envio final é feito pelo próprio utilizador, utilizando a sua conta pessoal de WhatsApp. A partir desse momento, a partilha do seu número de telefone e respetivos dados para entrega é feita diretamente com o Estabelecimento (que atua como o Responsável pelo Tratamento desses dados para a execução do contrato).</p>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Dados Analíticos:</strong> A Portugal Vision recolhe apenas dados estatísticos totalmente anónimos (ex: número de visualizações do catálogo, cliques em categorias) para garantir o bom funcionamento do sistema e fornecer métricas de visualização ao Lojista, sem identificar o utilizador final.</p>
-        `,
-        cookies: `
-            <h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade (marketing) neste catálogo.</p>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do seu navegador) <strong>única e exclusivamente</strong> para gerir o seu "Carrinho de Compras". Isto permite que possa navegar pelas categorias e abrir produtos sem que os itens que já selecionou desapareçam.</p>
-            <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Consentimento:</strong> Por utilizarmos apenas as tecnologias estritamente essenciais para o funcionamento básico e explícito do serviço que nos solicita (fazer um pedido), estas não requerem o seu consentimento prévio para serem ativadas. Se limpar a "cache" ou os dados do seu navegador, o seu carrinho de compras será esvaziado.</p>
-        `
+        termos: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Pedidos e Transações:</strong> Todos os pedidos realizados através desta plataforma são reencaminhados e finalizados diretamente na aplicação de mensagens WhatsApp do respetivo estabelecimento. A Portugal Vision não processa pagamentos diretos, não emite faturas e não se responsabiliza pela confeção, qualidade, entrega ou devolução dos artigos.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>4. Pagamentos:</strong> Caso o estabelecimento disponibilize métodos de pagamento remoto (como MBWay), o cliente deverá enviar o comprovativo de transferência diretamente para o contacto do Lojista. A nossa plataforma não regista nem tem acesso a quaisquer dados bancários.</p>`,
+        privacidade: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Privacidade e RGPD</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Navegação Anónima:</strong> A privacidade do utilizador é a nossa prioridade. A navegação neste catálogo digital <strong>não exige registo, criação de conta, nem a introdução de dados pessoais sensíveis</strong> (como nome, morada ou email) na nossa plataforma.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Envio do Pedido (WhatsApp):</strong> Ao clicar em "Confirmar e Enviar Pedido", o nosso sistema apenas compila os produtos escolhidos numa mensagem de texto formatada. O envio final é feito pelo próprio utilizador, utilizando a sua conta pessoal de WhatsApp. A partir desse momento, a partilha do seu número de telefone e respetivos dados para entrega é feita diretamente com o Estabelecimento (que atua como o Responsável pelo Tratamento desses dados para a execução do contrato).</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Dados Analíticos:</strong> A Portugal Vision recolhe apenas dados estatísticos totalmente anónimos (ex: número de visualizações do catálogo, cliques em categorias) para garantir o bom funcionamento do sistema e fornecer métricas de visualização ao Lojista, sem identificar o utilizador final.</p>`,
+        cookies: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade (marketing) neste catálogo.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do seu navegador) <strong>única e exclusivamente</strong> para gerir o seu "Carrinho de Compras". Isto permite que possa navegar pelas categorias e abrir produtos sem que os itens que já selecionou desapareçam.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Consentimento:</strong> Por utilizarmos apenas as tecnologias estritamente essenciais para o funcionamento básico e explícito do serviço que nos solicita (fazer um pedido), estas não requerem o seu consentimento prévio para serem ativadas. Se limpar a "cache" ou os dados do seu navegador, o seu carrinho de compras será esvaziado.</p>`
     };
 
     function showLegal(type) {
@@ -317,7 +302,6 @@
         try { await _sb.from('lojas').update({ views_total: currentViews + 1 }).eq('id', lojaId); } catch (e) {}
     }
 
-    // --- DICIONÁRIO DE VÍDEOS INTELIGENTE ---
     const videosSazonais = {
         'natal': 'https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Natal.mp4',
         'namorados': 'https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Dia%20dos%20Namorados.mp4', 
@@ -364,7 +348,6 @@
             let p = document.createElement('div');
             p.className = 'particle';
             p.innerText = emoji;
-            
             const size = Math.random() * 1.5 + 0.5;
             p.style.fontSize = size + 'em';
             
@@ -396,7 +379,6 @@
             p.style.animationName = anima;
             p.style.animationTimingFunction = "ease-in-out";
             p.style.animationIterationCount = "infinite";
-            
             overlay.appendChild(p);
         }
     }
@@ -426,9 +408,29 @@
         document.getElementById('link-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${mEnc}`;
         document.getElementById('link-waze').href = `https://waze.com/ul?q=${mEnc}&navigate=yes`;
 
+        // INJEÇÃO DINÂMICA DO LOGÓTIPO PARA A APP NATIVA
         if (loja.logo_url) {
             const logo = document.getElementById('v-logo');
             logo.src = loja.logo_url; logo.style.display = 'inline-block';
+            
+            document.getElementById('dynamic-favicon').href = loja.logo_url;
+            document.getElementById('dynamic-apple-icon').href = loja.logo_url;
+            document.title = loja.nome + " | Menu";
+
+            // CRIAR MANIFEST JSON DINÂMICO
+            const manifestData = {
+                "name": loja.nome,
+                "short_name": loja.nome.substring(0, 12),
+                "display": "standalone",
+                "background_color": "#000000",
+                "theme_color": "#000000",
+                "icons": [
+                    { "src": loja.logo_url, "sizes": "192x192", "type": "image/png" },
+                    { "src": loja.logo_url, "sizes": "512x512", "type": "image/png" }
+                ]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+            document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
         }
 
         if (loja.mbway_ativo && loja.mbway_num) {
@@ -456,17 +458,13 @@
 
     function virarCartao(id) { document.getElementById(`card-${id}`).classList.toggle('flipped'); }
 
-    // --- SISTEMA DO CARRINHO ---
     function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, event) {
         event.stopPropagation();
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         
         const itemExistente = carrinho.find(item => item.id === idProduto);
-        if (itemExistente) {
-            itemExistente.qtde += 1;
-        } else {
-            carrinho.push({ id: idProduto, nome: nome, preco: precoFinal, qtde: 1 });
-        }
+        if (itemExistente) { itemExistente.qtde += 1; } 
+        else { carrinho.push({ id: idProduto, nome: nome, preco: precoFinal, qtde: 1 }); }
         
         atualizarFloater();
         
@@ -588,15 +586,11 @@
 
                         <div class="card-back">
                             <h4>${p.nome}</h4>
-                            <div class="card-desc">
-                                ${p.descricao ? p.descricao.replace(/\n/g, '<br>') : 'Sem descrição disponível.'}
-                            </div>
+                            <div class="card-desc">${p.descricao ? p.descricao.replace(/\n/g, '<br>') : 'Sem descrição disponível.'}</div>
                             ${alergeniosHtml}
-                            
                             <button onclick="adicionarAoCarrinho(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFixo}, ${desc}, event)" class="btn-add-cart">
                                 <i class="fas fa-cart-plus"></i> Adicionar
                             </button>
-                            
                             <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;">
                                 Voltar
                             </button>
