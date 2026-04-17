@@ -40,6 +40,7 @@
             -webkit-tap-highlight-color: transparent; 
         }
 
+        /* --- TEMAS SAZONAIS --- */
         body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: transparent; }
         body.tema-namorados { --p: #d63031; --ok: #e84393; background-color: #fff5f5; }
         body.tema-bruxas { --p: #e67e22; --ok: #8e44ad; background-color: #1a1a1a; color: #ecf0f1; }
@@ -80,7 +81,7 @@
 
         #block-screen { position: fixed; inset: 0; background: white; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
 
-        .header { background: transparent; padding: 40px 20px 20px; text-align: center; position: relative; z-index: 2; border: none; }
+        .header { background: transparent; padding: 60px 20px 20px; text-align: center; position: relative; z-index: 2; border: none; }
         .logo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 20px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.1);}
 
@@ -124,31 +125,14 @@
         .cart-badge { background: white; color: var(--ok); border-radius: 50%; padding: 4px 10px; font-size: 14px; }
         @keyframes slideUp { from { bottom: -100px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
 
-        /* Estilos do Modal Melhorados para evitar cortes */
+        /* Estilos do Modal */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 15px;}
-        
         .modal-content { 
-            background: white; 
-            margin: 2vh auto; /* Menos margem no topo em mobile */
-            padding: 25px; 
-            border-radius: 20px; 
-            width: 100%; 
-            max-width: 500px; 
-            max-height: 90vh; /* Altura máxima segura */
-            overflow-y: auto; /* Garante que o conteúdo faz scroll */
-            position: relative; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            overscroll-behavior: contain; /* Evita que o fundo faça scroll acidentalmente */
+            background: white; margin: 2vh auto; padding: 25px; border-radius: 20px; width: 100%; max-width: 500px; 
+            max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); color: #333;
+            display: flex; flex-direction: column; overscroll-behavior: contain;
         }
-        
-        /* O "Corpo" interno do modal precisa de margem para não tapar o botão no fim */
-        .modal-body {
-            padding-bottom: 20px;
-        }
-
+        .modal-body { padding-bottom: 20px; }
         .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #999; transition: 0.2s; z-index: 10;}
         .close-modal:hover { color: var(--accent); }
         .modal-content h3 { font-family: 'Playfair Display'; color: #2c3e50; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.5em; padding-right: 30px; flex-shrink: 0;}
@@ -164,7 +148,6 @@
 
         .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: #2c3e50; }
         
-        /* Estilos dos Inputs de Reserva/Levantamento */
         .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 14px; background: #f8fafc; transition: 0.3s; margin-bottom: 5px; }
         .input-form:focus { outline: none; border-color: var(--ok); background: white; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
         .order-type-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
@@ -172,7 +155,6 @@
         .order-type-box label:hover { background: #f1f5f9; }
         .order-type-box input[type="radio"] { accent-color: var(--ok); transform: scale(1.1); margin:0;}
 
-        /* Estilos de Pagamento */
         .payment-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .payment-box label { background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; font-weight: 600; font-size: 0.85em; transition: 0.2s; white-space: nowrap;}
         .payment-box label:hover { background: #f1f5f9; }
@@ -229,67 +211,49 @@
                 <span id="cart-total-price">0.00€</span>
             </div>
 
-            <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
-                <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">1. Como deseja encomendar?</h4>
-                
-                <div class="order-type-box">
-                    <label>
-                        <input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()">
-                        🥡 Levantamento
-                    </label>
-                    <label>
-                        <input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()">
-                        🪑 Reserva
-                    </label>
-                </div>
-
-                <div id="fields-levantamento" style="display: grid; gap: 10px;">
-                    <input type="text" id="cli-nome-lev" placeholder="O seu Nome" class="input-form">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 14px; font-weight: 600; color: #475569; width: 60px;">Hora:</span>
-                        <input type="time" id="cli-hora-lev" class="input-form" style="margin: 0;">
+            <div id="checkout-options-wrapper">
+                <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">1. Como deseja encomendar?</h4>
+                    <div class="order-type-box">
+                        <label><input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()"> 🥡 Levantamento</label>
+                        <label><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> 🪑 Reserva</label>
+                    </div>
+                    <div id="fields-levantamento" style="display: grid; gap: 10px;">
+                        <input type="text" id="cli-nome-lev" placeholder="O seu Nome" class="input-form">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 14px; font-weight: 600; color: #475569; width: 60px;">Hora:</span>
+                            <input type="time" id="cli-hora-lev" class="input-form" style="margin: 0;">
+                        </div>
+                    </div>
+                    <div id="fields-reserva" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="text" id="cli-nome-res" placeholder="Nome da Reserva" class="input-form" style="grid-column: span 2;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
+                            <input type="date" id="cli-data-res" class="input-form" style="margin: 0;">
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora:</span>
+                            <input type="time" id="cli-hora-res" class="input-form" style="margin: 0;">
+                        </div>
+                        <input type="number" id="cli-pessoas-res" placeholder="Nº de Pessoas" class="input-form" style="grid-column: span 2;" min="1">
                     </div>
                 </div>
 
-                <div id="fields-reserva" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input type="text" id="cli-nome-res" placeholder="Nome da Reserva" class="input-form" style="grid-column: span 2;">
-                    <div style="display: flex; flex-direction: column;">
-                        <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
-                        <input type="date" id="cli-data-res" class="input-form" style="margin: 0;">
+                <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">2. Método de Pagamento</h4>
+                    <div class="payment-box">
+                        <label><input type="radio" name="tipo_pagamento" value="Dinheiro" checked onchange="togglePaymentFields()"> 💶 Dinheiro</label>
+                        <label><input type="radio" name="tipo_pagamento" value="Multibanco" onchange="togglePaymentFields()"> 💳 Multibanco</label>
+                        <label id="label-mbway" style="display:none;"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" onchange="togglePaymentFields()"> 📱 MBWay</label>
                     </div>
-                    <div style="display: flex; flex-direction: column;">
-                        <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora:</span>
-                        <input type="time" id="cli-hora-res" class="input-form" style="margin: 0;">
+                    <div id="mbway-zone" class="mbway-info">
+                        <i class="fas fa-mobile-alt"></i> <strong>Pagamento MBWay Selecionado!</strong><br>
+                        Pode enviar o valor para o nº <strong id="mbway-phone"></strong>. Por favor, envie o comprovativo pelo WhatsApp após enviar este pedido.
                     </div>
-                    <input type="number" id="cli-pessoas-res" placeholder="Nº de Pessoas" class="input-form" style="grid-column: span 2;" min="1">
                 </div>
             </div>
 
-            <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
-                <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">2. Método de Pagamento</h4>
-                
-                <div class="payment-box">
-                    <label>
-                        <input type="radio" name="tipo_pagamento" value="Dinheiro" checked onchange="togglePaymentFields()">
-                        💶 Dinheiro
-                    </label>
-                    <label>
-                        <input type="radio" name="tipo_pagamento" value="Multibanco" onchange="togglePaymentFields()">
-                        💳 Multibanco
-                    </label>
-                    <label id="label-mbway" style="display:none;">
-                        <input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" onchange="togglePaymentFields()">
-                        📱 MBWay
-                    </label>
-                </div>
-
-                <div id="mbway-zone" class="mbway-info">
-                    <i class="fas fa-mobile-alt"></i> <strong>Pagamento MBWay Selecionado!</strong><br>
-                    Pode enviar o valor para o nº <strong id="mbway-phone"></strong>. Por favor, envie o comprovativo pelo WhatsApp após enviar este pedido.
-                </div>
-            </div>
-
-            <button class="btn-checkout" onclick="finalizarPedido()">
+            <button id="btn-checkout-final" class="btn-checkout" onclick="finalizarPedido()">
                 <i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido
             </button>
         </div>
@@ -439,6 +403,47 @@
         }
     }
 
+    // CÉREBRO: VERIFICA SE A LOJA ESTÁ ABERTA
+    function verificarSeAberto(loja) {
+        const agora = new Date();
+        
+        // 1. Férias
+        if (loja.em_ferias) {
+            if (!loja.ferias_inicio && !loja.ferias_fim) return { aberto: false, motivo: "A loja encontra-se encerrada para férias." };
+            const hojeIso = agora.toISOString().split('T')[0];
+            if (hojeIso >= loja.ferias_inicio && hojeIso <= loja.ferias_fim) {
+                return { aberto: false, motivo: `Em férias de ${loja.ferias_inicio} até ${loja.ferias_fim}.` };
+            }
+        }
+
+        // 2. Horário Semanal
+        if (loja.horarios) {
+            // O JavaScript considera Domingo=0, Segunda=1. A nossa DB usa Segunda=0, Domingo=6.
+            const diaDb = (agora.getDay() + 6) % 7; 
+            const horarioHoje = loja.horarios[diaDb];
+
+            if (!horarioHoje || horarioHoje.status === 'fechado') {
+                return { aberto: false, motivo: "Encerrado no dia de hoje." };
+            }
+
+            const horaStr = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
+            const m1 = horarioHoje.m1 || "00:00";
+            const m2 = horarioHoje.m2 || "00:00";
+            const t1 = horarioHoje.t1 || "00:00";
+            const t2 = horarioHoje.t2 || "00:00";
+
+            const manhaAberto = (horaStr >= m1 && horaStr <= m2 && m1 !== m2);
+            const tardeAberto = (horaStr >= t1 && horaStr <= t2 && t1 !== t2);
+
+            if (!manhaAberto && !tardeAberto) {
+                const textoHorario = `O nosso horário hoje: ${m1}-${m2} | ${t1}-${t2}`.replace(/00:00-00:00/g, '').replace(/ \| $/,'').trim();
+                return { aberto: false, motivo: `Fechado no momento. ${textoHorario}` };
+            }
+        }
+
+        return { aberto: true, motivo: "" };
+    }
+
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('loja');
@@ -451,6 +456,26 @@
         }
 
         lojaAtual = loja;
+
+        // VERIFICAR HORÁRIO DA LOJA E INIBIR BOTÃO SE FECHADO
+        const estadoLoja = verificarSeAberto(lojaAtual);
+        if (!estadoLoja.aberto) {
+            // Faixa Superior
+            const bannerFechado = document.createElement('div');
+            bannerFechado.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: white; text-align: center; padding: 12px 20px; font-weight: bold; z-index: 99999; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);";
+            bannerFechado.innerHTML = `⚠️ ${estadoLoja.motivo}`;
+            document.body.appendChild(bannerFechado);
+            document.body.style.paddingTop = "40px"; // Afasta o menu do banner
+
+            // Bloquear botão de Checkout
+            document.getElementById('btn-checkout-final').style.display = 'none';
+            document.getElementById('checkout-options-wrapper').style.display = 'none';
+            
+            const avisoModal = document.createElement('div');
+            avisoModal.style.cssText = "background:#fee2e2; color:#991b1b; padding:15px; border-radius:12px; border:1px solid #fecaca; margin-top:20px; font-weight:bold; text-align:center;";
+            avisoModal.innerHTML = `⚠️ Não é possível encomendar agora.<br><span style="font-weight:normal; font-size:12px;">${estadoLoja.motivo}</span>`;
+            document.querySelector('.modal-body').appendChild(avisoModal);
+        }
         
         if(loja.tema_sazonal && loja.tema_sazonal !== 'padrao') { 
             document.body.classList.add(`tema-${loja.tema_sazonal}`); 
@@ -494,7 +519,6 @@
             document.head.appendChild(linkManifest);
         }
 
-        // MOSTRAR OPÇÃO MBWAY SE A LOJA TIVER ATIVADO
         if (loja.mbway_ativo && loja.mbway_num) {
             document.getElementById('label-mbway').style.display = 'flex';
             document.getElementById('mbway-phone').innerText = loja.mbway_num;
@@ -546,7 +570,6 @@
         else { floater.classList.remove('visible'); fecharCarrinho(); }
     }
 
-    // ALTERNA ENTRE OS CAMPOS DE LEVANTAMENTO E RESERVA
     function toggleOrderFields() {
         const tipo = document.querySelector('input[name="tipo_pedido"]:checked').value;
         const fLev = document.getElementById('fields-levantamento');
@@ -561,7 +584,6 @@
         }
     }
 
-    // ALTERNA A CAIXA INFORMATIVA DO MBWAY
     function togglePaymentFields() {
         const pag = document.querySelector('input[name="tipo_pagamento"]:checked').value;
         const mbwayZone = document.getElementById('mbway-zone');
@@ -617,7 +639,6 @@
         
         try { await _sb.from('lojas').update({ whatsapp_total: (lojaAtual.whatsapp_total || 0) + 1 }).eq('id', lojaAtual.id); } catch(e){}
 
-        // RECOLHER INFO DO LEVANTAMENTO/RESERVA E PAGAMENTO
         const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
         const tipoPagamento = document.querySelector('input[name="tipo_pagamento"]:checked').value;
         let infoExtra = "";
