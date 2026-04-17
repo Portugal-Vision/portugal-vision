@@ -24,7 +24,18 @@
         }
 
         /* --- TEMAS SAZONAIS (Cores e Fundos) --- */
-        body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: transparent; }
+        
+        /* NOVO TEMA DE NATAL DARK MODE (Para encaixar o vídeo de fundo preto) */
+        body.tema-natal { --p: #fdfbf7; --ok: #27ae60; background-color: #000; color: #fdfbf7; }
+        body.tema-natal .card-front, body.tema-natal .card-back, body.tema-natal .header { background: rgba(15, 15, 15, 0.6); color: white; border-color: #c0392b; }
+        body.tema-natal .footer { background: rgba(15, 15, 15, 0.6); }
+        body.tema-natal .cat-btn { background: rgba(30,30,30,0.8); color: #ccc; border-color: #444; }
+        body.tema-natal .cat-btn.active { background: #c0392b; color: white; border-color: #c0392b; }
+        body.tema-natal #search-input { background: rgba(30,30,30,0.8); color: white; border-color: #444; }
+        body.tema-natal .card-back { background: rgba(25, 25, 25, 0.95); }
+        body.tema-natal .card-desc { color: #cbd5e1; }
+        body.tema-natal .btn-flip { background: #333; color: #f8fcfb; }
+
         body.tema-namorados { --p: #d63031; --ok: #e84393; background-color: #fff5f5; }
         body.tema-bruxas { --p: #e67e22; --ok: #8e44ad; background-color: #1a1a1a; color: #ecf0f1; }
         body.tema-bruxas .card-front, body.tema-bruxas .card-back, body.tema-bruxas .header { background: transparent; color: white; border-color: #444; }
@@ -36,77 +47,53 @@
         body.tema-pai { --p: #2980b9; --ok: #34495e; background-color: transparent; }
         body.tema-mae { --p: #e84393; --ok: #fd79a8; background-color: transparent; }
 
-        /* --- MOLDURAS GRÁFICAS REAIS --- */
-        #seasonal-frame {
+        /* --- VÍDEO DE FUNDO (MOLDURA ANIMADA) --- */
+        #seasonal-frame-video {
             position: fixed; 
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
+            object-fit: fill; /* Estica o vídeo para colar nas bordas do telemóvel */
             pointer-events: none; 
-            z-index: 1; 
-            transition: 0.5s;
-            background-size: 100% 100%;
-            background-position: center;
-            background-repeat: no-repeat;
-            transform: translateZ(0); 
-        }
-
-        body.tema-natal #seasonal-frame { 
-            background-image: url('https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Natal.png'); 
-        }
-        body.tema-namorados #seasonal-frame { 
-            background-image: url('URL_DA_IMAGEM_NAMORADOS.png');
-        }
-        body.tema-bruxas #seasonal-frame { 
-            background-image: url('URL_DA_IMAGEM_HALLOWEEN.png');
-        }
-        body.tema-pascoa #seasonal-frame { 
-            background-image: url('URL_DA_IMAGEM_PASCOA.png'); 
-        }
-        body.tema-anonovo #seasonal-frame { 
-            background-image: url('URL_DA_IMAGEM_ANONOVO.png');
-        }
-        body.tema-carnaval #seasonal-frame { 
-            background-image: url('URL_DA_IMAGEM_CARNAVAL.png'); 
-        }
-        body.tema-pai #seasonal-frame { 
-            background-image: url('URL_DA_IMAGEM_PAI.png');
-        }
-        body.tema-mae #seasonal-frame { 
-            background-image: url('URL_DA_IMAGEM_MAE.png');
-        }
-
-        /* --- ANIMAÇÕES DE ENFEITES PREMIUM (FÍSICA ORGÂNICA) --- */
-        #seasonal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            pointer-events: none; 
-            z-index: 1; 
-            overflow: hidden; 
-        }
-        .particle { 
-            position: absolute; 
-            pointer-events: none;
-            will-change: transform, opacity; /* Boost de Performance */
+            z-index: 0; /* Fica no fundo absoluto */
+            display: none; /* Escondido por defeito */
         }
         
-        /* Neve / Confetes - Queda com Balanço Lateral */
+        body.tema-natal #seasonal-frame-video {
+            display: block; /* Mostra o vídeo apenas no Natal */
+        }
+
+        /* --- MOLDURAS ESTÁTICAS (Para os outros temas) --- */
+        #seasonal-frame {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 1; transition: 0.5s;
+            background-size: 100% 100%; background-position: center; background-repeat: no-repeat; transform: translateZ(0); 
+        }
+        body.tema-namorados #seasonal-frame { background-image: url('URL_DA_IMAGEM_NAMORADOS.png'); }
+        body.tema-bruxas #seasonal-frame { background-image: url('URL_DA_IMAGEM_HALLOWEEN.png'); }
+        body.tema-pascoa #seasonal-frame { background-image: url('URL_DA_IMAGEM_PASCOA.png'); }
+        body.tema-anonovo #seasonal-frame { background-image: url('URL_DA_IMAGEM_ANONOVO.png'); }
+        body.tema-carnaval #seasonal-frame { background-image: url('URL_DA_IMAGEM_CARNAVAL.png'); }
+        body.tema-pai #seasonal-frame { background-image: url('URL_DA_IMAGEM_PAI.png'); }
+        body.tema-mae #seasonal-frame { background-image: url('URL_DA_IMAGEM_MAE.png'); }
+
+        /* --- ANIMAÇÕES DE ENFEITES PREMIUM (FÍSICA ORGÂNICA JAVASCRIPT) --- */
+        #seasonal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+        .particle { position: absolute; pointer-events: none; will-change: transform, opacity; }
+        
         @keyframes fallOrganic {
             0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 0; }
             10% { opacity: var(--max-opacity, 0.8); }
             90% { opacity: var(--max-opacity, 0.8); }
             100% { transform: translate3d(var(--sway-end, 100px), 110vh, 0) rotate(var(--rot-end, 360deg)); opacity: 0; }
         }
-
-        /* Corações / Fantasmas - Subida com Ziguezague */
         @keyframes floatUpOrganic {
             0% { transform: translate3d(0, 110vh, 0) rotate(0deg) scale(0.5); opacity: 0; }
             20% { opacity: var(--max-opacity, 0.9); transform: translate3d(var(--sway-mid, -30px), 80vh, 0) rotate(15deg) scale(1); }
             80% { opacity: var(--max-opacity, 0.9); transform: translate3d(var(--sway-end, 40px), 20vh, 0) rotate(-15deg) scale(1.1); }
             100% { transform: translate3d(0, -10vh, 0) rotate(0deg) scale(1.2); opacity: 0; }
         }
-
-        /* Brilhos / Foguetes - Pulso Brilhante */
         @keyframes pulseSpark {
             0% { transform: scale(0) rotate(0deg); opacity: 0; }
             50% { transform: scale(var(--scale-max, 1.5)) rotate(var(--rot-end, 180deg)); opacity: var(--max-opacity, 1); }
@@ -114,20 +101,13 @@
         }
 
         /* --- ECRÃ DE BLOQUEIO --- */
-        #block-screen {
-            position: fixed; inset: 0; background: white; z-index: 99999;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            padding: 40px; text-align: center;
-        }
+        #block-screen { position: fixed; inset: 0; background: white; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
 
         /* --- CABEÇALHO --- */
         .header { 
-            background: transparent; 
-            padding: 50px 20px; 
-            text-align: center; 
-            transition: 0.5s; 
-            position: relative; 
-            z-index: 2; 
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 50px 20px; text-align: center; transition: 0.5s; position: relative; z-index: 2; 
         }
         .logo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: var(--card-shadow); margin-bottom: 20px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 1px; transition: 0.5s;}
@@ -137,32 +117,27 @@
         .cat-btn.active { background: var(--p); color: white; border-color: var(--p); }
 
         .search-container { padding: 0 20px 30px; max-width: 600px; margin: auto; position: relative; z-index: 2;}
-        #search-input { width: 100%; padding: 16px 25px; border-radius: 50px; border: 1px solid #eee; background: white; font-size: 16px; outline: none; box-shadow: var(--card-shadow); }
+        #search-input { width: 100%; padding: 16px 25px; border-radius: 50px; border: 1px solid #eee; background: white; font-size: 16px; outline: none; box-shadow: var(--card-shadow); transition: 0.3s;}
 
         /* --- GRADE DE PRODUTOS --- */
-        .grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-            gap: 30px; padding: 20px; max-width: 1200px; margin: auto; 
-            position: relative; 
-            z-index: 2; 
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; padding: 20px; max-width: 1200px; margin: auto; position: relative; z-index: 2; }
         
         /* --- MÁGICA DOS CARTÕES 3D (FLIP CARDS) --- */
         .card-container { perspective: 1000px; height: 420px; position: relative; z-index: 3; }
         .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; cursor: pointer; border-radius: 24px; box-shadow: var(--card-shadow); }
-        .card-container:hover .card-inner { box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .card-container:hover .card-inner { box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
         .card-container.flipped .card-inner { transform: rotateY(180deg); }
 
-        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; background: white; border: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden; }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; background: white; border: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden; transition: 0.5s; }
         
         .img-container { width: 100%; height: 200px; overflow: hidden; background: #fff; padding: 12px; box-sizing: border-box; flex-shrink: 0;}
         .card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); }
         .info { padding: 15px 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;}
         .info strong { font-size: 1.2em; display: block; margin-bottom: 5px; }
         .price-box { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
-        .price { font-size: 1.4em; font-weight: 800; color: var(--p); }
+        .price { font-size: 1.4em; font-weight: 800; color: var(--ok); }
         .old-price { color: #b2bec3; text-decoration: line-through; font-size: 0.9em; }
-        .btn-flip { background: #f1f5f9; color: #475569; padding: 8px; border-radius: 12px; font-size: 0.85em; font-weight: 600; margin-top: 10px; }
+        .btn-flip { background: #f1f5f9; color: #475569; padding: 8px; border-radius: 12px; font-size: 0.85em; font-weight: 600; margin-top: 10px; transition: 0.3s;}
 
         .card-back { transform: rotateY(180deg); padding: 25px; background: #f8fafc; text-align: left; overflow-y: auto; }
         .card-back h4 { margin: 0 0 10px 0; color: var(--p); font-family: 'Playfair Display'; font-size: 1.2em;}
@@ -173,22 +148,21 @@
         .btn-add-cart:hover { opacity: 0.9; transform: scale(0.98); }
 
         /* --- CARRINHO DE COMPRAS FLUTUANTE --- */
-        .cart-floater { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--p); color: white; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 16px; display: none; align-items: center; gap: 15px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; transition: 0.3s; border: none;}
+        .cart-floater { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ok); color: white; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 16px; display: none; align-items: center; gap: 15px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 1000; transition: 0.3s; border: none;}
         .cart-floater:hover { transform: translateX(-50%) translateY(-5px); }
         .cart-floater.visible { display: flex; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .cart-badge { background: var(--accent); color: white; border-radius: 50%; padding: 4px 10px; font-size: 14px; }
+        .cart-badge { background: white; color: var(--ok); border-radius: 50%; padding: 4px 10px; font-size: 14px; }
         @keyframes slideUp { from { bottom: -100px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
 
         /* --- MODAL DO CARRINHO & LEGAL --- */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 10vh auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);}
+        .modal-content { background: white; margin: 10vh auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); color: #333;}
         .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #999; transition: 0.2s;}
         .close-modal:hover { color: var(--accent); }
-        .modal-content h3 { font-family: 'Playfair Display'; color: var(--p); margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.5em;}
+        .modal-content h3 { font-family: 'Playfair Display'; color: #2c3e50; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.5em;}
         
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
         .cart-item-info { flex-grow: 1; }
-        
         .cart-item-title { font-weight: 500; font-size: 0.95em; color: #334155; margin-bottom: 3px; }
         .cart-item-price { color: var(--ok); font-weight: 700; font-size: 0.9em; }
         
@@ -196,7 +170,7 @@
         .btn-qty { background: #e2e8f0; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
         .btn-qty:hover { background: #cbd5e1; }
 
-        .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: var(--p); }
+        .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: #2c3e50; }
         
         .mbway-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 0.9em; color: #166534; display: none; }
         .mbway-info strong { color: #15803d; }
@@ -206,24 +180,23 @@
 
         /* --- RODAPÉ --- */
         .footer { 
-            background: transparent; 
-            padding: 60px 20px; 
-            text-align: center; 
-            margin-top: 50px; 
-            position: relative; 
-            z-index: 2; 
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 60px 20px; text-align: center; margin-top: 50px; position: relative; z-index: 2; transition: 0.5s;
         }
         .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 25px; margin-bottom: 30px; }
-        .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
-        .google-maps { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
-        .waze { background: #33ccff; color: white; }
+        .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; color: #333; }
+        .google-maps { background: #f1f3f4; border: 1px solid #dadce0; }
+        .waze { background: #33ccff; color: white; border: none; }
         .legal-footer { padding: 40px 20px; margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
         .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; list-style: none; padding: 0; margin-bottom: 10px; }
-        .legal-links a, .complaints-book a { color: #95a5a6; text-decoration: none; font-size: 0.85em; transition: 0.3s; cursor: pointer; font-weight: 600; }
-        .legal-links a:hover, .complaints-book a:hover { color: var(--p); }
+        .legal-links a, .complaints-book a { color: inherit; opacity: 0.7; text-decoration: none; font-size: 0.85em; transition: 0.3s; cursor: pointer; font-weight: 600; }
+        .legal-links a:hover, .complaints-book a:hover { opacity: 1; }
     </style>
 </head>
 <body>
+
+<video id="seasonal-frame-video" autoplay loop muted playsinline src="SUBSTITUIR_PELO_LINK_DO_VIDEO_AQUI.mp4"></video>
 
 <div id="seasonal-frame"></div>
 <div id="seasonal-overlay"></div>
@@ -246,8 +219,7 @@
         <span class="close-modal" onclick="fecharCarrinho()">×</span>
         <h3>O seu Pedido</h3>
         
-        <div id="cart-items-container">
-        </div>
+        <div id="cart-items-container"></div>
 
         <div class="cart-total-zone">
             <span>Total:</span>
@@ -285,7 +257,7 @@
 
 <div class="footer">
     <h3 style="font-family: 'Playfair Display';">Onde nos encontrar</h3>
-    <p id="footer-morada" style="color: #636e72; font-size: 0.95em;"></p>
+    <p id="footer-morada" style="font-size: 0.95em; opacity: 0.8;"></p>
     <div class="map-buttons">
         <a id="link-gmaps" target="_blank" class="btn-map google-maps"><i class="fas fa-map-marker-alt"></i> Google Maps</a>
         <a id="link-waze" target="_blank" class="btn-map waze"><i class="fab fa-waze"></i> Waze</a>
@@ -300,7 +272,7 @@
         <div class="complaints-book">
             <a href="https://www.livroreclamacoes.pt/Inicio/" target="_blank">Livro de Reclamações</a>
         </div>
-        <p style="font-size: 0.75em; color: #bdc3c7; margin-top: 20px;">© 2026 Portugal Vision. Todos os direitos reservados.</p>
+        <p style="font-size: 0.75em; opacity: 0.5; margin-top: 20px;">© 2026 Portugal Vision. Todos os direitos reservados.</p>
     </div>
 </div>
 
@@ -312,23 +284,22 @@
     let lojaAtual = null;
     let carrinho = []; 
 
-    // TEXTOS LEGAIS BLINDADOS
     const legalTexts = {
         termos: `
-            <h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3>
+            <h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Pedidos e Transações:</strong> Todos os pedidos realizados através desta plataforma são reencaminhados e finalizados diretamente na aplicação de mensagens WhatsApp do respetivo estabelecimento. A Portugal Vision não processa pagamentos diretos, não emite faturas e não se responsabiliza pela confeção, qualidade, entrega ou devolução dos artigos.</p>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>4. Pagamentos:</strong> Caso o estabelecimento disponibilize métodos de pagamento remoto (como MBWay), o cliente deverá enviar o comprovativo de transferência diretamente para o contacto do Lojista. A nossa plataforma não regista nem tem acesso a quaisquer dados bancários.</p>
         `,
         privacidade: `
-            <h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Privacidade e RGPD</h3>
+            <h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Privacidade e RGPD</h3>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Navegação Anónima:</strong> A privacidade do utilizador é a nossa prioridade. A navegação neste catálogo digital <strong>não exige registo, criação de conta, nem a introdução de dados pessoais sensíveis</strong> (como nome, morada ou email) na nossa plataforma.</p>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Envio do Pedido (WhatsApp):</strong> Ao clicar em "Confirmar e Enviar Pedido", o nosso sistema apenas compila os produtos escolhidos numa mensagem de texto formatada. O envio final é feito pelo próprio utilizador, utilizando a sua conta pessoal de WhatsApp. A partir desse momento, a partilha do seu número de telefone e respetivos dados para entrega é feita diretamente com o Estabelecimento (que atua como o Responsável pelo Tratamento desses dados para a execução do contrato).</p>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Dados Analíticos:</strong> A Portugal Vision recolhe apenas dados estatísticos totalmente anónimos (ex: número de visualizações do catálogo, cliques em categorias) para garantir o bom funcionamento do sistema e fornecer métricas de visualização ao Lojista, sem identificar o utilizador final.</p>
         `,
         cookies: `
-            <h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3>
+            <h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade (marketing) neste catálogo.</p>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do seu navegador) <strong>única e exclusivamente</strong> para gerir o seu "Carrinho de Compras". Isto permite que possa navegar pelas categorias e abrir produtos sem que os itens que já selecionou desapareçam.</p>
             <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Consentimento:</strong> Por utilizarmos apenas as tecnologias estritamente essenciais para o funcionamento básico e explícito do serviço que nos solicita (fazer um pedido), estas não requerem o seu consentimento prévio para serem ativadas. Se limpar a "cache" ou os dados do seu navegador, o seu carrinho de compras será esvaziado.</p>
@@ -345,7 +316,6 @@
         try { await _sb.from('lojas').update({ views_total: currentViews + 1 }).eq('id', lojaId); } catch (e) {}
     }
 
-    // --- FUNÇÃO MAGICA: MOLDURAS E FÍSICA DE PARTÍCULAS PREMIUM ---
     function activarEfeitosSazonais(tema) {
         const overlay = document.getElementById('seasonal-overlay');
         const iconBox = document.getElementById('theme-icon');
@@ -353,8 +323,8 @@
         
         let emoji = "", anima = "", total = 0, isBorderOnly = false;
 
-        // Configuração de cada tema (Ícones refinados e Físicas ajustadas)
-        if(tema === 'natal') { emoji = "❄️"; anima = "fallOrganic"; total = 40; iconBox.innerText = "🎄"; }
+        // Como o vídeo já tem neve, para o Natal desativamos as partículas extra de código para não sobrecarregar
+        if(tema === 'natal') { iconBox.innerText = ""; return; } 
         else if(tema === 'namorados') { emoji = "💖"; anima = "floatUpOrganic"; total = 30; iconBox.innerText = "💘"; }
         else if(tema === 'bruxas') { emoji = "🎃"; anima = "floatUpOrganic"; total = 25; iconBox.innerText = "👻"; }
         else if(tema === 'pascoa') { emoji = "🌸"; anima = "fallOrganic"; total = 30; iconBox.innerText = "🐰"; }
@@ -369,11 +339,9 @@
             p.className = 'particle';
             p.innerText = emoji;
             
-            // 1. PROFUNDIDADE (Depth of Field) - Tamanhos e Desfoques variados
-            const size = Math.random() * 1.5 + 0.5; // Entre 0.5em e 2em
+            const size = Math.random() * 1.5 + 0.5;
             p.style.fontSize = size + 'em';
             
-            // Se a partícula for pequena (longe), aplica desfoque e menos opacidade
             if(size < 1) {
                 p.style.filter = 'blur(2px)';
                 p.style.setProperty('--max-opacity', '0.4');
@@ -382,30 +350,25 @@
                 p.style.setProperty('--max-opacity', '0.85');
             }
 
-            // 2. MOVIMENTO ORGÂNICO (Sway) - Oscilação única para cada partícula
-            const sway = (Math.random() - 0.5) * 150; // Vai balançar até 75px para a esq ou dir
+            const sway = (Math.random() - 0.5) * 150;
             p.style.setProperty('--sway-end', sway + 'px');
             p.style.setProperty('--sway-mid', (sway / 2) + 'px');
-            p.style.setProperty('--rot-end', (Math.random() * 720 - 360) + 'deg'); // Rotação caótica
+            p.style.setProperty('--rot-end', (Math.random() * 720 - 360) + 'deg');
             p.style.setProperty('--scale-max', Math.random() * 0.8 + 0.7);
             
-            // 3. POSICIONAMENTO E TIMING
             if (isBorderOnly) {
-                // Brilhos nas bordas
                 p.style.left = (i % 2 === 0) ? (Math.random() * 10 + 2 + "vw") : (Math.random() * 10 + 80 + "vw");
                 p.style.top = Math.random() * 95 + "vh";
-                p.style.animationDuration = (Math.random() * 3 + 2) + "s"; // Pulsa entre 2s e 5s
+                p.style.animationDuration = (Math.random() * 3 + 2) + "s";
                 p.style.animationDelay = Math.random() * 5 + "s";
             } else {
-                // Neve/Corações a ocupar o ecrã inteiro
                 p.style.left = Math.random() * 100 + "vw";
-                p.style.animationDuration = (Math.random() * 6 + 4) + "s"; // Cai suavemente entre 4s e 10s
-                p.style.animationDelay = Math.random() * 10 + "s"; // Espalha o início para não cair tudo de uma vez
+                p.style.animationDuration = (Math.random() * 6 + 4) + "s";
+                p.style.animationDelay = Math.random() * 10 + "s";
             }
             
-            // Aplica a animação
             p.style.animationName = anima;
-            p.style.animationTimingFunction = "ease-in-out"; // Suaviza o início e o fim da curva
+            p.style.animationTimingFunction = "ease-in-out";
             p.style.animationIterationCount = "infinite";
             
             overlay.appendChild(p);
@@ -608,7 +571,7 @@
                                 <i class="fas fa-cart-plus"></i> Adicionar
                             </button>
                             
-                            <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: #94a3b8; margin-top: 15px; cursor: pointer;">
+                            <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;">
                                 Voltar
                             </button>
                         </div>
