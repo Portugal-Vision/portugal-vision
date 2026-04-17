@@ -9,9 +9,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
     
+    <script>
+        const baseManifest = { "name": "Menu", "display": "standalone", "background_color": "#000000", "theme_color": "#000000" };
+        const blobManifest = new Blob([JSON.stringify(baseManifest)], {type: 'application/json'});
+        document.write(`<link id="dynamic-manifest" rel="manifest" href="${URL.createObjectURL(blobManifest)}">`);
+    </script>
     <link id="dynamic-favicon" rel="icon" type="image/png" sizes="192x192" href="">
     <link id="dynamic-apple-icon" rel="apple-touch-icon" sizes="180x180" href="">
-    <link id="dynamic-manifest" rel="manifest" href="">
 
     <title>Catálogo | Portugal Vision</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -417,6 +421,10 @@
             document.getElementById('dynamic-apple-icon').href = loja.logo_url;
             document.title = loja.nome + " | Menu";
 
+            // Limpa o manifest provisório e forçar a App do Restaurante
+            const oldManifest = document.getElementById('dynamic-manifest');
+            if (oldManifest) oldManifest.remove();
+
             // CRIAR MANIFEST JSON DINÂMICO
             const manifestData = {
                 "name": loja.nome,
@@ -425,12 +433,16 @@
                 "background_color": "#000000",
                 "theme_color": "#000000",
                 "icons": [
-                    { "src": loja.logo_url, "sizes": "192x192", "type": "image/png" },
-                    { "src": loja.logo_url, "sizes": "512x512", "type": "image/png" }
+                    { "src": loja.logo_url, "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+                    { "src": loja.logo_url, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
                 ]
             };
             const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
-            document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+            const linkManifest = document.createElement('link');
+            linkManifest.id = 'dynamic-manifest';
+            linkManifest.rel = 'manifest';
+            linkManifest.href = URL.createObjectURL(manifestBlob);
+            document.head.appendChild(linkManifest);
         }
 
         if (loja.mbway_ativo && loja.mbway_num) {
@@ -565,6 +577,13 @@
                 alergeniosHtml = `<div class="alergenios-badge">⚠️ Contém: ${p.alergenios.join(', ')}</div>`;
             }
 
+            // Lógica de Preço com Desconto a vermelho
+            let htmlPreco = `<span class="price">${final}€</span>`;
+            if (desc > 0) {
+                htmlPreco += ` <span class="old-price">${precoFixo.toFixed(2)}€</span>`;
+                htmlPreco += ` <span style="color: var(--accent); font-weight: bold; font-size: 0.9em; margin-left: 5px;">-${desc}%</span>`;
+            }
+
             return `
                 <div class="card-container" id="card-${p.id}">
                     <div class="card-inner">
@@ -576,9 +595,9 @@
                                 <div>
                                     <strong>${p.nome}</strong>
                                     <div class="price-box">
-                                        <span class="price">${final}€</span>
-                                        ${desc > 0 ? `<span class="old-price">${precoFixo.toFixed(2)}€</span>` : ''}
+                                        ${htmlPreco}
                                     </div>
+                                    <div style="font-size: 0.75em; color: #94a3b8; margin-top: 4px; font-weight: 500;">IVA incluído</div>
                                 </div>
                                 <div class="btn-flip"><i class="fas fa-undo"></i> Ver Info</div>
                             </div>
