@@ -22,10 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Regra de Ouro para evitar ecrãs a "dançar" lateralmente nos telemóveis */
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
 
         :root { 
             --p: #2c3e50; 
@@ -40,10 +37,9 @@
             font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); margin: 0; padding-bottom: 80px;
             transition: background 0.5s ease, color 0.5s ease;
             overflow-x: hidden; 
-            -webkit-tap-highlight-color: transparent; /* Remove aquele flash azul feio quando clicas em botões no Android */
+            -webkit-tap-highlight-color: transparent; 
         }
 
-        /* --- TEMAS SAZONAIS (Cores Base para quando NÃO há vídeo) --- */
         body.tema-natal { --p: #c0392b; --ok: #1e6b3e; background-color: transparent; }
         body.tema-namorados { --p: #d63031; --ok: #e84393; background-color: #fff5f5; }
         body.tema-bruxas { --p: #e67e22; --ok: #8e44ad; background-color: #1a1a1a; color: #ecf0f1; }
@@ -55,7 +51,6 @@
         body.tema-pai { --p: #2980b9; --ok: #34495e; background-color: transparent; }
         body.tema-mae { --p: #e84393; --ok: #fd79a8; background-color: transparent; }
 
-        /* --- MODO VÍDEO (DARK MODE AUTOMÁTICO) --- */
         body.video-mode { --p: #fdfbf7; --ok: #27ae60; background-color: #000; color: #fdfbf7; }
         body.video-mode .card-front, body.video-mode .card-back { background: rgba(15, 15, 15, 0.85); color: white; border-color: #333; }
         body.video-mode .cat-btn { background: rgba(30,30,30,0.8); color: #ccc; border-color: #444; }
@@ -64,18 +59,9 @@
         body.video-mode .card-desc { color: #cbd5e1; }
         body.video-mode .btn-flip { background: #333; color: #f8fcfb; }
 
-        /* --- VÍDEO DE FUNDO --- */
-        #seasonal-frame-video {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            object-fit: fill; pointer-events: none; z-index: 0; display: none; 
-        }
+        #seasonal-frame-video { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: fill; pointer-events: none; z-index: 0; display: none; }
 
-        /* --- MOLDURAS ESTÁTICAS (IMAGENS PNG) --- */
-        #seasonal-frame {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            pointer-events: none; z-index: 1; transition: 0.5s;
-            background-size: 100% 100%; background-position: center; background-repeat: no-repeat; transform: translateZ(0); 
-        }
+        #seasonal-frame { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; transition: 0.5s; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; transform: translateZ(0); }
         body.tema-natal #seasonal-frame { background-image: url('URL_DA_IMAGEM_NATAL.png'); } 
         body.tema-namorados #seasonal-frame { background-image: url('URL_DA_IMAGEM_NAMORADOS.png'); }
         body.tema-bruxas #seasonal-frame { background-image: url('URL_DA_IMAGEM_HALLOWEEN.png'); }
@@ -85,36 +71,16 @@
         body.tema-pai #seasonal-frame { background-image: url('URL_DA_IMAGEM_PAI.png'); }
         body.tema-mae #seasonal-frame { background-image: url('URL_DA_IMAGEM_MAE.png'); }
 
-        /* --- ANIMAÇÕES DE ENFEITES PREMIUM --- */
         #seasonal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
         .particle { position: absolute; pointer-events: none; will-change: transform, opacity; }
         
-        @keyframes fallOrganic {
-            0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 0; }
-            10% { opacity: var(--max-opacity, 0.8); }
-            90% { opacity: var(--max-opacity, 0.8); }
-            100% { transform: translate3d(var(--sway-end, 100px), 110vh, 0) rotate(var(--rot-end, 360deg)); opacity: 0; }
-        }
-        @keyframes floatUpOrganic {
-            0% { transform: translate3d(0, 110vh, 0) rotate(0deg) scale(0.5); opacity: 0; }
-            20% { opacity: var(--max-opacity, 0.9); transform: translate3d(var(--sway-mid, -30px), 80vh, 0) rotate(15deg) scale(1); }
-            80% { opacity: var(--max-opacity, 0.9); transform: translate3d(var(--sway-end, 40px), 20vh, 0) rotate(-15deg) scale(1.1); }
-            100% { transform: translate3d(0, -10vh, 0) rotate(0deg) scale(1.2); opacity: 0; }
-        }
-        @keyframes pulseSpark {
-            0% { transform: scale(0) rotate(0deg); opacity: 0; }
-            50% { transform: scale(var(--scale-max, 1.5)) rotate(var(--rot-end, 180deg)); opacity: var(--max-opacity, 1); }
-            100% { transform: scale(0) rotate(var(--rot-end, 360deg)); opacity: 0; }
-        }
+        @keyframes fallOrganic { 0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 0; } 10% { opacity: var(--max-opacity, 0.8); } 90% { opacity: var(--max-opacity, 0.8); } 100% { transform: translate3d(var(--sway-end, 100px), 110vh, 0) rotate(var(--rot-end, 360deg)); opacity: 0; } }
+        @keyframes floatUpOrganic { 0% { transform: translate3d(0, 110vh, 0) rotate(0deg) scale(0.5); opacity: 0; } 20% { opacity: var(--max-opacity, 0.9); transform: translate3d(var(--sway-mid, -30px), 80vh, 0) rotate(15deg) scale(1); } 80% { opacity: var(--max-opacity, 0.9); transform: translate3d(var(--sway-end, 40px), 20vh, 0) rotate(-15deg) scale(1.1); } 100% { transform: translate3d(0, -10vh, 0) rotate(0deg) scale(1.2); opacity: 0; } }
+        @keyframes pulseSpark { 0% { transform: scale(0) rotate(0deg); opacity: 0; } 50% { transform: scale(var(--scale-max, 1.5)) rotate(var(--rot-end, 180deg)); opacity: var(--max-opacity, 1); } 100% { transform: scale(0) rotate(var(--rot-end, 360deg)); opacity: 0; } }
 
-        /* --- ECRÃ DE BLOQUEIO --- */
         #block-screen { position: fixed; inset: 0; background: white; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
 
-        /* --- CABEÇALHO --- */
-        .header { 
-            background: transparent; 
-            padding: 40px 20px 20px; text-align: center; position: relative; z-index: 2; border: none;
-        }
+        .header { background: transparent; padding: 40px 20px 20px; text-align: center; position: relative; z-index: 2; border: none; }
         .logo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 20px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.1);}
 
@@ -125,10 +91,8 @@
         .search-container { padding: 0 20px 30px; max-width: 600px; margin: auto; position: relative; z-index: 2;}
         #search-input { width: 100%; padding: 16px 25px; border-radius: 50px; border: 1px solid rgba(0,0,0,0.1); background: white; font-size: 16px; outline: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.3s;}
 
-        /* --- GRADE DE PRODUTOS --- */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding: 20px; max-width: 1200px; margin: auto; position: relative; z-index: 2; }
         
-        /* --- MÁGICA DOS CARTÕES 3D (FLIP CARDS) --- */
         .card-container { perspective: 1000px; height: 420px; position: relative; z-index: 3; }
         .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; cursor: pointer; border-radius: 24px; box-shadow: var(--card-shadow); }
         .card-container:hover .card-inner { box-shadow: 0 15px 35px rgba(0,0,0,0.2); transform: translateY(-5px); }
@@ -141,7 +105,7 @@
         
         .info { padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;}
         .info strong { font-size: 1.25em; display: block; margin-bottom: 5px; }
-        .price-box { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
+        .price-box { display: flex; align-items: baseline; justify-content: center; gap: 5px; }
         .price { font-size: 1.4em; font-weight: 800; color: var(--ok); }
         .old-price { color: #b2bec3; text-decoration: line-through; font-size: 0.9em; }
         .btn-flip { background: #f1f5f9; color: #475569; padding: 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; margin-top: 15px; transition: 0.3s;}
@@ -154,14 +118,13 @@
         .btn-add-cart { background: var(--ok); color: white; padding: 14px; border-radius: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; width: 100%; cursor: pointer; transition: 0.3s; margin-top: auto;}
         .btn-add-cart:hover { opacity: 0.9; transform: scale(0.98); }
 
-        /* --- CARRINHO DE COMPRAS FLUTUANTE --- */
         .cart-floater { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ok); color: white; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 16px; display: none; align-items: center; gap: 15px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 1000; transition: 0.3s; border: none;}
         .cart-floater:hover { transform: translateX(-50%) translateY(-5px); }
         .cart-floater.visible { display: flex; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .cart-badge { background: white; color: var(--ok); border-radius: 50%; padding: 4px 10px; font-size: 14px; }
         @keyframes slideUp { from { bottom: -100px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
 
-        /* --- MODAL DO CARRINHO & LEGAL --- */
+        /* Estilos do Modal */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 20px;}
         .modal-content { background: white; margin: 5vh auto; padding: 30px; border-radius: 20px; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); color: #333;}
         .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #999; transition: 0.2s; z-index: 10;}
@@ -179,17 +142,21 @@
 
         .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: #2c3e50; }
         
+        /* Estilos dos Inputs de Reserva/Levantamento */
+        .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 14px; background: #f8fafc; transition: 0.3s; margin-bottom: 5px; }
+        .input-form:focus { outline: none; border-color: var(--ok); background: white; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
+        .order-type-box { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .order-type-box label { background: white; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; font-weight: 600; font-size: 0.95em; transition: 0.2s; }
+        .order-type-box label:hover { background: #f1f5f9; }
+        .order-type-box input[type="radio"] { accent-color: var(--ok); transform: scale(1.2); }
+
         .mbway-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 0.9em; color: #166534; display: none; }
         .mbway-info strong { color: #15803d; }
 
         .btn-checkout { background: var(--ok); color: white; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 1.1em; display: block; width: 100%; border: none; cursor: pointer; margin-top: 25px; transition: 0.3s; }
         .btn-checkout:hover { background: #219653; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
 
-        /* --- RODAPÉ --- */
-        .footer { 
-            background: transparent; 
-            padding: 40px 20px; text-align: center; margin-top: 20px; position: relative; z-index: 2; transition: 0.5s; border: none;
-        }
+        .footer { background: transparent; padding: 40px 20px; text-align: center; margin-top: 20px; position: relative; z-index: 2; transition: 0.5s; border: none;}
         .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; margin-bottom: 20px; }
         .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; color: var(--p); background: rgba(255,255,255,0.9); box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s;}
         .btn-map:hover { transform: translateY(-2px); }
@@ -203,7 +170,7 @@
 </head>
 <body>
 
-<video id="seasonal-frame-video" autoplay loop muted playsinline src="https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Natal.mp4"></video>
+<video id="seasonal-frame-video" autoplay loop muted playsinline src=""></video>
 
 <div id="seasonal-frame"></div>
 <div id="seasonal-overlay"></div>
@@ -231,6 +198,42 @@
         <div class="cart-total-zone">
             <span>Total:</span>
             <span id="cart-total-price">0.00€</span>
+        </div>
+
+        <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
+            <h4 style="margin: 0 0 15px 0; color: var(--p); font-size: 1.1em; font-family: 'Playfair Display';">Como deseja encomendar?</h4>
+            
+            <div class="order-type-box">
+                <label>
+                    <input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()">
+                    🥡 Levantamento
+                </label>
+                <label>
+                    <input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()">
+                    🪑 Reserva
+                </label>
+            </div>
+
+            <div id="fields-levantamento" style="display: grid; gap: 10px;">
+                <input type="text" id="cli-nome-lev" placeholder="O seu Nome" class="input-form">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 14px; font-weight: 600; color: #475569; width: 60px;">Hora:</span>
+                    <input type="time" id="cli-hora-lev" class="input-form" style="margin: 0;">
+                </div>
+            </div>
+
+            <div id="fields-reserva" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="text" id="cli-nome-res" placeholder="Nome da Reserva" class="input-form" style="grid-column: span 2;">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
+                    <input type="date" id="cli-data-res" class="input-form" style="margin: 0;">
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora:</span>
+                    <input type="time" id="cli-hora-res" class="input-form" style="margin: 0;">
+                </div>
+                <input type="number" id="cli-pessoas-res" placeholder="Nº de Pessoas" class="input-form" style="grid-column: span 2;" min="1">
+            </div>
         </div>
 
         <div id="mbway-zone" class="mbway-info">
@@ -309,7 +312,7 @@
     const videosSazonais = {
         'natal': 'https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Natal.mp4',
         'namorados': 'https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Dia%20dos%20Namorados.mp4', 
-        'bruxas': 'https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Dia%20das%20Bruxas.mp4',
+        'bruxas': '',
         'pascoa': 'https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Feliz%20Pascoa.mp4',
         'anonovo': 'https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/Feliz%20Ano%20Novo.mp4',
         'carnaval': '',
@@ -421,11 +424,10 @@
             document.getElementById('dynamic-apple-icon').href = loja.logo_url;
             document.title = loja.nome + " | Menu";
 
-            // Limpa o manifest provisório e forçar a App do Restaurante
+            // Limpa o manifest vazio padrão e injeta o da loja
             const oldManifest = document.getElementById('dynamic-manifest');
             if (oldManifest) oldManifest.remove();
 
-            // CRIAR MANIFEST JSON DINÂMICO
             const manifestData = {
                 "name": loja.nome,
                 "short_name": loja.nome.substring(0, 12),
@@ -496,6 +498,21 @@
         else { floater.classList.remove('visible'); fecharCarrinho(); }
     }
 
+    // NOVA FUNÇÃO: Alterna os campos de Levantamento / Reserva
+    function toggleOrderFields() {
+        const tipo = document.querySelector('input[name="tipo_pedido"]:checked').value;
+        const fLev = document.getElementById('fields-levantamento');
+        const fRes = document.getElementById('fields-reserva');
+        
+        if (tipo === 'levantamento') {
+            fLev.style.display = 'grid';
+            fRes.style.display = 'none';
+        } else {
+            fLev.style.display = 'none';
+            fRes.style.display = 'grid';
+        }
+    }
+
     function abrirCarrinho() {
         const container = document.getElementById('cart-items-container');
         let html = '';
@@ -540,7 +557,23 @@
         
         try { await _sb.from('lojas').update({ whatsapp_total: (lojaAtual.whatsapp_total || 0) + 1 }).eq('id', lojaAtual.id); } catch(e){}
 
-        let textoWpp = `Olá! Queria fazer o seguinte pedido:\n\n`;
+        // RECOLHER INFO DO LEVANTAMENTO OU RESERVA
+        const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
+        let infoExtra = "";
+
+        if (tipoPedido === 'levantamento') {
+            const nome = document.getElementById('cli-nome-lev').value || "Não informado";
+            const hora = document.getElementById('cli-hora-lev').value || "O mais breve possível";
+            infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nome}\n*Hora de Recolha:* ${hora}\n\n`;
+        } else {
+            const nome = document.getElementById('cli-nome-res').value || "Não informado";
+            const data = document.getElementById('cli-data-res').value || "Hoje";
+            const hora = document.getElementById('cli-hora-res').value || "A definir";
+            const pessoas = document.getElementById('cli-pessoas-res').value || "1";
+            infoExtra = `*Tipo:* 🪑 Reserva de Mesa com Pedido\n*Nome:* ${nome}\n*Data:* ${data}\n*Hora:* ${hora}\n*Nº Pessoas:* ${pessoas}\n\n`;
+        }
+
+        let textoWpp = `Olá! Gostaria de fazer o seguinte pedido:\n\n${infoExtra}*📝 O Meu Pedido:*\n`;
         let total = 0;
         
         carrinho.forEach(item => {
@@ -577,7 +610,7 @@
                 alergeniosHtml = `<div class="alergenios-badge">⚠️ Contém: ${p.alergenios.join(', ')}</div>`;
             }
 
-            // Lógica de Preço com Desconto a vermelho
+            // HTML DINÂMICO PARA O PREÇO + DESCONTO
             let htmlPreco = `<span class="price">${final}€</span>`;
             if (desc > 0) {
                 htmlPreco += ` <span class="old-price">${precoFixo.toFixed(2)}€</span>`;
