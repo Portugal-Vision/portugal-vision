@@ -76,15 +76,6 @@
             transform: scale(1.00); /* Ligeiro zoom para esconder a marca de água no canto */
         }
 
-        /* --- A MÁGICA EXCLUSIVA PARA O COMPUTADOR (Monitores horizontais) --- */
-        @media (min-width: 1080px) {
-            #seasonal-frame-video {
-                object-fit: contain; /* Impede o zoom monstruoso. O vídeo fica no centro no tamanho real. */
-                opacity: 0.3; /* Ainda mais suave no PC */
-                /* Como temos o mix-blend-mode: screen, os lados não ficam pretos, ficam transparentes! */
-            }
-        }
-
         #seasonal-frame { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; transition: 0.5s; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; transform: translateZ(0); }
         body.tema-natal #seasonal-frame { background-image: url('URL_DA_IMAGEM_NATAL.png'); } 
         body.tema-namorados #seasonal-frame { background-image: url('URL_DA_IMAGEM_NAMORADOS.png'); }
