@@ -60,20 +60,19 @@
         body.video-mode .card-desc { color: #cbd5e1; }
         body.video-mode .btn-flip { background: #333; color: #f8fcfb; }
 
-/* --- O VÍDEO (Comportamento Base para Telemóvel) --- */
+        /* --- VÍDEO LIMPO NO FUNDO --- */
         #seasonal-frame-video { 
             position: fixed; 
             top: 0; 
             left: 0; 
             width: 100vw; 
             height: 100vh; 
-            object-fit: cover; /* No telemóvel: preenche o ecrã todo na perfeição */
+            object-fit: cover; 
             pointer-events: none; 
-            z-index: 0; /* Fica no fundo, atrás da comida */
+            z-index: 0; 
             display: none; 
-            mix-blend-mode: screen; /* Faz o preto desaparecer */
-            opacity: 0.90; /* Suave para não ofuscar os pratos */
-            transform: scale(1); /* Ligeiro zoom para esconder a marca de água no canto */
+            mix-blend-mode: screen; 
+            opacity: 0.6; 
         }
 
         #seasonal-frame { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; transition: 0.5s; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; transform: translateZ(0); }
