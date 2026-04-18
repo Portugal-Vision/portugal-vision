@@ -62,26 +62,20 @@
 
         /* --- A MÁGICA DA MARCA DE ÁGUA E DO FUNDO TRANSPARENTE AQUI --- */
         /* --- A MÁGICA DO VÍDEO NO FUNDO --- */
+       /* --- A MÁGICA DO VÍDEO NO FUNDO --- */
         #seasonal-frame-video { 
             position: fixed; 
             top: 0; 
             left: 0; 
             width: 100vw; 
             height: 100vh; 
-            object-fit: cover; /* Formato perfeito para Telemóvel */
+            object-fit: cover; /* Força a preencher o ecrã todo (tira as faixas pretas laterais no PC) */
             pointer-events: none; 
-            z-index: 0; /* CORREÇÃO 1: Passou de 10 (frente) para 0 (trás de tudo) */
+            z-index: 0; /* Mantém-se atrás dos pratos para se conseguir ler o menu */
             display: none; 
-            mix-blend-mode: screen; /* O preto fica transparente */
-            opacity: 0.6; /* CORREÇÃO 2: Baixei a opacidade para a comida ter mais destaque que o fundo */
-            transform: scale(1.08); /* Esconde a marca de água */
-        }
-
-        /* CORREÇÃO 3: Resolve o problema de ficar esticado no Computador */
-        @media (min-width: 768px) {
-            #seasonal-frame-video {
-                object-fit: contain; /* Impede o vídeo de fazer um zoom gigante em monitores horizontais */
-            }
+            mix-blend-mode: screen; 
+            opacity: 0.35; /* Baixei a opacidade. Assim brilha no fundo, mas não rouba a atenção da comida! */
+            transform: scale(1.08); /* Continua a esconder a marca de água */
         }
 
         #seasonal-frame { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; transition: 0.5s; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; transform: translateZ(0); }
