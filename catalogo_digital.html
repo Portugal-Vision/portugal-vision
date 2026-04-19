@@ -34,7 +34,7 @@
         }
         
         body { 
-            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); margin: 0; padding-bottom: 90px; /* Aumentado para os novos botões */
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); margin: 0; padding-bottom: 90px; 
             transition: background 0.5s ease, color 0.5s ease;
             overflow-x: hidden; 
             -webkit-tap-highlight-color: transparent; 
@@ -341,7 +341,7 @@
     let categoriaSelecionada = 'todos';
     let lojaAtual = null;
     let carrinho = []; 
-    let mesaAtual = null; // NOVA VARIÁVEL: Guarda a mesa se existir no URL
+    let mesaAtual = null; 
 
     const legalTexts = {
         termos: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Pedidos e Transações:</strong> Todos os pedidos realizados através desta plataforma são reencaminhados e finalizados diretamente na aplicação de mensagens WhatsApp do respetivo estabelecimento. A Portugal Vision não processa pagamentos diretos, não emite faturas e não se responsabiliza pela confeção, qualidade, entrega ou devolução dos artigos.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>4. Pagamentos:</strong> Caso o estabelecimento disponibilize métodos de pagamento remoto (como MBWay), o cliente deverá enviar o comprovativo de transferência diretamente para o contacto do Lojista. A nossa plataforma não regista nem tem acesso a quaisquer dados bancários.</p>`,
@@ -359,7 +359,6 @@
         try { await _sb.from('lojas').update({ views_total: currentViews + 1 }).eq('id', lojaId); } catch (e) {}
     }
 
-    // NOVA FUNÇÃO: Chamar Empregado ou Pedir Conta
     async function chamarMesa(tipo) {
         if (!lojaAtual || !mesaAtual) return;
         
@@ -503,7 +502,7 @@
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('loja');
-        mesaAtual = urlParams.get('mesa'); // VERIFICA SE EXISTE MESA NO URL
+        mesaAtual = urlParams.get('mesa'); 
 
         if (!slug) return;
 
@@ -517,22 +516,18 @@
 
         preencherHorariosDropdown();
 
-        // SE TIVER MESA: Adapta a interface!
         if (mesaAtual) {
             document.getElementById('mesa-badge').innerText = `📍 Mesa ${mesaAtual}`;
             document.getElementById('mesa-badge').style.display = 'inline-block';
             
-            // Esconde os campos de Takeaway/Reserva
             document.getElementById('checkout-options-wrapper').style.display = 'none';
             
-            // Altera o botão final
             const btnFinal = document.getElementById('btn-checkout-final');
             btnFinal.innerHTML = `<i class="fas fa-paper-plane"></i> Enviar Pedido - Mesa ${mesaAtual}`;
             
-            // Mostra os botões da mesa ao lado do carrinho
             document.getElementById('btn-chamar-empregado').style.display = 'flex';
             document.getElementById('btn-pedir-conta').style.display = 'flex';
-            document.getElementById('cart-text-btn').innerText = ''; // Encolhe o botão do carrinho
+            document.getElementById('cart-text-btn').innerText = ''; 
         }
 
         const estadoLoja = verificarSeAberto(lojaAtual);
@@ -595,7 +590,6 @@
         }
 
         if (loja.mbway_ativo && loja.mbway_num && !mesaAtual) {
-            // Só mostra o MBway se não for pedido de mesa
             document.getElementById('label-mbway').style.display = 'flex';
             document.getElementById('mbway-phone').innerText = loja.mbway_num;
         }
@@ -714,7 +708,7 @@
         }
     }
 
-    // NOVA FUNÇÃO: Gravar na base de dados em vez de (ou além de) usar o WhatsApp
+    // A MÁGICA ACONTECE NESTA FUNÇÃO:
     async function finalizarPedido() {
         if(carrinho.length === 0) return;
         
@@ -726,19 +720,22 @@
         carrinho.forEach(item => { totalPreco += (item.preco * item.qtde); });
 
         try {
-            // 1. SE FOR MESA: Grava direto no Supabase para a Cozinha
+            // 1. SE FOR MESA: Grava no Supabase a aguardar confirmação do empregado!
             if (mesaAtual) {
                 const { error } = await _sb.from('pedidos').insert([{
                     loja_id: lojaAtual.id,
                     tipo_pedido: 'mesa',
                     mesa: mesaAtual,
                     itens: carrinho,
-                    total: totalPreco
+                    total: totalPreco,
+                    estado: 'aguarda_confirmacao' // <-- ADICIONADO AQUI
                 }]);
 
                 if (error) throw error;
                 
-                alert(`✅ Pedido enviado para a cozinha!\nTotal: ${totalPreco.toFixed(2)}€`);
+                // ALERTA ALTERADO PARA O CLIENTE
+                alert(`✅ Pedido registado!\nO empregado irá à sua mesa num instante para confirmar o pedido.`);
+                
                 carrinho = []; atualizarFloater(); fecharCarrinho();
                 btnFinal.innerText = "Confirmar e Enviar Pedido";
                 btnFinal.disabled = false;
