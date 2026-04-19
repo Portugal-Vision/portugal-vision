@@ -141,7 +141,6 @@
         .btn-mesa-action { background: #2c3e50; color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: none; transition: 0.3s;}
         .btn-mesa-action:hover { transform: translateY(-5px); background: #34495e;}
         
-        /* O botão de chamar o empregado deve estar sempre visível se houver mesa, mesmo com o carrinho vazio */
         .mesa-active-floater { display: flex !important; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -242,10 +241,14 @@
                         <label><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> 🪑 Reserva</label>
                     </div>
                     
-                    <div id="fields-levantamento" style="display: grid; gap: 10px;">
-                        <input type="text" id="cli-nome-lev" placeholder="O seu Nome" class="input-form">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 14px; font-weight: 600; color: #475569; width: 60px;">Hora:</span>
+                    <div id="fields-levantamento" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="text" id="cli-nome-lev" placeholder="O seu Nome" class="input-form" style="grid-column: span 2;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
+                            <input type="date" id="cli-data-lev" class="input-form" style="margin: 0;" onchange="atualizarHorariosDisponiveis('levantamento')">
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora:</span>
                             <select id="cli-hora-lev" class="input-form" style="margin: 0;"></select>
                         </div>
                     </div>
@@ -254,7 +257,7 @@
                         <input type="text" id="cli-nome-res" placeholder="Nome da Reserva" class="input-form" style="grid-column: span 2;">
                         <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
-                            <input type="date" id="cli-data-res" class="input-form" style="margin: 0;">
+                            <input type="date" id="cli-data-res" class="input-form" style="margin: 0;" onchange="atualizarHorariosDisponiveis('reserva')">
                         </div>
                         <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora:</span>
@@ -459,16 +462,85 @@
         }
     }
 
-    function preencherHorariosDropdown() {
-        let options = '<option value="" disabled selected>Escolha a hora...</option>';
-        for (let h = 11; h <= 23; h++) {
-            ['00', '15', '30', '45'].forEach(m => {
-                options += `<option value="${h}:${m}">${h}:${m}</option>`;
-            });
-        }
-        document.getElementById('cli-hora-lev').innerHTML = options;
-        document.getElementById('cli-hora-res').innerHTML = options;
+    // --- NOVA LÓGICA DE HORÁRIOS INTELIGENTES (TIME SLOTS) ---
+    function configurarDatasIniciais() {
+        const hojeIso = new Date().toLocaleDateString('en-CA').split('/').join('-'); // Formato YYYY-MM-DD
+        const inputLev = document.getElementById('cli-data-lev');
+        const inputRes = document.getElementById('cli-data-res');
+        
+        if(inputLev) { inputLev.min = hojeIso; inputLev.value = hojeIso; }
+        if(inputRes) { inputRes.min = hojeIso; inputRes.value = hojeIso; }
     }
+
+    function atualizarHorariosDisponiveis(tipo) {
+        if (!lojaAtual) return;
+        
+        const inputId = tipo === 'levantamento' ? 'cli-data-lev' : 'cli-data-res';
+        const selectId = tipo === 'levantamento' ? 'cli-hora-lev' : 'cli-hora-res';
+        
+        const dataStr = document.getElementById(inputId).value;
+        const selectEl = document.getElementById(selectId);
+        
+        if(!dataStr) return;
+
+        const dataSelecionada = new Date(dataStr);
+        const agora = new Date();
+        const hojeStr = agora.toLocaleDateString('en-CA').split('/').join('-');
+        const isHoje = dataStr === hojeStr;
+
+        // Dia da semana para base de dados (0 a 6, ajustado se necessário)
+        const diaSemanaDb = (dataSelecionada.getDay() + 6) % 7; 
+        
+        const horariosLoja = lojaAtual.horarios || [];
+        const horarioHoje = horariosLoja[diaSemanaDb];
+
+        selectEl.innerHTML = ''; 
+        
+        if (!horarioHoje || horarioHoje.status === 'fechado') {
+            selectEl.innerHTML = '<option value="" disabled selected>Encerrado neste dia</option>';
+            document.getElementById('btn-checkout-final').disabled = true;
+            return;
+        }
+
+        let optionsHtml = '';
+        // Margens de segurança: 30m Takeaway, 60m Reserva
+        const margemMinutos = tipo === 'levantamento' ? 30 : 60; 
+        const agoraEmMinutos = (agora.getHours() * 60) + agora.getMinutes();
+
+        function adicionarTurno(horaInicio, horaFim) {
+            if(!horaInicio || !horaFim || horaInicio === horaFim) return;
+            
+            const [hI, mI] = horaInicio.split(':').map(Number);
+            const [hF, mF] = horaFim.split(':').map(Number);
+            
+            let minStart = (hI * 60) + mI;
+            let minEnd = (hF * 60) + mF;
+
+            // Bloqueio de segurança 1 hora antes do fecho para reservas
+            if (tipo === 'reserva') minEnd -= 60; 
+
+            for (let tempo = minStart; tempo <= minEnd; tempo += 15) {
+                // Se for hoje, oculta horas passadas + a margem
+                if (isHoje && tempo <= (agoraEmMinutos + margemMinutos)) continue;
+                
+                const h = Math.floor(tempo / 60).toString().padStart(2, '0');
+                const m = (tempo % 60).toString().padStart(2, '0');
+                optionsHtml += `<option value="${h}:${m}">${h}:${m}</option>`;
+            }
+        }
+
+        adicionarTurno(horarioHoje.m1, horarioHoje.m2);
+        adicionarTurno(horarioHoje.t1, horarioHoje.t2);
+
+        if (optionsHtml === '') {
+            selectEl.innerHTML = '<option value="" disabled selected>Sem horários disponíveis hoje</option>';
+            document.getElementById('btn-checkout-final').disabled = true;
+        } else {
+            selectEl.innerHTML = '<option value="" disabled selected>Escolha a hora...</option>' + optionsHtml;
+            document.getElementById('btn-checkout-final').disabled = false;
+        }
+    }
+    // -------------------------------------------------------------
 
     function verificarSeAberto(loja) {
         const agora = new Date();
@@ -477,23 +549,6 @@
             const hojeIso = agora.toISOString().split('T')[0];
             if (hojeIso >= loja.ferias_inicio && hojeIso <= loja.ferias_fim) {
                 return { aberto: false, motivo: `Em férias de ${loja.ferias_inicio} até ${loja.ferias_fim}.` };
-            }
-        }
-        if (loja.horarios) {
-            const diaDb = (agora.getDay() + 6) % 7; 
-            const horarioHoje = loja.horarios[diaDb];
-            if (!horarioHoje || horarioHoje.status === 'fechado') return { aberto: false, motivo: "Encerrado no dia de hoje." };
-
-            const horaStr = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
-            const m1 = horarioHoje.m1 || "00:00"; const m2 = horarioHoje.m2 || "00:00";
-            const t1 = horarioHoje.t1 || "00:00"; const t2 = horarioHoje.t2 || "00:00";
-
-            const manhaAberto = (horaStr >= m1 && horaStr <= m2 && m1 !== m2);
-            const tardeAberto = (horaStr >= t1 && horaStr <= t2 && t1 !== t2);
-
-            if (!manhaAberto && !tardeAberto) {
-                const textoHorario = `O nosso horário hoje: ${m1}-${m2} | ${t1}-${t2}`.replace(/00:00-00:00/g, '').replace(/ \| $/,'').trim();
-                return { aberto: false, motivo: `Fechado no momento. ${textoHorario}` };
             }
         }
         return { aberto: true, motivo: "" };
@@ -514,7 +569,9 @@
 
         lojaAtual = loja;
 
-        preencherHorariosDropdown();
+        // Ativa a lógica dos dias e horas inteligentes
+        configurarDatasIniciais();
+        atualizarHorariosDisponiveis('levantamento');
 
         if (mesaAtual) {
             document.getElementById('mesa-badge').innerText = `📍 Mesa ${mesaAtual}`;
@@ -652,9 +709,11 @@
         if (tipo === 'levantamento') {
             fLev.style.display = 'grid';
             fRes.style.display = 'none';
+            atualizarHorariosDisponiveis('levantamento');
         } else {
             fLev.style.display = 'none';
             fRes.style.display = 'grid';
+            atualizarHorariosDisponiveis('reserva');
         }
     }
 
@@ -708,7 +767,7 @@
         }
     }
 
-    // A MÁGICA ACONTECE NESTA FUNÇÃO:
+    // A MÁGICA DE GRAVAR OS DADOS E REGRAS DA MESA
     async function finalizarPedido() {
         if(carrinho.length === 0) return;
         
@@ -728,18 +787,17 @@
                     mesa: mesaAtual,
                     itens: carrinho,
                     total: totalPreco,
-                    estado: 'aguarda_confirmacao' // <-- ADICIONADO AQUI
+                    estado: 'aguarda_confirmacao' // <-- REGRA DA MESA APLICADA
                 }]);
 
                 if (error) throw error;
                 
-                // ALERTA ALTERADO PARA O CLIENTE
                 alert(`✅ Pedido registado!\nO empregado irá à sua mesa num instante para confirmar o pedido.`);
                 
                 carrinho = []; atualizarFloater(); fecharCarrinho();
                 btnFinal.innerText = "Confirmar e Enviar Pedido";
                 btnFinal.disabled = false;
-                return; // Pára aqui, não abre o WhatsApp para as mesas
+                return; // Pára aqui, não abre o WhatsApp
             }
 
             // 2. SE NÃO FOR MESA (Takeaway/Reserva): Grava no Supabase e abre o WhatsApp
@@ -750,13 +808,22 @@
 
             if (tipoPedido === 'levantamento') {
                 nomeCliente = document.getElementById('cli-nome-lev').value || "Não informado";
-                const hora = document.getElementById('cli-hora-lev').value || "O mais breve possível";
-                infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nomeCliente}\n*Hora de Recolha:* ${hora}\n*Pagamento:* ${tipoPagamento}\n\n`;
+                const dataStr = document.getElementById('cli-data-lev').value;
+                const hora = document.getElementById('cli-hora-lev').value;
+                if(!hora) {
+                    alert("Por favor, selecione uma hora de recolha.");
+                    btnFinal.innerText = "Confirmar e Enviar Pedido"; btnFinal.disabled = false; return;
+                }
+                infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nomeCliente}\n*Data:* ${dataStr}\n*Hora de Recolha:* ${hora}\n*Pagamento:* ${tipoPagamento}\n\n`;
             } else {
                 nomeCliente = document.getElementById('cli-nome-res').value || "Não informado";
                 const data = document.getElementById('cli-data-res').value || "Hoje";
-                const hora = document.getElementById('cli-hora-res').value || "A definir";
+                const hora = document.getElementById('cli-hora-res').value;
                 const pessoas = document.getElementById('cli-pessoas-res').value || "1";
+                if(!hora) {
+                    alert("Por favor, selecione uma hora para a reserva.");
+                    btnFinal.innerText = "Confirmar e Enviar Pedido"; btnFinal.disabled = false; return;
+                }
                 infoExtra = `*Tipo:* 🪑 Reserva de Mesa com Pedido\n*Nome:* ${nomeCliente}\n*Data:* ${data}\n*Hora:* ${hora}\n*Nº Pessoas:* ${pessoas}\n*Pagamento:* ${tipoPagamento}\n\n`;
             }
 
