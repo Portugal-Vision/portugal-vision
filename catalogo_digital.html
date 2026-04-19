@@ -141,6 +141,7 @@
         .btn-mesa-action { background: #2c3e50; color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: none; transition: 0.3s;}
         .btn-mesa-action:hover { transform: translateY(-5px); background: #34495e;}
         
+        /* O botão de chamar o empregado deve estar sempre visível se houver mesa, mesmo com o carrinho vazio */
         .mesa-active-floater { display: flex !important; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -345,6 +346,9 @@
     let lojaAtual = null;
     let carrinho = []; 
     let mesaAtual = null; 
+
+    // Mapeamento dos dias adicionado aqui:
+    const nomeDiasInt = {1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo"};
 
     const legalTexts = {
         termos: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Pedidos e Transações:</strong> Todos os pedidos realizados através desta plataforma são reencaminhados e finalizados diretamente na aplicação de mensagens WhatsApp do respetivo estabelecimento. A Portugal Vision não processa pagamentos diretos, não emite faturas e não se responsabiliza pela confeção, qualidade, entrega ou devolução dos artigos.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>4. Pagamentos:</strong> Caso o estabelecimento disponibilize métodos de pagamento remoto (como MBWay), o cliente deverá enviar o comprovativo de transferência diretamente para o contacto do Lojista. A nossa plataforma não regista nem tem acesso a quaisquer dados bancários.</p>`,
@@ -905,6 +909,12 @@ function adicionarTurno(horaInicio, horaFim) {
                 htmlPreco += ` <span style="color: var(--accent); font-weight: bold; font-size: 0.9em; margin-left: 5px;">-${desc}%</span>`;
             }
 
+            // A MUDANÇA É AQUI: Cria a etiqueta visual a indicar o dia do prato se ele tiver um dia configurado
+            let badgeDia = '';
+            if (p.dia_semana !== null && p.dia_semana !== undefined && p.dia_semana !== "") {
+                badgeDia = `<div style="font-size: 11px; color: var(--s); background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> Especial de ${nomeDiasInt[p.dia_semana]}</div>`;
+            }
+
             return `
                 <div class="card-container" id="card-${p.id}">
                     <div class="card-inner">
@@ -918,6 +928,7 @@ function adicionarTurno(horaInicio, horaFim) {
                                     <div class="price-box">
                                         ${htmlPreco}
                                     </div>
+                                    ${badgeDia}
                                     <div style="font-size: 0.75em; color: #94a3b8; margin-top: 4px; font-weight: 500;">IVA incluído</div>
                                 </div>
                                 <div class="btn-flip"><i class="fas fa-undo"></i> Ver Info</div>
