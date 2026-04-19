@@ -110,7 +110,8 @@
         .card-front, .card-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 24px; background: white; border: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden; transition: 0.5s; }
         
         .img-container { width: 100%; height: 210px; overflow: hidden; flex-shrink: 0; position: relative;}
-        .card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px 24px 0 0; }
+        .card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px 24px 0 0; transition: 0.3s; }
+        .card-container.esgotado .card-front img { filter: grayscale(1); opacity: 0.7; }
         
         .info { padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;}
         .info strong { font-size: 1.25em; display: block; margin-bottom: 5px; }
@@ -244,6 +245,7 @@
                     
                     <div id="fields-levantamento" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <input type="text" id="cli-nome-lev" placeholder="O seu Nome" class="input-form" style="grid-column: span 2;">
+                        <input type="tel" id="cli-telefone-lev" placeholder="Telemóvel (Obrigatório)" class="input-form" style="grid-column: span 2;">
                         <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
                             <input type="date" id="cli-data-lev" class="input-form" style="margin: 0;" onchange="atualizarHorariosDisponiveis('levantamento')">
@@ -256,6 +258,7 @@
                     
                     <div id="fields-reserva" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <input type="text" id="cli-nome-res" placeholder="Nome da Reserva" class="input-form" style="grid-column: span 2;">
+                        <input type="tel" id="cli-telefone-res" placeholder="Telemóvel (Obrigatório)" class="input-form" style="grid-column: span 2;">
                         <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
                             <input type="date" id="cli-data-res" class="input-form" style="margin: 0;" onchange="atualizarHorariosDisponiveis('reserva')">
@@ -347,7 +350,6 @@
     let carrinho = []; 
     let mesaAtual = null; 
 
-    // Mapeamento dos dias adicionado aqui:
     const nomeDiasInt = {1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo"};
 
     const legalTexts = {
@@ -476,7 +478,7 @@
         if(inputRes) { inputRes.min = hojeIso; inputRes.value = hojeIso; }
     }
 
-function atualizarHorariosDisponiveis(tipo) {
+    function atualizarHorariosDisponiveis(tipo) {
         if (!lojaAtual) return;
         
         const inputId = tipo === 'levantamento' ? 'cli-data-lev' : 'cli-data-res';
@@ -512,7 +514,7 @@ function atualizarHorariosDisponiveis(tipo) {
         const margemMinutos = tipo === 'levantamento' ? 30 : 60; 
         const agoraEmMinutos = (agora.getHours() * 60) + agora.getMinutes();
 
-function adicionarTurno(horaInicio, horaFim) {
+        function adicionarTurno(horaInicio, horaFim) {
             if(!horaInicio || !horaFim || horaInicio === horaFim) return;
             
             const [hI, mI] = horaInicio.split(':').map(Number);
@@ -525,7 +527,7 @@ function adicionarTurno(horaInicio, horaFim) {
             if (tipo === 'reserva') {
                 minEnd -= 60; // Última reserva 1 hora antes de fechar a porta
             } else if (tipo === 'levantamento') {
-                minEnd -= 60; // Último takeaway 30 minutos antes de fechar a porta
+                minEnd -= 60; // Último takeaway 60 minutos antes de fechar a porta
             }
 
             for (let tempo = minStart; tempo <= minEnd; tempo += 15) {
@@ -594,6 +596,16 @@ function adicionarTurno(horaInicio, horaFim) {
         // Ativa a lógica dos dias e horas inteligentes
         configurarDatasIniciais();
         atualizarHorariosDisponiveis('levantamento');
+
+        // MÁGICA DO TAKEAWAY: Oculta a opção se estiver desativada pelo lojista
+        if (lojaAtual.takeaway_ativo === false) {
+            const inputLevantamento = document.querySelector('input[name="tipo_pedido"][value="levantamento"]');
+            if (inputLevantamento && inputLevantamento.parentNode) {
+                inputLevantamento.parentNode.style.display = 'none';
+            }
+            document.querySelector('input[name="tipo_pedido"][value="reserva"]').checked = true;
+            toggleOrderFields(); 
+        }
 
         if (mesaAtual) {
             document.getElementById('mesa-badge').innerText = `📍 Mesa ${mesaAtual}`;
@@ -727,14 +739,17 @@ function adicionarTurno(horaInicio, horaFim) {
         const tipo = document.querySelector('input[name="tipo_pedido"]:checked').value;
         const fLev = document.getElementById('fields-levantamento');
         const fRes = document.getElementById('fields-reserva');
+        const pSec = document.getElementById('payment-section');
         
         if (tipo === 'levantamento') {
             fLev.style.display = 'grid';
             fRes.style.display = 'none';
+            pSec.style.display = 'block'; // Mostra pagamento
             atualizarHorariosDisponiveis('levantamento');
         } else {
             fLev.style.display = 'none';
             fRes.style.display = 'grid';
+            pSec.style.display = 'none'; // Esconde pagamento nas reservas
             atualizarHorariosDisponiveis('reserva');
         }
     }
@@ -789,7 +804,6 @@ function adicionarTurno(horaInicio, horaFim) {
         }
     }
 
-    // A MÁGICA DE GRAVAR OS DADOS E REGRAS DA MESA
     async function finalizarPedido() {
         if(carrinho.length === 0) return;
         
@@ -801,7 +815,6 @@ function adicionarTurno(horaInicio, horaFim) {
         carrinho.forEach(item => { totalPreco += (item.preco * item.qtde); });
 
         try {
-            // 1. SE FOR MESA: Grava no Supabase a aguardar confirmação do empregado!
             if (mesaAtual) {
                 const { error } = await _sb.from('pedidos').insert([{
                     loja_id: lojaAtual.id,
@@ -809,7 +822,7 @@ function adicionarTurno(horaInicio, horaFim) {
                     mesa: mesaAtual,
                     itens: carrinho,
                     total: totalPreco,
-                    estado: 'aguarda_confirmacao' // <-- REGRA DA MESA APLICADA
+                    estado: 'aguarda_confirmacao'
                 }]);
 
                 if (error) throw error;
@@ -819,54 +832,62 @@ function adicionarTurno(horaInicio, horaFim) {
                 carrinho = []; atualizarFloater(); fecharCarrinho();
                 btnFinal.innerText = "Confirmar e Enviar Pedido";
                 btnFinal.disabled = false;
-                return; // Pára aqui, não abre o WhatsApp
+                return;
             }
 
-            // 2. SE NÃO FOR MESA (Takeaway/Reserva): Grava no Supabase e abre o WhatsApp
             const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
-            const tipoPagamento = document.querySelector('input[name="tipo_pagamento"]:checked').value;
             let infoExtra = "";
             let nomeCliente = "";
+            let telCliente = "";
+            let tipoPagamento = "No Local";
 
             if (tipoPedido === 'levantamento') {
-                nomeCliente = document.getElementById('cli-nome-lev').value || "Não informado";
+                tipoPagamento = document.querySelector('input[name="tipo_pagamento"]:checked').value;
+                nomeCliente = document.getElementById('cli-nome-lev').value;
+                telCliente = document.getElementById('cli-telefone-lev').value;
                 const dataStr = document.getElementById('cli-data-lev').value;
                 const hora = document.getElementById('cli-hora-lev').value;
-                if(!hora) {
-                    alert("Por favor, selecione uma hora de recolha.");
+                
+                if(!nomeCliente || !telCliente || !hora) {
+                    alert("Por favor, preencha o Nome, Telemóvel e Hora de recolha.");
                     btnFinal.innerText = "Confirmar e Enviar Pedido"; btnFinal.disabled = false; return;
                 }
-                infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nomeCliente}\n*Data:* ${dataStr}\n*Hora de Recolha:* ${hora}\n*Pagamento:* ${tipoPagamento}\n\n`;
+                infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${dataStr}\n*Hora:* ${hora}\n*Pagamento:* ${tipoPagamento}\n\n`;
             } else {
-                nomeCliente = document.getElementById('cli-nome-res').value || "Não informado";
+                nomeCliente = document.getElementById('cli-nome-res').value;
+                telCliente = document.getElementById('cli-telefone-res').value;
                 const data = document.getElementById('cli-data-res').value || "Hoje";
                 const hora = document.getElementById('cli-hora-res').value;
                 const pessoas = document.getElementById('cli-pessoas-res').value || "1";
-                if(!hora) {
-                    alert("Por favor, selecione uma hora para a reserva.");
+                
+                if(!nomeCliente || !telCliente || !hora) {
+                    alert("Por favor, preencha o Nome, Telemóvel e Hora para a reserva.");
                     btnFinal.innerText = "Confirmar e Enviar Pedido"; btnFinal.disabled = false; return;
                 }
-                infoExtra = `*Tipo:* 🪑 Reserva de Mesa com Pedido\n*Nome:* ${nomeCliente}\n*Data:* ${data}\n*Hora:* ${hora}\n*Nº Pessoas:* ${pessoas}\n*Pagamento:* ${tipoPagamento}\n\n`;
+                infoExtra = `*Tipo:* 🪑 Reserva de Mesa\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${data}\n*Hora:* ${hora}\n*Pax:* ${pessoas}\n\n`;
             }
 
-            // Grava no Supabase (Para estatística e gestão)
             await _sb.from('pedidos').insert([{
                 loja_id: lojaAtual.id,
                 tipo_pedido: tipoPedido,
                 nome_cliente: nomeCliente,
+                telefone: telCliente,
                 itens: carrinho,
                 total: totalPreco,
-                metodo_pagamento: tipoPagamento
+                metodo_pagamento: tipoPagamento,
+                estado: 'aguarda_confirmacao'
             }]);
 
-            // Formata o WhatsApp
+            // Soma as métricas do WhatsApp
+            await _sb.from('lojas').update({ whatsapp_total: (lojaAtual.whatsapp_total || 0) + 1 }).eq('id', lojaAtual.id);
+
             let textoWpp = `Olá! Gostaria de fazer o seguinte pedido:\n\n${infoExtra}*📝 O Meu Pedido:*\n`;
             carrinho.forEach(item => {
                 textoWpp += `▪️ ${item.qtde}x ${item.nome} (${(item.preco * item.qtde).toFixed(2)}€)\n`;
             });
             textoWpp += `\n*TOTAL: ${totalPreco.toFixed(2)}€*`;
             
-            if (tipoPagamento === 'MBWay' && lojaAtual.mbway_ativo) { 
+            if (tipoPedido === 'levantamento' && tipoPagamento === 'MBWay' && lojaAtual.mbway_ativo) { 
                 textoWpp += `\n\n(Vou enviar o comprovativo de transferência MBWay a seguir.)`; 
             }
             
@@ -909,17 +930,30 @@ function adicionarTurno(horaInicio, horaFim) {
                 htmlPreco += ` <span style="color: var(--accent); font-weight: bold; font-size: 0.9em; margin-left: 5px;">-${desc}%</span>`;
             }
 
-            // A MUDANÇA É AQUI: Cria a etiqueta visual a indicar o dia do prato se ele tiver um dia configurado
+            // MÁGICA DO STOCK: Verifica se está Esgotado
+            let isEsgotado = false;
+            if (p.stock !== null && p.stock !== undefined && p.stock !== "") { 
+                if (parseInt(p.stock) <= 0) isEsgotado = true; 
+            }
+
+            // MÁGICA DO PRATO DO DIA: Cria a etiqueta visual
             let badgeDia = '';
             if (p.dia_semana !== null && p.dia_semana !== undefined && p.dia_semana !== "") {
                 badgeDia = `<div style="font-size: 11px; color: var(--s); background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> Especial de ${nomeDiasInt[p.dia_semana]}</div>`;
             }
 
+            let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-times-circle"></i> Esgotado</div>` : '';
+            
+            let btnAdicionar = isEsgotado 
+                ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Esgotado de momento</button>`
+                : `<button onclick="adicionarAoCarrinho(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
+
             return `
-                <div class="card-container" id="card-${p.id}">
+                <div class="card-container ${isEsgotado ? 'esgotado' : ''}" id="card-${p.id}">
                     <div class="card-inner">
                         <div class="card-front" onclick="virarCartao(${p.id})">
                             <div class="img-container">
+                                ${badgeEsgotado}
                                 <img src="${p.imagem_url || 'https://via.placeholder.com/400x300?text=Sem+Imagem'}" loading="lazy">
                             </div>
                             <div class="info">
@@ -939,9 +973,7 @@ function adicionarTurno(horaInicio, horaFim) {
                             <h4>${p.nome}</h4>
                             <div class="card-desc">${p.descricao ? p.descricao.replace(/\n/g, '<br>') : 'Sem descrição disponível.'}</div>
                             ${alergeniosHtml}
-                            <button onclick="adicionarAoCarrinho(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFixo}, ${desc}, event)" class="btn-add-cart">
-                                <i class="fas fa-cart-plus"></i> Adicionar
-                            </button>
+                            ${btnAdicionar}
                             <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;">
                                 Voltar
                             </button>
