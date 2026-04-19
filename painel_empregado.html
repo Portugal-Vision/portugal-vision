@@ -9,394 +9,290 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #f1f5f9; --card: #ffffff; --text: #1e293b; --primary: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* ECRÃ DE LOGIN */
         #login-screen { position: fixed; inset: 0; background: var(--text); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
         .input-form { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
         .btn-login { background: var(--primary); color: white; width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-login:hover { background: #2563eb; }
-
-        /* DASHBOARD (CABEÇALHO) */
-        header { background: var(--card); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); z-index: 10; }
-        .logo-area h1 { margin: 0; font-size: 1.5em; display: flex; align-items: center; gap: 10px; }
+        
+        header { background: var(--card); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); z-index: 10; flex-shrink: 0; }
+        .logo-area h1 { margin: 0; font-size: 1.4em; display: flex; align-items: center; gap: 10px; }
         .status-dot { width: 12px; height: 12px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
+        
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .btn-header { background: #e2e8f0; color: var(--text); border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-header:hover { background: #cbd5e1; }
 
-        /* ÁREA PRINCIPAL (GRELHA) */
-        .main-content { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; padding: 20px; flex-grow: 1; overflow: hidden; }
+        /* A CORREÇÃO DO SCROLL */
+        .main-content { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; padding: 20px; flex-grow: 1; overflow: hidden; height: calc(100vh - 70px); }
         @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; overflow-y: auto; } }
-        
-        .coluna { background: transparent; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px; }
+        .coluna { display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px; padding-bottom: 80px; }
+        .coluna::-webkit-scrollbar { width: 6px; } .coluna::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .coluna-header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px 20px; border-radius: 15px; font-weight: bold; font-size: 1.2em; position: sticky; top: 0; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        
         .badge { background: #e2e8f0; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; }
-
-        /* CARTÕES DE AVISO E PEDIDO */
-        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; gap: 15px; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        
-        .card.chamada-empregado { border-left-color: var(--warning); }
-        .card.chamada-conta { border-left-color: var(--danger); }
-        
-        /* Cores base para os tipos de serviço */
-        .card.pedido-mesa { border-left-color: var(--primary); }
-        .card.pedido-takeaway { border-left-color: #8b5cf6; } /* Roxo para Takeaway */
-        .card.pedido-reserva { border-left-color: #14b8a6; } /* Teal para Reserva */
-        
-        /* Destaque quando aguarda confirmação na mesa */
+        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; gap: 15px; }
+        .card.chamada-empregado { border-left-color: var(--warning); } .card.chamada-conta { border-left-color: var(--danger); }
+        .card.pedido-mesa { border-left-color: var(--primary); } .card.pedido-takeaway { border-left-color: #8b5cf6; } .card.pedido-reserva { border-left-color: #14b8a6; }
         .card.aguarda-confirmacao { border-left-color: var(--warning); background: #fffbeb; }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; }
         .mesa-tag { font-size: 1.5em; font-weight: 800; display: flex; align-items: center; gap: 8px; }
         .time-tag { color: #64748b; font-size: 0.9em; }
-
         .card-body { font-size: 1.1em; color: #475569; }
-        .itens-lista { list-style: none; padding: 0; margin: 0; font-size: 0.95em; }
-        .itens-lista li { padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
-        .itens-lista li:last-child { border: none; }
+        .itens-lista { list-style: none; padding: 0; margin: 0; font-size: 0.95em; } .itens-lista li { padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+        .ronda-box { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #e2e8f0;}
+        .ronda-title { font-size: 0.8em; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 5px; display: flex; justify-content: space-between;}
         
         .card-footer { display: flex; gap: 10px; margin-top: auto; }
         .btn-action { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 1em; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        
-        .btn-resolve { background: #f1f5f9; color: var(--text); }
-        .btn-resolve:hover { background: #e2e8f0; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: #059669; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-warning:hover { background: #d97706; }
+        .btn-resolve { background: #f1f5f9; color: var(--text); } .btn-resolve:hover { background: #e2e8f0; }
+        .btn-success { background: var(--success); color: white; } .btn-warning { background: var(--warning); color: white; }
+        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; } .empty-state i { font-size: 3em; margin-bottom: 15px; opacity: 0.5; }
 
-        /* ESTADO VAZIO */
-        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
-        .empty-state i { font-size: 3em; margin-bottom: 15px; opacity: 0.5; }
+        /* O BOTÃO FLUTUANTE POS */
+        .fab-pos { position: fixed; bottom: 30px; right: 30px; background: var(--primary); color: white; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5); cursor: pointer; z-index: 100; transition: 0.3s; border: none;}
+        .fab-pos:hover { transform: scale(1.1); }
+
+        /* MODAIS */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; padding: 20px; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 100%; max-width: 800px; max-height: 90vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
+        .modal-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; }
         
-        .ronda-box { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #e2e8f0;}
-        .ronda-title { font-size: 0.8em; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 5px; display: flex; justify-content: space-between;}
+        /* POS Grid */
+        .pos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .pos-item { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; cursor: pointer; text-align: center; transition: 0.2s; user-select: none; }
+        .pos-item:active { background: #e2e8f0; transform: scale(0.95); }
+        .pos-cart { background: #f8fafc; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px dashed #cbd5e1; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: monospace; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-box">
-        <h2 style="margin-top:0;">📱 Tablet de Sala</h2>
-        <p style="color: #64748b; margin-bottom: 25px;">Faça login para ligar o ecrã à sua loja.</p>
+        <h2 style="margin-top:0;"><i class="fas fa-tablet-alt"></i> Painel de Sala</h2>
+        <p style="color: #64748b; margin-bottom: 25px;">Faça login para iniciar o turno.</p>
         <input type="email" id="email" class="input-form" placeholder="Email do Lojista">
         <input type="password" id="password" class="input-form" placeholder="Password">
-        <button onclick="fazerLogin()" class="btn-login" id="btn-login-text">Entrar</button>
+        <button onclick="fazerLogin()" class="btn-login" id="btn-login-text"><i class="fas fa-sign-in-alt"></i> Entrar no Turno</button>
     </div>
 </div>
 
-<div id="dashboard-screen" style="display: none;">
+<div id="dashboard-screen" style="display: none; height: 100%; flex-direction: column;">
     <header>
-        <div class="logo-area">
-            <h1><span class="status-dot"></span> <span id="nome-restaurante">A carregar...</span></h1>
+        <div class="logo-area"><h1><span class="status-dot"></span> <span id="nome-restaurante">A carregar...</span></h1></div>
+        <div class="header-actions">
+            <button class="btn-header" onclick="abrirHistorico()"><i class="fas fa-file-invoice"></i> Histórico & Fecho</button>
+            <button onclick="logout()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 1.5em;"><i class="fas fa-power-off"></i></button>
         </div>
-        <button onclick="logout()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 1.5em;"><i class="fas fa-sign-out-alt"></i></button>
     </header>
 
     <div class="main-content">
         <div class="coluna">
-            <div class="coluna-header">
-                <span>🛎️ Chamadas & Contas</span>
-                <span class="badge" id="count-chamadas">0</span>
+            <div class="coluna-header"><span><i class="fas fa-concierge-bell"></i> Apoio à Sala</span><span class="badge" id="count-chamadas">0</span></div>
+            <div id="lista-chamadas"><div class="empty-state"><i class="fas fa-check-circle"></i><p>A sala está tranquila.</p></div></div>
+        </div>
+        <div class="coluna">
+            <div class="coluna-header"><span><i class="fas fa-receipt"></i> Gestão de Pedidos</span><span class="badge" id="count-pedidos">0</span></div>
+            <div id="lista-pedidos"><div class="empty-state"><i class="fas fa-utensils"></i><p>Nenhum pedido em curso.</p></div></div>
+        </div>
+    </div>
+    
+    <button class="fab-pos" onclick="abrirPOS()" title="Novo Pedido Manual"><i class="fas fa-plus"></i></button>
+</div>
+
+<div id="modal-pos" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin:0;"><i class="fas fa-cash-register"></i> Novo Pedido Manual</h3>
+            <span class="close-modal" onclick="fecharModal('modal-pos')"><i class="fas fa-times"></i></span>
+        </div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="text" id="pos-mesa" class="input-form" placeholder="Nº da Mesa ou Nome do Cliente (Takeaway)" style="margin:0;">
+            
+            <div class="pos-grid" id="pos-produtos"></div>
+            
+            <div class="pos-cart">
+                <h4 style="margin:0 0 10px 0;">Resumo do Pedido</h4>
+                <ul id="pos-cart-list" class="itens-lista" style="margin-bottom: 10px;"></ul>
+                <strong style="font-size: 1.2em;">Total: <span id="pos-total">0.00</span>€</strong>
             </div>
-            <div id="lista-chamadas">
-                <div class="empty-state"><i class="fas fa-mug-hot"></i><p>A sala está tranquila.</p></div>
+            <button class="btn-login" onclick="enviarPedidoPOS()"><i class="fas fa-fire"></i> Enviar Direto para a Cozinha</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-historico" class="modal">
+    <div class="modal-content">
+        <div class="modal-header no-print">
+            <h3 style="margin:0;"><i class="fas fa-archive"></i> Fecho de Caixa (Hoje)</h3>
+            <span class="close-modal" onclick="fecharModal('modal-historico')"><i class="fas fa-times"></i></span>
+        </div>
+        <div class="modal-body" id="print-area">
+            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #ccc; padding-bottom: 10px;">
+                <h2 id="print-loja-nome" style="margin: 0;">Restaurante</h2>
+                <p style="margin: 5px 0;">Relatório Diário de Vendas</p>
+                <p style="margin: 0;" id="print-data"></p>
+            </div>
+            
+            <div id="historico-lista" style="margin-bottom: 20px;"></div>
+            
+            <div style="border-top: 2px dashed #ccc; padding-top: 15px; font-size: 1.3em;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Qtd Pedidos:</span><strong id="hist-qtd">0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Faturação Total:</span><strong id="hist-total">0.00€</strong></div>
             </div>
         </div>
-
-        <div class="coluna">
-            <div class="coluna-header">
-                <span>📝 Gestão de Pedidos</span>
-                <span class="badge" id="count-pedidos">0</span>
-            </div>
-            <div id="lista-pedidos">
-                <div class="empty-state"><i class="fas fa-utensils"></i><p>Nenhum pedido pendente.</p></div>
-            </div>
+        <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; gap:10px;" class="no-print">
+            <button class="btn-action btn-resolve" onclick="fecharModal('modal-historico')">Fechar</button>
+            <button class="btn-action btn-success" onclick="window.print()"><i class="fas fa-print"></i> Imprimir Fecho (PDF)</button>
         </div>
     </div>
 </div>
 
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
-    
-    let minhaLojaId = null;
+    let minhaLojaId = null; let lojaNome = "";
+    let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
 
-    // 1. VERIFICAR SESSÃO AO ABRIR
-    async function verificarSessao() {
-        const { data: { session } } = await _sb.auth.getSession();
-        if (session) {
-            iniciarDashboard(session.user.id);
-        }
-    }
-
-    // 2. FAZER LOGIN
+    async function verificarSessao() { const { data: { session } } = await _sb.auth.getSession(); if (session) iniciarDashboard(session.user.id); }
     async function fazerLogin() {
-        const btn = document.getElementById('btn-login-text');
-        btn.innerText = "A autenticar...";
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
-        
-        const { data, error } = await _sb.auth.signInWithPassword({ email: e, password: p });
-        
-        if (error) {
-            alert("Erro: " + error.message);
-            btn.innerText = "Entrar";
-        } else {
-            iniciarDashboard(data.user.id);
-        }
+        const btn = document.getElementById('btn-login-text'); btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A autenticar...`;
+        const { data, error } = await _sb.auth.signInWithPassword({ email: document.getElementById('email').value, password: document.getElementById('password').value });
+        if (error) { alert("Erro: " + error.message); btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Entrar no Turno`; } else iniciarDashboard(data.user.id);
     }
+    async function logout() { await _sb.auth.signOut(); window.location.reload(); }
 
-    async function logout() {
-        await _sb.auth.signOut();
-        window.location.reload();
-    }
-
-    // 3. ARRANCAR O DASHBOARD
     async function iniciarDashboard(userId) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('dashboard-screen').style.display = 'flex';
-
+        document.getElementById('login-screen').style.display = 'none'; document.getElementById('dashboard-screen').style.display = 'flex';
         const { data: loja } = await _sb.from('lojas').select('id, nome').eq('user_id', userId).single();
-        if (!loja) {
-            alert("Não tem nenhuma loja registada.");
-            return;
-        }
+        if (!loja) return alert("Não tem nenhuma loja registada.");
         
-        minhaLojaId = loja.id;
-        document.getElementById('nome-restaurante').innerText = loja.nome + " - Sala";
+        minhaLojaId = loja.id; lojaNome = loja.nome;
+        document.getElementById('nome-restaurante').innerText = loja.nome + " - Operação";
+        document.getElementById('print-loja-nome').innerText = loja.nome;
+        
+        // Carrega produtos para o POS
+        const { data: prods } = await _sb.from('produtos').select('id, nome, preco, desconto_percent').eq('loja_id', minhaLojaId).eq('oculto', false);
+        if(prods) produtosCatalogo = prods;
 
         carregarDados();
-
-        _sb.channel('sala-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
-                tocarSomAlerta();
-                carregarDados(); 
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
-                tocarSomAlerta();
-                carregarDados();
-            })
-            .subscribe();
+        _sb.channel('sala-updates').on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, () => { tocarSomAlerta(); carregarDados(); })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, () => { tocarSomAlerta(); carregarDados(); }).subscribe();
     }
 
-    // 4. CARREGAR E RENDERIZAR DADOS
     async function carregarDados() {
-        // Chamadas (Mantém-se igual)
         const { data: chamadas } = await _sb.from('chamadas_sala').select('*').eq('loja_id', minhaLojaId).eq('estado', 'pendente').order('created_at', { ascending: true });
-        
-        // Pedidos (AGORA BUSCA TODOS, não apenas os de mesa)
         const { data: pedidos } = await _sb.from('pedidos').select('*').eq('loja_id', minhaLojaId).neq('estado', 'finalizado').order('created_at', { ascending: true });
-
-        renderizarChamadas(chamadas || []);
-        renderizarPedidosInteligentes(pedidos || []);
+        renderizarChamadas(chamadas || []); renderizarPedidos(pedidos || []);
     }
 
-    function formatarHora(isoString) {
-        const d = new Date(isoString);
-        return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
-    }
+    function formatarHora(iso) { const d = new Date(iso); return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
 
     function renderizarChamadas(lista) {
-        document.getElementById('count-chamadas').innerText = lista.length;
-        const div = document.getElementById('lista-chamadas');
-        
-        if (lista.length === 0) {
-            div.innerHTML = '<div class="empty-state"><i class="fas fa-mug-hot"></i><p>A sala está tranquila.</p></div>';
-            return;
-        }
-
+        document.getElementById('count-chamadas').innerText = lista.length; const div = document.getElementById('lista-chamadas');
+        if (lista.length === 0) { div.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i><p>A sala está tranquila.</p></div>'; return; }
         div.innerHTML = lista.map(c => {
-            const isConta = c.tipo_chamada === 'conta';
-            const icon = isConta ? '<i class="fas fa-file-invoice-dollar" style="color:var(--danger);"></i>' : '<i class="fas fa-concierge-bell" style="color:var(--warning);"></i>';
-            const texto = isConta ? 'Pediu a Conta' : 'Chamou o Empregado';
-            const classeClasse = isConta ? 'chamada-conta' : 'chamada-empregado';
-
-            return `
-                <div class="card ${classeClasse}">
-                    <div class="card-header">
-                        <div class="mesa-tag">${icon} Mesa ${c.mesa}</div>
-                        <div class="time-tag"><i class="far fa-clock"></i> ${formatarHora(c.created_at)}</div>
-                    </div>
-                    <div class="card-body"><strong>Aviso:</strong> ${texto}</div>
-                    <div class="card-footer">
-                        <button class="btn-action btn-resolve" onclick="resolverChamada(${c.id})"><i class="fas fa-check"></i> Marcar como Resolvido</button>
-                    </div>
-                </div>
-            `;
+            const isC = c.tipo_chamada === 'conta'; const icon = isC ? '<i class="fas fa-file-invoice-dollar" style="color:var(--danger);"></i>' : '<i class="fas fa-bell" style="color:var(--warning);"></i>';
+            return `<div class="card ${isC ? 'chamada-conta' : 'chamada-empregado'}"><div class="card-header"><div class="mesa-tag">${icon} Mesa ${c.mesa}</div><div class="time-tag">${formatarHora(c.created_at)}</div></div><div class="card-body"><strong>Aviso:</strong> ${isC ? 'Pediu a Conta' : 'Chamou o Empregado'}</div><div class="card-footer"><button class="btn-action btn-resolve" onclick="resolverChamada(${c.id})"><i class="fas fa-check"></i> Resolvido</button></div></div>`;
         }).join('');
     }
 
-    // A MÁGICA DO AGRUPAMENTO (RONDAS/SOMAS)
-    function renderizarPedidosInteligentes(listaBruta) {
+    function renderizarPedidos(listaBruta) {
         const div = document.getElementById('lista-pedidos');
-        
-        if (listaBruta.length === 0) {
-            div.innerHTML = '<div class="empty-state"><i class="fas fa-utensils"></i><p>Nenhum pedido em curso.</p></div>';
-            document.getElementById('count-pedidos').innerText = 0;
-            return;
-        }
+        if (listaBruta.length === 0) { div.innerHTML = '<div class="empty-state"><i class="fas fa-utensils"></i><p>Nenhum pedido em curso.</p></div>'; document.getElementById('count-pedidos').innerText = "0"; return; }
 
-        // 1. Separar Mesas de Externos (Takeaway/Reserva)
-        const externos = listaBruta.filter(p => p.tipo_pedido !== 'mesa');
-        const pedidosMesa = listaBruta.filter(p => p.tipo_pedido === 'mesa');
-
-        // 2. Agrupar as Mesas
+        const externos = listaBruta.filter(p => p.tipo_pedido !== 'mesa'); const pedidosMesa = listaBruta.filter(p => p.tipo_pedido === 'mesa');
         const mesasAgrupadas = {};
         pedidosMesa.forEach(p => {
-            if (!mesasAgrupadas[p.mesa]) {
-                mesasAgrupadas[p.mesa] = {
-                    mesa: p.mesa,
-                    rondas: [],
-                    totalAcumulado: 0,
-                    temParaConfirmar: false,
-                    tudoPronto: true, // Começa assumindo que está tudo pronto até provar o contrário
-                    horaPrimeiraRonda: p.created_at
-                };
-            }
-            mesasAgrupadas[p.mesa].rondas.push(p);
-            mesasAgrupadas[p.mesa].totalAcumulado += p.total;
-            
-            if (p.estado === 'aguarda_confirmacao') mesasAgrupadas[p.mesa].temParaConfirmar = true;
-            if (p.estado !== 'pronto') mesasAgrupadas[p.mesa].tudoPronto = false;
+            if (!mesasAgrupadas[p.mesa]) mesasAgrupadas[p.mesa] = { mesa: p.mesa, rondas: [], totalAcumulado: 0, temParaConfirmar: false, tudoPronto: true, hora: p.created_at };
+            mesasAgrupadas[p.mesa].rondas.push(p); mesasAgrupadas[p.mesa].totalAcumulado += p.total;
+            if (p.estado === 'aguarda_confirmacao') mesasAgrupadas[p.mesa].temParaConfirmar = true; if (p.estado !== 'pronto') mesasAgrupadas[p.mesa].tudoPronto = false;
         });
 
-        // 3. Contar cartões totais (Mesas ativas + Externos)
-        const totalCartoes = Object.keys(mesasAgrupadas).length + externos.length;
-        document.getElementById('count-pedidos').innerText = totalCartoes;
+        document.getElementById('count-pedidos').innerText = Object.keys(mesasAgrupadas).length + externos.length; let html = '';
 
-        let htmlFinal = '';
-
-        // --- RENDERIZAR MESAS ---
         Object.values(mesasAgrupadas).forEach(m => {
-            let rondasHtml = '';
-            let idParaConfirmar = null;
-
-            m.rondas.forEach((ronda, index) => {
-                let itensHtml = ronda.itens.map(item => `<li><strong>${item.qtde}x</strong> ${item.nome}</li>`).join('');
-                let statusBadge = '';
-                
-                if (ronda.estado === 'aguarda_confirmacao') {
-                    statusBadge = `<span style="color:var(--warning);">⚠️ Confirmar</span>`;
-                    idParaConfirmar = ronda.id; // Guarda o ID para o botão mestre do cartão
-                } else if (ronda.estado === 'pendente') {
-                    statusBadge = `<span style="color:var(--danger);">Na Fila</span>`;
-                } else if (ronda.estado === 'preparacao') {
-                    statusBadge = `<span style="color:var(--primary);">Na Cozinha 🍳</span>`;
-                } else if (ronda.estado === 'pronto') {
-                    statusBadge = `<span style="color:var(--success);">Pronto 🔔</span>`;
-                }
-
-                rondasHtml += `
-                    <div class="ronda-box">
-                        <div class="ronda-title">Ronda ${index + 1} <span>${statusBadge}</span></div>
-                        <ul class="itens-lista">${itensHtml}</ul>
-                    </div>
-                `;
+            let rondasHtml = ''; let idConf = null;
+            m.rondas.forEach((r, i) => {
+                let itens = r.itens.map(it => `<li><strong>${it.qtde}x</strong> ${it.nome}</li>`).join(''); let badge = '';
+                if (r.estado === 'aguarda_confirmacao') { badge = `<span style="color:var(--warning);">⚠️ Confirmar</span>`; idConf = r.id; } 
+                else if (r.estado === 'pendente') badge = `<span style="color:var(--danger);">Na Fila</span>`; 
+                else if (r.estado === 'preparacao') badge = `<span style="color:var(--primary);">Na Cozinha 🍳</span>`; 
+                else if (r.estado === 'pronto') badge = `<span style="color:var(--success);">Pronto 🔔</span>`;
+                rondasHtml += `<div class="ronda-box"><div class="ronda-title">Ronda ${i + 1} <span>${badge}</span></div><ul class="itens-lista">${itens}</ul></div>`;
             });
-
-            // Lógica principal do Cartão da Mesa
-            let classeEstado = 'pedido-mesa';
-            let btnAcao = '';
-
-            if (m.temParaConfirmar) {
-                classeEstado += ' aguarda-confirmacao';
-                btnAcao = `<button class="btn-action btn-warning" onclick="avancarPedido(${idParaConfirmar}, 'pendente')"><i class="fas fa-eye"></i> Confirmar na Mesa</button>`;
-            } else if (m.tudoPronto) {
-                btnAcao = `<button class="btn-action btn-resolve" onclick="fecharMesa('${m.mesa}', ${JSON.stringify(m.rondas.map(r=>r.id))})"><i class="fas fa-check-double"></i> Limpar Mesa (Total: ${m.totalAcumulado.toFixed(2)}€)</button>`;
-            } else {
-                btnAcao = `<button class="btn-action btn-resolve" style="opacity:0.5; cursor:not-allowed;">Em processamento...</button>`;
-            }
-
-            htmlFinal += `
-                <div class="card ${classeEstado}">
-                    <div class="card-header">
-                        <div class="mesa-tag"><i class="fas fa-utensils" style="color:var(--primary);"></i> Mesa ${m.mesa}</div>
-                        <div class="time-tag"><i class="far fa-clock"></i> ${formatarHora(m.horaPrimeiraRonda)}</div>
-                    </div>
-                    <div class="card-body">
-                        ${rondasHtml}
-                        <div style="margin-top: 15px; font-weight: 900; font-size: 1.2em; text-align:right;">Total da Conta: ${m.totalAcumulado.toFixed(2)}€</div>
-                    </div>
-                    <div class="card-footer">
-                        ${btnAcao}
-                    </div>
-                </div>
-            `;
+            let cl = 'pedido-mesa'; let btn = `<button class="btn-action btn-resolve" style="opacity:0.5;">A aguardar...</button>`;
+            if (m.temParaConfirmar) { cl += ' aguarda-confirmacao'; btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${idConf}, 'pendente')"><i class="fas fa-fire"></i> Enviar p/ Cozinha</button>`; } 
+            else if (m.tudoPronto) { btn = `<button class="btn-action btn-success" onclick="fecharMesa('${m.mesa}', ${JSON.stringify(m.rondas.map(r=>r.id))})"><i class="fas fa-euro-sign"></i> Pagar e Fechar (${m.totalAcumulado.toFixed(2)}€)</button>`; }
+            html += `<div class="card ${cl}"><div class="card-header"><div class="mesa-tag"><i class="fas fa-utensils" style="color:var(--primary);"></i> Mesa ${m.mesa}</div><div class="time-tag">${formatarHora(m.hora)}</div></div><div class="card-body">${rondasHtml}<div style="margin-top: 15px; font-weight: 800; font-size: 1.1em; text-align:right;">Total: ${m.totalAcumulado.toFixed(2)}€</div></div><div class="card-footer">${btn}</div></div>`;
         });
 
-        // --- RENDERIZAR EXTERNOS (TAKEAWAY / RESERVAS) ---
         externos.forEach(p => {
-            let itensHtml = p.itens.map(item => `<li><strong>${item.qtde}x</strong> ${item.nome}</li>`).join('');
-            let icon = p.tipo_pedido === 'levantamento' ? '<i class="fas fa-shopping-bag"></i> Takeaway' : '<i class="far fa-calendar-check"></i> Reserva';
-            let cssClass = p.tipo_pedido === 'levantamento' ? 'pedido-takeaway' : 'pedido-reserva';
+            let itens = p.itens.map(it => `<li><strong>${it.qtde}x</strong> ${it.nome}</li>`).join('');
+            let icon = p.tipo_pedido === 'levantamento' ? '<i class="fas fa-shopping-bag" style="color:#8b5cf6;"></i>' : '<i class="far fa-calendar-check" style="color:#14b8a6;"></i>';
+            let cClass = p.tipo_pedido === 'levantamento' ? 'pedido-takeaway' : 'pedido-reserva'; let estHtml = ''; let btn = '';
             
-            let btnAcao = '';
-            if(p.estado === 'pendente') {
-                btnAcao = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'preparacao')">Aceitar e Enviar Cozinha</button>`;
-            } else if(p.estado === 'preparacao') {
-                btnAcao = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')">Marcar Pronto</button>`;
-            } else if(p.estado === 'pronto') {
-                btnAcao = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'finalizado')"><i class="fas fa-check-double"></i> Entregue / Pago</button>`;
-            }
-
-            htmlFinal += `
-                <div class="card ${cssClass}">
-                    <div class="card-header">
-                        <div class="mesa-tag">${icon}</div>
-                        <div class="time-tag"><i class="far fa-clock"></i> ${formatarHora(p.created_at)}</div>
-                    </div>
-                    <div class="card-body">
-                        <div style="font-size:0.85em; text-transform:uppercase; font-weight:bold; color:#64748b; margin-bottom:10px;">Cliente: ${p.nome_cliente}</div>
-                        <ul class="itens-lista">${itensHtml}</ul>
-                        <div style="margin-top: 10px; font-weight: 800; font-size: 1.1em;">Total: ${p.total.toFixed(2)}€</div>
-                    </div>
-                    <div class="card-footer">
-                        ${btnAcao}
-                    </div>
-                </div>
-            `;
+            if(p.estado === 'aguarda_confirmacao') { cClass += ' aguarda-confirmacao'; estHtml = `<span style="color: var(--warning); font-weight:bold;">⚠️ Validar Pedido</span>`; btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${p.id}, 'pendente')"><i class="fas fa-check"></i> Enviar Cozinha</button> <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedido(${p.id})"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; } 
+            else if(p.estado === 'pendente') { estHtml = `<span style="color: var(--danger); font-weight:bold;">Aguardar fogão</span>`; btn = `<button class="btn-action btn-resolve" style="opacity:0.5;">Na fila...</button>`; } 
+            else if(p.estado === 'preparacao') { estHtml = `<span style="color: var(--primary); font-weight:bold;">Na Cozinha 🍳</span>`; btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')">Marcar Pronto</button>`; } 
+            else if(p.estado === 'pronto') { estHtml = `<span style="color: var(--success); font-weight:bold;">Pronto! 🔔</span>`; btn = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'finalizado')"><i class="fas fa-check-double"></i> Entregue/Pago</button>`; }
+            
+            const tel = p.telefone ? `<a href="tel:${p.telefone}" style="color:var(--primary); text-decoration:none;">📞 ${p.telefone}</a>` : '';
+            html += `<div class="card ${cClass}"><div class="card-header"><div class="mesa-tag">${icon} ${p.tipo_pedido}</div><div class="time-tag">${formatarHora(p.created_at)}</div></div><div class="card-body"><div style="font-size:0.85em; text-transform:uppercase; font-weight:bold; color:#64748b; margin-bottom:10px; display:flex; justify-content:space-between;"><span>${p.nome_cliente || 'Anónimo'}</span><span>${tel}</span></div>${estHtml}<hr style="border-top:1px dashed #cbd5e1; margin:10px 0;"><ul class="itens-lista">${itens}</ul><div style="margin-top: 10px; font-weight: 800; font-size: 1.1em; text-align:right;">Total: ${p.total.toFixed(2)}€</div></div><div class="card-footer">${btn}</div></div>`;
         });
-
-        div.innerHTML = htmlFinal;
+        div.innerHTML = html;
     }
 
-    // 5. AÇÕES DOS BOTÕES
-    async function resolverChamada(id) {
-        await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id);
+    async function resolverChamada(id) { await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id); }
+    async function avancarPedido(id, est) { await _sb.from('pedidos').update({ estado: est }).eq('id', id); }
+    async function apagarPedido(id) { if(confirm("Apagar este pedido falso?")) await _sb.from('pedidos').delete().eq('id', id); }
+    async function fecharMesa(m, ids) { if(confirm(`Limpar e receber pagamento da Mesa ${m}?`)) for(let id of ids) await _sb.from('pedidos').update({ estado: 'finalizado' }).eq('id', id); }
+
+    function tocarSomAlerta() { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.setValueAtTime(600, ctx.currentTime); gain.gain.setValueAtTime(0, ctx.currentTime); gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5); } catch(e) {} }
+
+    // --- POS MANUAL (NOVO PEDIDO) ---
+    function abrirPOS() {
+        document.getElementById('pos-produtos').innerHTML = produtosCatalogo.map(p => {
+            const final = p.desconto_percent > 0 ? p.preco * (1 - p.desconto_percent/100) : p.preco;
+            return `<div class="pos-item" onclick="addPOS(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${final})"><strong>${p.nome}</strong><br><span style="color:var(--ok)">${final.toFixed(2)}€</span></div>`;
+        }).join('');
+        posCarrinho = []; atualizaPOSCart(); document.getElementById('pos-mesa').value = '';
+        document.getElementById('modal-pos').style.display = 'flex';
+    }
+    function addPOS(id, n, p) { const it = posCarrinho.find(i=>i.id===id); if(it) it.qtde++; else posCarrinho.push({id, nome:n, preco:p, qtde:1}); atualizaPOSCart(); }
+    function atualizaPOSCart() {
+        posTotal = 0; document.getElementById('pos-cart-list').innerHTML = posCarrinho.map(i => { posTotal += (i.preco*i.qtde); return `<li>${i.qtde}x ${i.nome} - ${(i.preco*i.qtde).toFixed(2)}€</li>`; }).join('');
+        document.getElementById('pos-total').innerText = posTotal.toFixed(2);
+    }
+    async function enviarPedidoPOS() {
+        const mesaStr = document.getElementById('pos-mesa').value; if(!mesaStr) return alert("Insira o Nº da mesa ou Nome."); if(posCarrinho.length === 0) return alert("Carrinho vazio.");
+        // Vai direto para pendente (cozinha) porque foi o empregado que inseriu!
+        await _sb.from('pedidos').insert([{ loja_id: minhaLojaId, tipo_pedido: isNaN(mesaStr) ? 'levantamento' : 'mesa', mesa: isNaN(mesaStr) ? null : mesaStr, nome_cliente: isNaN(mesaStr) ? mesaStr : null, itens: posCarrinho, total: posTotal, estado: 'pendente' }]);
+        fecharModal('modal-pos');
     }
 
-    async function avancarPedido(id, novoEstado) {
-        await _sb.from('pedidos').update({ estado: novoEstado }).eq('id', id);
+    // --- HISTÓRICO E FECHO ---
+    async function abrirHistorico() {
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('print-data').innerText = new Date().toLocaleDateString('pt-PT') + " - Turno Atual";
+        const { data: fechados } = await _sb.from('pedidos').select('*').eq('loja_id', minhaLojaId).eq('estado', 'finalizado').gte('created_at', hoje + 'T00:00:00').lte('created_at', hoje + 'T23:59:59');
+        let tDia = 0;
+        document.getElementById('historico-lista').innerHTML = (fechados || []).map(p => { tDia += p.total; return `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;"><span>${p.tipo_pedido === 'mesa' ? 'Mesa '+p.mesa : p.nome_cliente}</span><strong>${p.total.toFixed(2)}€</strong></div>`; }).join('');
+        document.getElementById('hist-qtd').innerText = (fechados||[]).length; document.getElementById('hist-total').innerText = tDia.toFixed(2) + '€';
+        document.getElementById('modal-historico').style.display = 'flex';
     }
 
-    // Fecha todas as rondas de uma mesa de uma vez só!
-    async function fecharMesa(mesaNum, arrayDeIds) {
-        if(confirm(`Fechar a conta da Mesa ${mesaNum}?`)) {
-            // Atualiza todos os IDs dessa mesa para finalizado
-            for(let id of arrayDeIds) {
-                await _sb.from('pedidos').update({ estado: 'finalizado' }).eq('id', id);
-            }
-        }
-    }
-
-    function tocarSomAlerta() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(600, ctx.currentTime);
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.5);
-        } catch(e) {}
-    }
-
+    function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
     verificarSessao();
 </script>
 </body>
