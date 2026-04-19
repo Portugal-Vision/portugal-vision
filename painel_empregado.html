@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tablet de Sala | Portugal Vision</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #f1f5f9; --card: #ffffff; --text: #1e293b; --primary: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #10b981; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* ECRÃ DE LOGIN */
+        #login-screen { position: fixed; inset: 0; background: var(--text); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: white; padding: 40px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .input-form { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
+        .btn-login { background: var(--primary); color: white; width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-login:hover { background: #2563eb; }
+
+        /* DASHBOARD (CABEÇALHO) */
+        header { background: var(--card); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); z-index: 10; }
+        .logo-area h1 { margin: 0; font-size: 1.5em; display: flex; align-items: center; gap: 10px; }
+        .status-dot { width: 12px; height: 12px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
+
+        /* ÁREA PRINCIPAL (GRELHA) */
+        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; flex-grow: 1; overflow: hidden; }
+        @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; overflow-y: auto; } }
+        
+        .coluna { background: transparent; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px; }
+        .coluna-header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px 20px; border-radius: 15px; font-weight: bold; font-size: 1.2em; position: sticky; top: 0; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        .badge { background: #e2e8f0; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; }
+
+        /* CARTÕES DE AVISO E PEDIDO */
+        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; gap: 15px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        .card.chamada-empregado { border-left-color: var(--warning); }
+        .card.chamada-conta { border-left-color: var(--danger); }
+        .card.pedido-mesa { border-left-color: var(--primary); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .mesa-tag { font-size: 1.5em; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .time-tag { color: #64748b; font-size: 0.9em; }
+
+        .card-body { font-size: 1.1em; color: #475569; }
+        .itens-lista { list-style: none; padding: 0; margin: 0; font-size: 0.95em; }
+        .itens-lista li { padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+        .itens-lista li:last-child { border: none; }
+        
+        .card-footer { display: flex; gap: 10px; margin-top: auto; }
+        .btn-action { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 1em; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        
+        .btn-resolve { background: #f1f5f9; color: var(--text); }
+        .btn-resolve:hover { background: #e2e8f0; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+
+        /* ESTADO VAZIO */
+        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
+        .empty-state i { font-size: 3em; margin-bottom: 15px; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="margin-top:0;">📱 Tablet de Sala</h2>
+        <p style="color: #64748b; margin-bottom: 25px;">Faça login para ligar o ecrã à sua loja.</p>
+        <input type="email" id="email" class="input-form" placeholder="Email do Lojista">
+        <input type="password" id="password" class="input-form" placeholder="Password">
+        <button onclick="fazerLogin()" class="btn-login" id="btn-login-text">Entrar</button>
+    </div>
+</div>
+
+<div id="dashboard-screen" style="display: none;">
+    <header>
+        <div class="logo-area">
+            <h1><span class="status-dot"></span> <span id="nome-restaurante">A carregar...</span></h1>
+        </div>
+        <button onclick="logout()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 1.5em;"><i class="fas fa-sign-out-alt"></i></button>
+    </header>
+
+    <div class="main-content">
+        <div class="coluna">
+            <div class="coluna-header">
+                <span>🛎️ Chamadas & Contas</span>
+                <span class="badge" id="count-chamadas">0</span>
+            </div>
+            <div id="lista-chamadas">
+                <div class="empty-state"><i class="fas fa-mug-hot"></i><p>A sala está tranquila.</p></div>
+            </div>
+        </div>
+
+        <div class="coluna">
+            <div class="coluna-header">
+                <span>📝 Pedidos nas Mesas</span>
+                <span class="badge" id="count-pedidos">0</span>
+            </div>
+            <div id="lista-pedidos">
+                <div class="empty-state"><i class="fas fa-utensils"></i><p>Nenhum pedido pendente.</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // As tuas chaves do Supabase
+    const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
+    
+    let minhaLojaId = null;
+
+    // 1. VERIFICAR SESSÃO AO ABRIR
+    async function verificarSessao() {
+        const { data: { session } } = await _sb.auth.getSession();
+        if (session) {
+            iniciarDashboard(session.user.id);
+        }
+    }
+
+    // 2. FAZER LOGIN
+    async function fazerLogin() {
+        const btn = document.getElementById('btn-login-text');
+        btn.innerText = "A autenticar...";
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        
+        const { data, error } = await _sb.auth.signInWithPassword({ email: e, password: p });
+        
+        if (error) {
+            alert("Erro: " + error.message);
+            btn.innerText = "Entrar";
+        } else {
+            iniciarDashboard(data.user.id);
+        }
+    }
+
+    async function logout() {
+        await _sb.auth.signOut();
+        window.location.reload();
+    }
+
+    // 3. ARRANCAR O DASHBOARD
+    async function iniciarDashboard(userId) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard-screen').style.display = 'flex';
+
+        // Descobrir a loja deste utilizador
+        const { data: loja } = await _sb.from('lojas').select('id, nome').eq('user_id', userId).single();
+        if (!loja) {
+            alert("Não tem nenhuma loja registada.");
+            return;
+        }
+        
+        minhaLojaId = loja.id;
+        document.getElementById('nome-restaurante').innerText = loja.nome + " - Sala";
+
+        // Carregar os dados que lá estão agora
+        carregarDados();
+
+        // A MÁGICA: Subscrever atualizações em Tempo Real!
+        _sb.channel('sala-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
+                tocarSomAlerta();
+                carregarDados(); // Recarrega os dados silenciosamente
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
+                tocarSomAlerta();
+                carregarDados();
+            })
+            .subscribe();
+    }
+
+    // 4. CARREGAR E RENDERIZAR DADOS
+    async function carregarDados() {
+        // Buscar Chamadas
+        const { data: chamadas } = await _sb.from('chamadas_sala').select('*').eq('loja_id', minhaLojaId).eq('estado', 'pendente').order('created_at', { ascending: true });
+        
+        // Buscar Pedidos de Mesa
+        const { data: pedidos } = await _sb.from('pedidos').select('*').eq('loja_id', minhaLojaId).eq('tipo_pedido', 'mesa').neq('estado', 'finalizado').order('created_at', { ascending: true });
+
+        renderizarChamadas(chamadas || []);
+        renderizarPedidos(pedidos || []);
+    }
+
+    function formatarHora(isoString) {
+        const d = new Date(isoString);
+        return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+    }
+
+    function renderizarChamadas(lista) {
+        document.getElementById('count-chamadas').innerText = lista.length;
+        const div = document.getElementById('lista-chamadas');
+        
+        if (lista.length === 0) {
+            div.innerHTML = '<div class="empty-state"><i class="fas fa-mug-hot"></i><p>A sala está tranquila.</p></div>';
+            return;
+        }
+
+        div.innerHTML = lista.map(c => {
+            const isConta = c.tipo_chamada === 'conta';
+            const icon = isConta ? '<i class="fas fa-file-invoice-dollar" style="color:var(--danger);"></i>' : '<i class="fas fa-concierge-bell" style="color:var(--warning);"></i>';
+            const texto = isConta ? 'Pediu a Conta' : 'Chamou o Empregado';
+            const classeClasse = isConta ? 'chamada-conta' : 'chamada-empregado';
+
+            return `
+                <div class="card ${classeClasse}">
+                    <div class="card-header">
+                        <div class="mesa-tag">${icon} Mesa ${c.mesa}</div>
+                        <div class="time-tag"><i class="far fa-clock"></i> ${formatarHora(c.created_at)}</div>
+                    </div>
+                    <div class="card-body"><strong>Aviso:</strong> ${texto}</div>
+                    <div class="card-footer">
+                        <button class="btn-action btn-resolve" onclick="resolverChamada(${c.id})"><i class="fas fa-check"></i> Marcar como Resolvido</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderizarPedidos(lista) {
+        document.getElementById('count-pedidos').innerText = lista.length;
+        const div = document.getElementById('lista-pedidos');
+        
+        if (lista.length === 0) {
+            div.innerHTML = '<div class="empty-state"><i class="fas fa-utensils"></i><p>Nenhum pedido pendente.</p></div>';
+            return;
+        }
+
+        div.innerHTML = lista.map(p => {
+            let itensHtml = p.itens.map(item => `<li><strong>${item.qtde}x</strong> ${item.nome}</li>`).join('');
+            
+            let btnAcao = '';
+            let estadoHtml = '';
+
+            if(p.estado === 'pendente') {
+                estadoHtml = `<span style="color: var(--danger); font-weight:bold;">A enviar para cozinha...</span>`;
+                btnAcao = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'preparacao')">Aceitar e Enviar</button>`;
+            } else if(p.estado === 'preparacao') {
+                estadoHtml = `<span style="color: var(--warning); font-weight:bold;">Na Cozinha 🍳</span>`;
+                btnAcao = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')">Marcar Pronto p/ Servir</button>`;
+            } else if(p.estado === 'pronto') {
+                estadoHtml = `<span style="color: var(--success); font-weight:bold;">Pronto a Servir! 🔔</span>`;
+                btnAcao = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'finalizado')"><i class="fas fa-check-double"></i> Encerrar Pedido</button>`;
+            }
+
+            return `
+                <div class="card pedido-mesa">
+                    <div class="card-header">
+                        <div class="mesa-tag"><i class="fas fa-utensils" style="color:var(--primary);"></i> Mesa ${p.mesa}</div>
+                        <div class="time-tag"><i class="far fa-clock"></i> ${formatarHora(p.created_at)}</div>
+                    </div>
+                    <div class="card-body">
+                        ${estadoHtml}
+                        <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 10px 0;">
+                        <ul class="itens-lista">${itensHtml}</ul>
+                        <div style="margin-top: 10px; font-weight: 800; font-size: 1.1em;">Total: ${p.total.toFixed(2)}€</div>
+                    </div>
+                    <div class="card-footer">
+                        ${btnAcao}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 5. AÇÕES DOS BOTÕES
+    async function resolverChamada(id) {
+        await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id);
+        // O Realtime dispara e atualiza o ecrã sozinho!
+    }
+
+    async function avancarPedido(id, novoEstado) {
+        await _sb.from('pedidos').update({ estado: novoEstado }).eq('id', id);
+        // O Realtime dispara e atualiza o ecrã sozinho!
+    }
+
+    // EXTRA: Som suave para avisar o empregado que algo aconteceu
+    function tocarSomAlerta() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(600, ctx.currentTime);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.5);
+        } catch(e) {} // Ignora se o browser bloquear o som (precisa de interação prévia do utilizador)
+    }
+
+    verificarSessao();
+</script>
+</body>
+</html>
