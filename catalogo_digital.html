@@ -238,8 +238,8 @@
                 <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
                     <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">1. Como deseja encomendar?</h4>
                     <div class="order-type-box">
-                        <label id="lbl-levantamento"><input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()"> 🥡 Levantamento</label>
-                        <label id="lbl-reserva"><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> 🪑 Reserva</label>
+                        <label id="lbl-levantamento"><input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()"> <i class="fas fa-shopping-bag" style="margin-right:5px;"></i> Levantamento</label>
+                        <label id="lbl-reserva"><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> <i class="fas fa-chair" style="margin-right:5px;"></i> Reserva</label>
                     </div>
                     
                     <div id="fields-levantamento" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -262,7 +262,7 @@
                             </div>
                             <input type="text" id="cli-nif" class="input-form" placeholder="O seu número de contribuinte (NIF)" style="display: none; margin-bottom: 0;">
                             <div id="nif-aviso" style="font-size: 11px; color: var(--accent); background: #fef2f2; padding: 8px; border-radius: 8px; margin-top: 5px;">
-                                ⚠️ Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.
+                                <i class="fas fa-exclamation-triangle"></i> Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.
                             </div>
                         </div>
 
@@ -286,13 +286,11 @@
                 <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
                     <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">2. Método de Pagamento</h4>
                     <div class="payment-box">
-                        <label><input type="radio" name="tipo_pagamento" value="Dinheiro" checked onchange="togglePaymentFields()"> 💶 Dinheiro</label>
-                        <label><input type="radio" name="tipo_pagamento" value="Multibanco" onchange="togglePaymentFields()"> 💳 Multibanco</label>
-                        <label id="label-mbway" style="display:none;"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" onchange="togglePaymentFields()"> 📱 MBWay</label>
+                        <label id="label-mbway" style="display:flex;"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" checked> <i class="fas fa-mobile-screen-button" style="margin-right:5px;"></i> MBWay</label>
                     </div>
-                    <div id="mbway-zone" class="mbway-info">
-                        <i class="fas fa-mobile-alt"></i> <strong>Pagamento MBWay Selecionado!</strong><br>
-                        Pode enviar o valor para o nº <strong id="mbway-phone"></strong>. Por favor, envie o comprovativo pelo WhatsApp após enviar este pedido.
+                    <div id="mbway-zone" class="mbway-info" style="display:block;">
+                        <i class="fas fa-info-circle"></i> <strong>Pagamento Exclusivo via MBWay</strong><br>
+                        O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº <strong id="mbway-phone"></strong>.
                     </div>
                 </div>
             </div>
@@ -391,7 +389,7 @@
             if (error) throw error;
             
             const msg = tipo === 'empregado' ? 'O empregado foi chamado à sua mesa.' : 'A sua conta foi solicitada. Aguarde um momento.';
-            alert("🛎️ " + msg);
+            alert(msg);
             
         } catch (e) {
             console.error(e);
@@ -637,7 +635,7 @@
         if (!estadoLoja.aberto) {
             const bannerFechado = document.createElement('div');
             bannerFechado.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: white; text-align: center; padding: 12px 20px; font-weight: bold; z-index: 99999; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);";
-            bannerFechado.innerHTML = `⚠️ ${estadoLoja.motivo}`;
+            bannerFechado.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${estadoLoja.motivo}`;
             document.body.appendChild(bannerFechado);
             document.body.style.paddingTop = "40px";
 
@@ -646,7 +644,7 @@
             
             const avisoModal = document.createElement('div');
             avisoModal.style.cssText = "background:#fee2e2; color:#991b1b; padding:15px; border-radius:12px; border:1px solid #fecaca; margin-top:20px; font-weight:bold; text-align:center;";
-            avisoModal.innerHTML = `⚠️ Não é possível encomendar agora.<br><span style="font-weight:normal; font-size:12px;">${estadoLoja.motivo}</span>`;
+            avisoModal.innerHTML = `<i class="fas fa-exclamation-circle"></i> Não é possível encomendar agora.<br><span style="font-weight:normal; font-size:12px;">${estadoLoja.motivo}</span>`;
             document.querySelector('.modal-body').appendChild(avisoModal);
         }
         
@@ -692,8 +690,8 @@
             document.head.appendChild(linkManifest);
         }
 
-        if (loja.mbway_ativo && loja.mbway_num && !mesaAtual) {
-            document.getElementById('label-mbway').style.display = 'flex';
+        // MBWay agora é obrigatório para Takeaway, mostramos o número diretamente na área
+        if (loja.mbway_num && !mesaAtual) {
             document.getElementById('mbway-phone').innerText = loja.mbway_num;
         }
 
@@ -756,24 +754,13 @@
         if (tipo === 'levantamento') {
             fLev.style.display = 'grid';
             fRes.style.display = 'none';
-            pSec.style.display = 'block'; // Mostra pagamento
+            pSec.style.display = 'block'; // Mostra pagamento (apenas MBWay)
             atualizarHorariosDisponiveis('levantamento');
         } else {
             fLev.style.display = 'none';
             fRes.style.display = 'grid';
             pSec.style.display = 'none'; // Esconde pagamento nas reservas
             atualizarHorariosDisponiveis('reserva');
-        }
-    }
-
-    function togglePaymentFields() {
-        const pag = document.querySelector('input[name="tipo_pagamento"]:checked').value;
-        const mbwayZone = document.getElementById('mbway-zone');
-        
-        if (pag === 'MBWay') {
-            mbwayZone.style.display = 'block';
-        } else {
-            mbwayZone.style.display = 'none';
         }
     }
 
@@ -855,7 +842,7 @@
 
                 if (error) throw error;
                 
-                alert(`✅ Pedido registado!\nO empregado irá à sua mesa num instante para confirmar o pedido.`);
+                alert(`Pedido registado!\nO empregado irá à sua mesa num instante para confirmar o pedido.`);
                 
                 carrinho = []; atualizarFloater(); fecharCarrinho();
                 btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`;
@@ -873,7 +860,7 @@
             let querNif = false;
 
             if (tipoPedido === 'levantamento') {
-                tipoPagamento = document.querySelector('input[name="tipo_pagamento"]:checked').value;
+                tipoPagamento = "MBWay"; // Exclusivo e obrigatório agora
                 nomeCliente = document.getElementById('cli-nome-lev').value;
                 telCliente = document.getElementById('cli-telefone-lev').value;
                 const dataStr = document.getElementById('cli-data-lev').value;
@@ -896,7 +883,7 @@
                 }
                 
                 let linhaNif = querNif ? `\n*NIF na Fatura:* Sim (${nifCliente})` : `\n*NIF na Fatura:* Não`;
-                infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${dataStr}\n*Hora de Recolha:* ${hora}\n*Pagamento:* ${tipoPagamento}${linhaNif}\n\n`;
+                infoExtra = `*Tipo:* Levantamento no Local\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${dataStr}\n*Hora de Recolha:* ${hora}\n*Pagamento:* ${tipoPagamento}${linhaNif}\n\n`;
                 
             } else {
                 nomeCliente = document.getElementById('cli-nome-res').value;
@@ -909,7 +896,7 @@
                     alert("Por favor, preencha o Nome, Telemóvel e Hora para a reserva.");
                     btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`; btnFinal.disabled = false; return;
                 }
-                infoExtra = `*Tipo:* 🪑 Reserva de Mesa\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${data}\n*Hora:* ${hora}\n*Pax:* ${pessoas}\n\n`;
+                infoExtra = `*Tipo:* Reserva de Mesa\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${data}\n*Hora:* ${hora}\n*Pax:* ${pessoas}\n\n`;
             }
 
             // Grava no Supabase com os novos campos de segurança e NIF
@@ -935,7 +922,7 @@
             });
             textoWpp += `\n*TOTAL: ${totalPreco.toFixed(2)}€*`;
             
-            if (tipoPedido === 'levantamento' && tipoPagamento === 'MBWay' && lojaAtual.mbway_ativo) { 
+            if (tipoPedido === 'levantamento' && lojaAtual.mbway_ativo) { 
                 textoWpp += `\n\n(Vou enviar o comprovativo de transferência MBWay a seguir.)`; 
             }
             
@@ -949,7 +936,7 @@
 
         } catch (e) {
             console.error(e);
-            alert("❌ Erro ao enviar o pedido. Verifique a sua ligação à internet.");
+            alert("Erro ao enviar o pedido. Verifique a sua ligação à internet.");
             btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`;
             btnFinal.disabled = false;
         }
@@ -969,7 +956,7 @@
             
             let alergeniosHtml = '';
             if(lojaAtual.tipo_negocio === 'restaurante' && p.alergenios && p.alergenios.length > 0) {
-                alergeniosHtml = `<div class="alergenios-badge">⚠️ Contém: ${p.alergenios.join(', ')}</div>`;
+                alergeniosHtml = `<div class="alergenios-badge"><i class="fas fa-exclamation-circle"></i> Contém: ${p.alergenios.join(', ')}</div>`;
             }
 
             let htmlPreco = `<span class="price">${final}€</span>`;
@@ -991,7 +978,7 @@
             }
 
             // Design Esgotado Limpo: Imagem normal, apenas etiqueta vermelha e botão trancado.
-            let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-times-circle"></i> Esgotado</div>` : '';
+            let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> Esgotado</div>` : '';
             
             let btnAdicionar = isEsgotado 
                 ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Produto Esgotado</button>`
