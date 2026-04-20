@@ -110,8 +110,7 @@
         .card-front, .card-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 24px; background: white; border: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden; transition: 0.5s; }
         
         .img-container { width: 100%; height: 210px; overflow: hidden; flex-shrink: 0; position: relative;}
-        .card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px 24px 0 0; transition: 0.3s; }
-        .card-container.esgotado .card-front img { filter: grayscale(1); opacity: 0.7; }
+        .card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px 24px 0 0; }
         
         .info { padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;}
         .info strong { font-size: 1.25em; display: block; margin-bottom: 5px; }
@@ -127,6 +126,7 @@
 
         .btn-add-cart { background: var(--ok); color: white; padding: 14px; border-radius: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; width: 100%; cursor: pointer; transition: 0.3s; margin-top: auto;}
         .btn-add-cart:hover { opacity: 0.9; transform: scale(0.98); }
+        .btn-add-cart:disabled { background: #94a3b8; cursor: not-allowed; transform: none; opacity: 1; }
 
         /* --- BOTÕES FLUTUANTES (CARRINHO E MESA) --- */
         .floater-container {
@@ -142,7 +142,6 @@
         .btn-mesa-action { background: #2c3e50; color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: none; transition: 0.3s;}
         .btn-mesa-action:hover { transform: translateY(-5px); background: #34495e;}
         
-        /* O botão de chamar o empregado deve estar sempre visível se houver mesa, mesmo com o carrinho vazio */
         .mesa-active-floater { display: flex !important; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -239,32 +238,45 @@
                 <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
                     <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">1. Como deseja encomendar?</h4>
                     <div class="order-type-box">
-                        <label><input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()"> 🥡 Levantamento</label>
-                        <label><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> 🪑 Reserva</label>
+                        <label id="lbl-levantamento"><input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()"> 🥡 Levantamento</label>
+                        <label id="lbl-reserva"><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> 🪑 Reserva</label>
                     </div>
                     
                     <div id="fields-levantamento" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <input type="text" id="cli-nome-lev" placeholder="O seu Nome" class="input-form" style="grid-column: span 2;">
+                        <input type="text" id="cli-nome-lev" placeholder="O seu Nome (Obrigatório)" class="input-form" style="grid-column: span 2;">
                         <input type="tel" id="cli-telefone-lev" placeholder="Telemóvel (Obrigatório)" class="input-form" style="grid-column: span 2;">
                         <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
                             <input type="date" id="cli-data-lev" class="input-form" style="margin: 0;" onchange="atualizarHorariosDisponiveis('levantamento')">
                         </div>
                         <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora:</span>
+                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora (Intervalos de 30 min):</span>
                             <select id="cli-hora-lev" class="input-form" style="margin: 0;"></select>
                         </div>
+
+                        <div id="nif-section" style="grid-column: span 2; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px; display: block;">Deseja NIF na Fatura? (Obrigatório escolher)</span>
+                            <div class="order-type-box" style="margin-bottom: 10px;">
+                                <label><input type="radio" name="opcao_nif" value="sim" onchange="toggleNifField()"> Sim</label>
+                                <label><input type="radio" name="opcao_nif" value="nao" checked onchange="toggleNifField()"> Não</label>
+                            </div>
+                            <input type="text" id="cli-nif" class="input-form" placeholder="O seu número de contribuinte (NIF)" style="display: none; margin-bottom: 0;">
+                            <div id="nif-aviso" style="font-size: 11px; color: var(--accent); background: #fef2f2; padding: 8px; border-radius: 8px; margin-top: 5px;">
+                                ⚠️ Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.
+                            </div>
+                        </div>
+
                     </div>
                     
                     <div id="fields-reserva" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <input type="text" id="cli-nome-res" placeholder="Nome da Reserva" class="input-form" style="grid-column: span 2;">
+                        <input type="text" id="cli-nome-res" placeholder="Nome da Reserva (Obrigatório)" class="input-form" style="grid-column: span 2;">
                         <input type="tel" id="cli-telefone-res" placeholder="Telemóvel (Obrigatório)" class="input-form" style="grid-column: span 2;">
                         <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
                             <input type="date" id="cli-data-res" class="input-form" style="margin: 0;" onchange="atualizarHorariosDisponiveis('reserva')">
                         </div>
                         <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora:</span>
+                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora (Intervalos de 30 min):</span>
                             <select id="cli-hora-res" class="input-form" style="margin: 0;"></select>
                         </div>
                         <input type="number" id="cli-pessoas-res" placeholder="Nº de Pessoas" class="input-form" style="grid-column: span 2;" min="1">
@@ -468,7 +480,7 @@
         }
     }
 
-    // --- NOVA LÓGICA DE HORÁRIOS INTELIGENTES (TIME SLOTS) ---
+    // --- NOVA LÓGICA DE HORÁRIOS INTELIGENTES (TIME SLOTS 30 MIN) ---
     function configurarDatasIniciais() {
         const hojeIso = new Date().toLocaleDateString('en-CA').split('/').join('-'); // Formato YYYY-MM-DD
         const inputLev = document.getElementById('cli-data-lev');
@@ -500,11 +512,12 @@
         const diaSemanaDb = (dataSelecionada.getDay() + 6) % 7; 
         
         const horariosLoja = lojaAtual.horarios || [];
-        let horarioHoje = horariosLoja[diaSemanaDb];
+        // REDE DE SEGURANÇA: Se não houver horário configurado, assume aberto das 11h às 23h
+        let horarioHoje = horariosLoja[diaSemanaDb] || { status: 'aberto', m1: '11:00', m2: '23:00', t1: '', t2: '' };
 
         selectEl.innerHTML = ''; 
         
-        if (!horarioHoje || horarioHoje.status === 'fechado') {
+        if (horarioHoje.status === 'fechado') {
             selectEl.innerHTML = '<option value="" disabled selected>Encerrado neste dia</option>';
             document.getElementById('btn-checkout-final').disabled = true;
             return;
@@ -530,7 +543,8 @@
                 minEnd -= 60; // Último takeaway 60 minutos antes de fechar a porta
             }
 
-            for (let tempo = minStart; tempo <= minEnd; tempo += 15) {
+            // GERA SLOTS DE 30 EM 30 MINUTOS EXATOS
+            for (let tempo = minStart; tempo <= minEnd; tempo += 30) {
                 // Inteligência em ação: Se for hoje, oculta horas que já passaram (mais a margem de tempo)
                 if (isHoje && tempo <= (agoraEmMinutos + margemMinutos)) continue;
                 
@@ -540,7 +554,6 @@
             }
         }
 
-        // A MÁGICA CORRIGIDA PARA LER HORÁRIOS:
         const m1 = horarioHoje.m1 || "";
         const m2 = horarioHoje.m2 || "";
         const t1 = horarioHoje.t1 || "";
@@ -599,11 +612,10 @@
 
         // MÁGICA DO TAKEAWAY: Oculta a opção se estiver desativada pelo lojista
         if (lojaAtual.takeaway_ativo === false) {
-            const inputLevantamento = document.querySelector('input[name="tipo_pedido"][value="levantamento"]');
-            if (inputLevantamento && inputLevantamento.parentNode) {
-                inputLevantamento.parentNode.style.display = 'none';
-            }
-            document.querySelector('input[name="tipo_pedido"][value="reserva"]').checked = true;
+            const lblLev = document.getElementById('lbl-levantamento');
+            if(lblLev) lblLev.style.display = 'none';
+            const radioReserva = document.querySelector('input[name="tipo_pedido"][value="reserva"]');
+            if(radioReserva) radioReserva.checked = true;
             toggleOrderFields(); 
         }
 
@@ -765,6 +777,20 @@
         }
     }
 
+    function toggleNifField() {
+        const opt = document.querySelector('input[name="opcao_nif"]:checked').value;
+        const inputNif = document.getElementById('cli-nif');
+        const avisoNif = document.getElementById('nif-aviso');
+        
+        if (opt === 'sim') {
+            inputNif.style.display = 'block';
+            avisoNif.style.display = 'none';
+        } else {
+            inputNif.style.display = 'none';
+            avisoNif.style.display = 'block';
+        }
+    }
+
     function abrirCarrinho() {
         const container = document.getElementById('cart-items-container');
         let html = '';
@@ -804,6 +830,7 @@
         }
     }
 
+    // A MÁGICA DE GRAVAR OS DADOS E REGRAS DA MESA
     async function finalizarPedido() {
         if(carrinho.length === 0) return;
         
@@ -815,6 +842,7 @@
         carrinho.forEach(item => { totalPreco += (item.preco * item.qtde); });
 
         try {
+            // 1. SE FOR MESA: Grava no Supabase a aguardar confirmação do empregado!
             if (mesaAtual) {
                 const { error } = await _sb.from('pedidos').insert([{
                     loja_id: lojaAtual.id,
@@ -830,16 +858,19 @@
                 alert(`✅ Pedido registado!\nO empregado irá à sua mesa num instante para confirmar o pedido.`);
                 
                 carrinho = []; atualizarFloater(); fecharCarrinho();
-                btnFinal.innerText = "Confirmar e Enviar Pedido";
+                btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`;
                 btnFinal.disabled = false;
                 return;
             }
 
+            // 2. SE NÃO FOR MESA (Takeaway/Reserva): Grava no Supabase e abre o WhatsApp
             const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
             let infoExtra = "";
             let nomeCliente = "";
             let telCliente = "";
             let tipoPagamento = "No Local";
+            let nifCliente = "";
+            let querNif = false;
 
             if (tipoPedido === 'levantamento') {
                 tipoPagamento = document.querySelector('input[name="tipo_pagamento"]:checked').value;
@@ -848,11 +879,25 @@
                 const dataStr = document.getElementById('cli-data-lev').value;
                 const hora = document.getElementById('cli-hora-lev').value;
                 
+                // Validação do NIF
+                const opcaoNif = document.querySelector('input[name="opcao_nif"]:checked').value;
+                if (opcaoNif === 'sim') {
+                    nifCliente = document.getElementById('cli-nif').value;
+                    querNif = true;
+                    if(!nifCliente) {
+                        alert("Por favor, preencha o seu NIF ou selecione 'Não'.");
+                        btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`; btnFinal.disabled = false; return;
+                    }
+                }
+
                 if(!nomeCliente || !telCliente || !hora) {
                     alert("Por favor, preencha o Nome, Telemóvel e Hora de recolha.");
-                    btnFinal.innerText = "Confirmar e Enviar Pedido"; btnFinal.disabled = false; return;
+                    btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`; btnFinal.disabled = false; return;
                 }
-                infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${dataStr}\n*Hora:* ${hora}\n*Pagamento:* ${tipoPagamento}\n\n`;
+                
+                let linhaNif = querNif ? `\n*NIF na Fatura:* Sim (${nifCliente})` : `\n*NIF na Fatura:* Não`;
+                infoExtra = `*Tipo:* 🥡 Levantamento no Local\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${dataStr}\n*Hora de Recolha:* ${hora}\n*Pagamento:* ${tipoPagamento}${linhaNif}\n\n`;
+                
             } else {
                 nomeCliente = document.getElementById('cli-nome-res').value;
                 telCliente = document.getElementById('cli-telefone-res').value;
@@ -862,11 +907,12 @@
                 
                 if(!nomeCliente || !telCliente || !hora) {
                     alert("Por favor, preencha o Nome, Telemóvel e Hora para a reserva.");
-                    btnFinal.innerText = "Confirmar e Enviar Pedido"; btnFinal.disabled = false; return;
+                    btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`; btnFinal.disabled = false; return;
                 }
                 infoExtra = `*Tipo:* 🪑 Reserva de Mesa\n*Nome:* ${nomeCliente}\n*Tel:* ${telCliente}\n*Data:* ${data}\n*Hora:* ${hora}\n*Pax:* ${pessoas}\n\n`;
             }
 
+            // Grava no Supabase com os novos campos de segurança e NIF
             await _sb.from('pedidos').insert([{
                 loja_id: lojaAtual.id,
                 tipo_pedido: tipoPedido,
@@ -875,6 +921,8 @@
                 itens: carrinho,
                 total: totalPreco,
                 metodo_pagamento: tipoPagamento,
+                quer_nif: querNif,
+                nif_cliente: nifCliente,
                 estado: 'aguarda_confirmacao'
             }]);
 
@@ -895,14 +943,14 @@
             const url = `https://wa.me/${numLoja}?text=${encodeURIComponent(textoWpp)}`;
             
             carrinho = []; atualizarFloater(); fecharCarrinho();
-            btnFinal.innerText = "Confirmar e Enviar Pedido";
+            btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`;
             btnFinal.disabled = false;
             window.open(url, '_blank');
 
         } catch (e) {
             console.error(e);
             alert("❌ Erro ao enviar o pedido. Verifique a sua ligação à internet.");
-            btnFinal.innerText = "Confirmar e Enviar Pedido";
+            btnFinal.innerHTML = `<i class="fab fa-whatsapp"></i> Confirmar e Enviar Pedido`;
             btnFinal.disabled = false;
         }
     }
@@ -942,14 +990,15 @@
                 badgeDia = `<div style="font-size: 11px; color: var(--s); background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> Especial de ${nomeDiasInt[p.dia_semana]}</div>`;
             }
 
+            // Design Esgotado Limpo: Imagem normal, apenas etiqueta vermelha e botão trancado.
             let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-times-circle"></i> Esgotado</div>` : '';
             
             let btnAdicionar = isEsgotado 
-                ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Esgotado de momento</button>`
+                ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Produto Esgotado</button>`
                 : `<button onclick="adicionarAoCarrinho(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
 
             return `
-                <div class="card-container ${isEsgotado ? 'esgotado' : ''}" id="card-${p.id}">
+                <div class="card-container" id="card-${p.id}">
                     <div class="card-inner">
                         <div class="card-front" onclick="virarCartao(${p.id})">
                             <div class="img-container">
