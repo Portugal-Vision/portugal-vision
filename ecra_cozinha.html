@@ -43,7 +43,7 @@
         .ticket { background: var(--bg-card); border-radius: 12px; width: 350px; min-width: 350px; display: flex; flex-direction: column; overflow: hidden; border: 2px solid var(--border-color); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* ESTADO: PENDENTE (Novo) */
+        /* ESTADO: PENDENTE */
         .ticket.estado-pendente { border-top: 6px solid var(--danger); }
         .ticket.estado-pendente .ticket-header { background: rgba(239, 68, 68, 0.1); }
         
@@ -60,6 +60,7 @@
         .item-row:last-child { border: none; }
         .item-qtde { font-weight: 900; color: var(--warning); min-width: 40px; }
         .item-nome { font-weight: 600; line-height: 1.2; }
+        .item-obs { display: block; font-size: 0.7em; color: var(--text-muted); font-style: italic; margin-top: 4px; } /* Adicionado para notas do cliente */
 
         .ticket-footer { padding: 15px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.2); }
         .btn-kds { width: 100%; padding: 20px; font-size: 1.2em; font-weight: 900; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
@@ -109,7 +110,7 @@
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
     let minhaLojaId = null;
-    let timerAtualizacao = null; // Para atualizar os minutos de espera a cada 60 segundos
+    let timerAtualizacao = null; 
 
     // 1. LOGIN E SESSÃO
     async function verificarSessao() {
@@ -142,13 +143,11 @@
 
         carregarPedidos();
 
-        // Atualiza os minutos nos cartões a cada 1 minuto
         if(timerAtualizacao) clearInterval(timerAtualizacao);
         timerAtualizacao = setInterval(carregarPedidos, 60000);
 
         _sb.channel('cozinha-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
-                // Toca a sineta se for um pedido novo!
                 if(payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && payload.new.estado === 'pendente')) {
                     tocarSinoCozinha();
                 }
@@ -157,56 +156,88 @@
             .subscribe();
     }
 
+    // --- FUNÇÃO AUXILIAR: FILTRAR BEBIDAS ---
+    // Esta função analisa o nome do item ou a categoria (se gravada) para excluir bebidas
+    function isBebida(item) {
+        // Se no momento da compra guardarmos a categoria, o ideal é:
+        if (item.categoria && item.categoria.toLowerCase() === 'bebidas') return true;
+        
+        // Proteção (Fallback) através de palavras-chave no nome do produto
+        const palavrasBebida = ['água', 'agua', 'sumo', 'coca-cola', 'cerveja', 'vinho', 'fanta', 'sprite', 'café', 'cafe', 'ice tea', 'nestea', 'refrigerante'];
+        const nomeLower = item.nome.toLowerCase();
+        
+        return palavrasBebida.some(palavra => nomeLower.includes(palavra));
+    }
+
     // 3. CARREGAR E DESENHAR TICKETS
     async function carregarPedidos() {
-        // Na cozinha, só queremos ver o que está pendente ou a ser feito. (Pronto = Desaparece)
         const { data: pedidos } = await _sb.from('pedidos')
             .select('*')
             .eq('loja_id', minhaLojaId)
             .in('estado', ['pendente', 'preparacao'])
             .order('estado', { ascending: false }) // 'preparacao' aparece primeiro
-            .order('created_at', { ascending: true }); // Os mais antigos primeiro
+            .order('created_at', { ascending: true });
 
         const div = document.getElementById('linha-producao');
-        document.getElementById('contador-pendentes').innerText = pedidos ? pedidos.length : 0;
         
-        if (!pedidos || pedidos.length === 0) {
+        // --- NOVO: FILTRAR OS PEDIDOS QUE TÊM COMIDA ---
+        let pedidosCozinha = [];
+        
+        if (pedidos) {
+            pedidos.forEach(p => {
+                // Filtra os itens do pedido: Só queremos o que NÃO for bebida
+                const itensComida = p.itens.filter(item => !isBebida(item));
+                
+                // Se sobrou alguma comida neste pedido, ele entra para a Cozinha
+                if (itensComida.length > 0) {
+                    // Substitui a lista de itens original pela lista filtrada (só comida)
+                    const pedidoApenasComida = { ...p, itens: itensComida };
+                    pedidosCozinha.push(pedidoApenasComida);
+                }
+            });
+        }
+
+        document.getElementById('contador-pendentes').innerText = pedidosCozinha.length;
+        
+        if (pedidosCozinha.length === 0) {
             div.innerHTML = `
                 <div class="empty-kds">
                     <i class="fas fa-fire-burner"></i>
                     <h2>A Cozinha está limpa!</h2>
-                    <p>A aguardar novos pedidos...</p>
+                    <p>A aguardar novos pratos...</p>
                 </div>`;
             return;
         }
 
-        div.innerHTML = pedidos.map(p => {
-            // Calcular tempo de espera
+        div.innerHTML = pedidosCozinha.map(p => {
             const horaPedido = new Date(p.created_at);
             const agora = new Date();
             const diffMinutos = Math.floor((agora - horaPedido) / 60000);
             
-            let corTempo = diffMinutos > 15 ? 'color: var(--danger);' : ''; // Fica vermelho se > 15min
+            let corTempo = diffMinutos > 15 ? 'color: var(--danger);' : '';
 
-            // Informação do Local (Mesa ou Takeaway)
             let localTag = '';
             if (p.tipo_pedido === 'mesa') {
                 localTag = `<i class="fas fa-utensils"></i> Mesa ${p.mesa}`;
-            } else if (p.tipo_pedido === 'levantamento') {
+            } else if (p.tipo_pedido === 'levantamento' || p.tipo_pedido === 'takeaway') {
                 localTag = `<i class="fas fa-shopping-bag"></i> Takeaway`;
             } else {
                 localTag = `<i class="far fa-calendar-alt"></i> Reserva`;
             }
 
-            // Lista de pratos (Letras GIGANTES)
-            let itensHtml = p.itens.map(item => `
+            // --- NOVO: RENDERIZAR SÓ OS ITENS DE COMIDA COM POSSÍVEL OBSERVAÇÃO ---
+            let itensHtml = p.itens.map(item => {
+                let obsHtml = item.obs ? `<span class="item-obs"><i class="fas fa-comment-alt"></i> ${item.obs}</span>` : '';
+                return `
                 <div class="item-row">
                     <div class="item-qtde">${item.qtde}x</div>
-                    <div class="item-nome">${item.nome}</div>
+                    <div style="flex: 1;">
+                        <div class="item-nome">${item.nome}</div>
+                        ${obsHtml}
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
 
-            // Lógica dos Botões baseada no Estado
             let btnAcao = '';
             let classeEstado = '';
 
@@ -215,6 +246,7 @@
                 btnAcao = `<button class="btn-kds btn-start" onclick="mudarEstado(${p.id}, 'preparacao')"><i class="fas fa-fire"></i> Iniciar Preparação</button>`;
             } else if (p.estado === 'preparacao') {
                 classeEstado = 'estado-preparacao';
+                // O GATILHO QUE CRIA A NOTIFICAÇÃO NO SUPABASE
                 btnAcao = `<button class="btn-kds btn-finish" onclick="mudarEstado(${p.id}, 'pronto')"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
             }
 
@@ -237,10 +269,9 @@
 
     async function mudarEstado(id, novoEstado) {
         await _sb.from('pedidos').update({ estado: novoEstado }).eq('id', id);
-        // O Realtime dispara e atualiza os ecrãs (Cozinha e Sala) automaticamente!
+        // Ao atualizar para 'pronto', a nossa função SQL "criar_notificacao_pedido_pronto" dispara automaticamente!
     }
 
-    // EXTRA: Som estridente de cozinha!
     function tocarSinoCozinha() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
