@@ -487,7 +487,6 @@
                                </div>`;
                     btn = `<button class="btn-action btn-warning" onclick="confirmarTakeaway(${p.id})"><i class="fas fa-check"></i> Validar MbWay e Aceitar</button>`;
                 } else {
-                    // SE FOR RESERVA, MOSTRA O NÚMERO DE PESSOAS E OBRIGA A PEDIR MESA
                     const infoPessoas = p.numero_pessoas ? `<strong>👥 Para ${p.numero_pessoas} pessoas.</strong>` : '';
                     estHtml = `<span style="color: var(--warning); font-weight:bold;">⚠️ Validar Reserva<br>${infoPessoas}</span>`; 
                     btn = `<button class="btn-action btn-warning" onclick="abrirModalAceitarReserva(${p.id})"><i class="fas fa-check"></i> Atribuir Mesa e Aceitar</button>`;
@@ -747,3 +746,5 @@
 </script>
 </body>
 </html>
+
+
