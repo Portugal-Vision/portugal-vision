@@ -493,7 +493,6 @@
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
     const nomeDiasInt = {1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo"};
 
-    // --- VARIÁVEL GLOBAL PARA O CANAL REALTIME ---
     let canalNotificacoes = null;
 
     const configNegocios = {
@@ -562,20 +561,36 @@
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
 
+    // --- NOVA INTERFACE DOS HORÁRIOS PARA O LOJISTA (ALMOÇO E JANTAR) ---
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
                 <b>${dia}</b>
                 <select id="h-${i}-status" onchange="atualizarEstiloDia(${i}); marcarAltHoras()" style="width:110px; margin:0; padding: 6px 10px;">
                     <option value="aberto">Aberto</option>
-                    <option value="fechado">Fechado</option>
+                    <option value="fechado">Dia de Folga</option>
                 </select>
             </div>
+            
+            <p style="font-size: 11px; color: #64748b; margin: 5px 0 10px 0;">
+                <i class="fas fa-info-circle"></i> Defina abaixo apenas as horas em que a <b>cozinha aceita encomendas</b> (Takeaway/Reservas). Deixe em branco se não servir nesse turno.
+            </p>
+            
             <div id="inputs-${i}" class="inputs-tempo">
-                <input type="time" id="h-${i}-m1" oninput="marcarAltHoras()">
-                <input type="time" id="h-${i}-m2" oninput="marcarAltHoras()">
-                <input type="time" id="h-${i}-t1" oninput="marcarAltHoras()">
-                <input type="time" id="h-${i}-t2" oninput="marcarAltHoras()">
+                <div style="background: #e2e8f0; padding: 8px; border-radius: 8px;">
+                    <small style="display:block; color:#475569; font-weight:800; margin-bottom:5px; text-transform: uppercase;">☀️ Turno Almoço</small>
+                    <div style="display:flex; gap:5px;">
+                        <input type="time" id="h-${i}-m1" oninput="marcarAltHoras()" title="Abertura da Cozinha">
+                        <input type="time" id="h-${i}-m2" oninput="marcarAltHoras()" title="Fecho da Cozinha">
+                    </div>
+                </div>
+                <div style="background: #e2e8f0; padding: 8px; border-radius: 8px;">
+                    <small style="display:block; color:#475569; font-weight:800; margin-bottom:5px; text-transform: uppercase;">🌙 Turno Jantar</small>
+                    <div style="display:flex; gap:5px;">
+                        <input type="time" id="h-${i}-t1" oninput="marcarAltHoras()" title="Abertura da Cozinha">
+                        <input type="time" id="h-${i}-t2" oninput="marcarAltHoras()" title="Fecho da Cozinha">
+                    </div>
+                </div>
             </div>
         </div>`).join('');
 
