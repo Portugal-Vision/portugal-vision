@@ -215,7 +215,7 @@
                 Novo Total a Pagar: <span id="edit-total-preco" style="color:var(--primary);">0.00</span>€
             </div>
 
-            <button class="btn-login" style="background: var(--success); margin-top: 10px;" onclick="guardarEdicao()"><i class="fas fa-save"></i> Guardar Alterações do Pedido</button>
+            <button class="btn-login btn-success" style="background: var(--success); margin-top: 10px;" onclick="guardarEdicao()"><i class="fas fa-save"></i> Guardar Alterações do Pedido</button>
         </div>
     </div>
 </div>
@@ -246,7 +246,7 @@
     let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
     
     let canalNotificacoesCozinha = null; 
-    let pedidoEditando = null; // Variável global para guardar o pedido em edição
+    let pedidoEditando = null; 
 
     async function procurarLoja() {
         const inputSlug = document.getElementById('slug-loja').value.toLowerCase().trim();
@@ -625,7 +625,11 @@
     }
 
     async function guardarEdicao() {
+        // CORRECTION: Select the button correctly by its class '.btn-success' which was added to the HTML
         const btn = document.querySelector('#modal-edicao .btn-success');
+        
+        if(!btn) return console.error("Save button not found");
+        
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A guardar...`;
         btn.disabled = true;
 
