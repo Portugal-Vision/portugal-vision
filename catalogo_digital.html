@@ -629,10 +629,10 @@
             }).subscribe();
     }
 
-    // --- NOVA LÓGICA DE HORÁRIOS INTELIGENTES (ALMOÇO E JANTAR) ---
+    // --- LÓGICA DE HORÁRIOS: LEITURA DOS TURNOS DA COZINHA ---
     function configurarDatasIniciais() {
         const agora = new Date();
-        const hojeIso = agora.toLocaleDateString('en-CA').split('/').join('-'); // Garante o fuso horário correto YYYY-MM-DD
+        const hojeIso = agora.toLocaleDateString('en-CA').split('/').join('-'); 
         const inputData = document.getElementById('cli-data');
         if(inputData) { inputData.min = hojeIso; inputData.value = hojeIso; }
     }
@@ -657,7 +657,6 @@
         
         const horariosLoja = lojaAtual.horarios || {};
         
-        // REDE DE SEGURANÇA: Se o lojista ainda não configurou horários no painel, assume este padrão de restaurante
         let horarioHoje = horariosLoja[diaSemanaDb] || { status: 'aberto', m1: '12:00', m2: '15:00', t1: '19:00', t2: '23:00' };
 
         selectEl.innerHTML = ''; 
@@ -669,7 +668,7 @@
         }
 
         let optionsHtml = '';
-        const margemMinutos = tipo === 'levantamento' ? 30 : 60; // Dá margem à cozinha
+        const margemMinutos = tipo === 'levantamento' ? 30 : 60; 
         const agoraEmMinutos = (agora.getHours() * 60) + agora.getMinutes();
 
         function adicionarTurno(horaInicio, horaFim, nomeTurno) {
@@ -681,7 +680,6 @@
             let minStart = (hI * 60) + mI;
             let minEnd = (hF * 60) + mF;
 
-            // CORTA O FIM DO TURNO: Para a cozinha não receber pedidos 5 min antes de fechar
             if (tipo === 'reserva') { minEnd -= 60; } 
             else if (tipo === 'levantamento') { minEnd -= 45; } 
 
@@ -689,7 +687,6 @@
             let slotsHtml = '';
 
             for (let tempo = minStart; tempo <= minEnd; tempo += 30) {
-                // Inteligência: Se o cliente escolher "Hoje", o sistema oculta as horas que já passaram + a margem de confeção
                 if (isHoje && tempo <= (agoraEmMinutos + margemMinutos)) continue;
                 
                 const h = Math.floor(tempo / 60).toString().padStart(2, '0');
@@ -703,13 +700,10 @@
             }
         }
 
-        // Lê os turnos configurados (m = morning/almoço, t = tarde/jantar)
         const m1 = horarioHoje.m1; const m2 = horarioHoje.m2;
         const t1 = horarioHoje.t1; const t2 = horarioHoje.t2;
 
-        // Processa o Almoço
         if (m1 && m2) adicionarTurno(m1, m2, "Almoço");
-        // Processa o Jantar
         if (t1 && t2) adicionarTurno(t1, t2, "Jantar");
 
         if (optionsHtml === '') {
@@ -742,7 +736,6 @@
 
         const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
         
-        // --- BLOQUEIO DE SEGURANÇA (FÉRIAS E STATUS) ---
         const estadoLoja = verificarSeAberto(loja);
         if (!loja || loja.status !== 'ativa' || loja.status_catalogo === false || !estadoLoja.aberto) {
             document.getElementById('motivo-fecho').innerText = !estadoLoja.aberto ? estadoLoja.motivo : "O catálogo está temporariamente indisponível.";
@@ -754,7 +747,7 @@
 
         configurarDatasIniciais();
         atualizarHorariosDisponiveis();
-        verificarSessaoCliente(); // NOVO: Valida se o cliente já fez login antes
+        verificarSessaoCliente(); 
 
         if (lojaAtual.takeaway_ativo === false) {
             const lblLev = document.getElementById('lbl-levantamento');
@@ -775,7 +768,7 @@
             document.getElementById('btn-chamar-empregado').style.display = 'flex';
             document.getElementById('btn-pedir-conta').style.display = 'flex';
             document.getElementById('cart-text-btn').innerText = ''; 
-            document.getElementById('btn-user-account').style.display = 'none'; // Na mesa não precisa de login de App
+            document.getElementById('btn-user-account').style.display = 'none'; 
         }
 
         if(loja.tema_sazonal && loja.tema_sazonal !== 'padrao') { 
@@ -935,11 +928,10 @@
         }
     }
 
-    // --- NOVO: CHECKOUT SEGURO COM INTEGRAÇÃO DE CLIENTE ---
+    // --- CHECKOUT SEGURO COM INTEGRAÇÃO DE CLIENTE ---
     async function validarEEnviarPedido() {
         if(carrinho.length === 0) return;
         
-        // Bloqueio: Se for Takeaway/Reserva e não houver cliente logado
         if(!mesaAtual && !clienteAtual) {
             fecharCarrinho();
             document.getElementById('authModal').style.display = 'block';
@@ -987,7 +979,7 @@
 
                 await _sb.from('pedidos').insert([{
                     loja_id: lojaAtual.id,
-                    cliente_id: clienteAtual.id, // ASSOCIAÇÃO DO LOGIN
+                    cliente_id: clienteAtual.id, 
                     nome_cliente: clienteAtual.nome,
                     telefone: clienteAtual.telefone,
                     tipo_pedido: tipoPedido,
@@ -996,7 +988,7 @@
                     metodo_pagamento: tipoPedido === 'levantamento' ? 'MBWay' : 'No Local',
                     quer_nif: querNif,
                     nif_cliente: nifCliente,
-                    data_agendada: dataAgendada.toISOString(), // PARA REGRAS DE TEMPO
+                    data_agendada: dataAgendada.toISOString(), 
                     estado: 'aguarda_confirmacao'
                 }]);
 
