@@ -258,6 +258,7 @@
     </div>
 </div>
 
+
 <div id="modal-fecho" class="modal">
     <div class="modal-content">
         <div class="modal-header no-print">
@@ -588,6 +589,12 @@
         else if(p.estado === 'preparacao') { estHtml = `<span style="color: var(--primary); font-weight:bold;">Na Cozinha 🍳</span>`; btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')">Marcar Pronto</button>`; } 
         else if(p.estado === 'pronto') { estHtml = `<span style="color: var(--success); font-weight:bold;">Pronto! 🔔</span>`; btn = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'finalizado')"><i class="fas fa-check-double"></i> Entregue/Pago</button>`; }
         
+        // NOVO: Impedir que a reserva desapareça ou confunda antes do "Já Cheguei"
+        else if(p.estado === 'reserva_confirmada') {
+            estHtml = `<span style="color: var(--primary); font-weight:bold;">✅ Reserva Confirmada.<br>Mesa ${p.mesa} atribuída.<br><small>A aguardar que o cliente chegue.</small></span>`;
+            btn = `<button class="btn-action btn-resolve" style="opacity:0.5;"><i class="fas fa-hourglass-half"></i> A aguardar cliente</button>`;
+        }
+
         const tel = p.telefone ? `<a href="tel:${p.telefone}" style="color:var(--primary); text-decoration:none;">📞 ${p.telefone}</a>` : '';
         return `<div class="card ${cClass}">
                     <div class="card-header">
@@ -611,10 +618,12 @@
     async function avancarPedido(id, est) { await _sb.from('pedidos').update({ estado: est }).eq('id', id); }
     
     function abrirModalAceitarReserva(id) { document.getElementById('reserva-id-escondido').value = id; document.getElementById('input-mesa-reserva').value = ''; document.getElementById('modal-mesa-reserva').style.display = 'flex'; }
+    
+    // ATUALIZAÇÃO: Reserva aceite passa para 'reserva_confirmada' e não para pendente
     async function confirmarMesaReserva() {
         const id = document.getElementById('reserva-id-escondido').value; const mesa = document.getElementById('input-mesa-reserva').value.trim();
         if (!mesa) return alert("Por favor, introduza o número da mesa a que a reserva pertence.");
-        await _sb.from('pedidos').update({ mesa: mesa, tipo_pedido: 'mesa', estado: 'pendente' }).eq('id', id); fecharModal('modal-mesa-reserva');
+        await _sb.from('pedidos').update({ mesa: mesa, estado: 'reserva_confirmada' }).eq('id', id); fecharModal('modal-mesa-reserva');
     }
 
     async function abrirEdicao(id) {
@@ -700,8 +709,7 @@
     }
 
     async function abrirFechoTurno() {
-        const hoje = new Date().toISOString().split('T')[0];
-        const { data: fechados } = await _sb.from('pedidos').select('tipo_pedido, mesa, nome_cliente, created_at, metodo_pagamento, total').eq('loja_id', minhaLojaId).eq('estado', 'finalizado').gte('created_at', hoje + 'T00:00:00').lte('created_at', hoje + 'T23:59:59');
+        const hoje = new Date().toISOString().split('T')[0]; const { data: fechados } = await _sb.from('pedidos').select('tipo_pedido, mesa, nome_cliente, created_at, metodo_pagamento, total').eq('loja_id', minhaLojaId).eq('estado', 'finalizado').gte('created_at', hoje + 'T00:00:00').lte('created_at', hoje + 'T23:59:59');
         const divLista = document.getElementById('lista-fecho-cego');
         if(!fechados || fechados.length === 0) { divLista.innerHTML = `<div class="empty-state" style="padding: 20px;"><i class="fas fa-folder-open"></i><p>Nenhum pedido finalizado neste turno.</p></div>`; } 
         else { divLista.innerHTML = fechados.map(p => { 
