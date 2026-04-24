@@ -95,7 +95,6 @@
         .btn-mesa-action { background: #2c3e50; color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: none; transition: 0.3s;}
         .btn-mesa-action:hover { transform: translateY(-5px); background: #34495e;}
         
-        /* NOVO BOTÃO DE UTILIZADOR */
         .btn-user { background: #8b5cf6; display: flex; }
         .btn-user:hover { background: #7c3aed; }
         
@@ -299,14 +298,24 @@
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <span class="close-modal" onclick="fecharModal('pedirContaModal')">×</span>
         <h3><i class="fas fa-file-invoice-dollar"></i> Pedir a Conta</h3>
-        <p style="color: #64748b; font-size: 14px;">Deseja fatura com número de contribuinte?</p>
         
-        <div class="order-type-box" style="margin-bottom: 15px;">
-            <label><input type="radio" name="conta_nif" value="sim" onchange="document.getElementById('input-conta-nif').style.display='block'"> Sim</label>
-            <label><input type="radio" name="conta_nif" value="nao" checked onchange="document.getElementById('input-conta-nif').style.display='none'"> Não</label>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 12px; font-weight: bold; color: #64748b;">Método de Pagamento</label>
+            <select id="input-metodo-pagamento-conta" class="input-form" style="margin-top: 5px;">
+                <option value="Dinheiro">💵 Dinheiro</option>
+                <option value="Multibanco">💳 Multibanco</option>
+                <option value="MBWay">📱 MBWay</option>
+            </select>
         </div>
-        
-        <input type="text" id="input-conta-nif" class="input-form" placeholder="O seu NIF" style="display: none; margin-bottom: 20px;">
+
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 12px; font-weight: bold; color: #64748b;">Deseja fatura com NIF?</label>
+            <div class="order-type-box" style="margin-top: 5px;">
+                <label><input type="radio" name="conta_nif" value="sim" onchange="document.getElementById('input-conta-nif').style.display='block'"> Sim</label>
+                <label><input type="radio" name="conta_nif" value="nao" checked onchange="document.getElementById('input-conta-nif').style.display='none'"> Não</label>
+            </div>
+            <input type="text" id="input-conta-nif" class="input-form" placeholder="O seu NIF" style="display: none; margin-top: 10px;">
+        </div>
         
         <button class="btn-checkout" onclick="confirmarPedidoConta()" style="width: 100%; margin-top: 10px;">
             <i class="fas fa-paper-plane"></i> Enviar Pedido
@@ -405,23 +414,24 @@
             return;
         }
 
-        enviarChamadaSala(tipo, false, null);
+        enviarChamadaSala(tipo, false, null, null);
     }
 
     function confirmarPedidoConta() {
         const querNif = document.querySelector('input[name="conta_nif"]:checked').value === 'sim';
         const nif = document.getElementById('input-conta-nif').value;
+        const metodo = document.getElementById('input-metodo-pagamento-conta').value;
         
         if (querNif && !nif) {
             alert("Por favor, insira o seu NIF.");
             return;
         }
 
-        enviarChamadaSala('conta', querNif, nif);
+        enviarChamadaSala('conta', querNif, nif, metodo);
         fecharModal('pedirContaModal');
     }
 
-    async function enviarChamadaSala(tipo, querNif, nifCliente) {
+    async function enviarChamadaSala(tipo, querNif, nifCliente, metodoPagamento) {
         try {
             const dados = { 
                 loja_id: lojaAtual.id, 
@@ -432,7 +442,7 @@
             if (tipo === 'conta') {
                 dados.quer_nif = querNif;
                 dados.nif_cliente = querNif ? nifCliente : null;
-                dados.metodo_pagamento = "Na Mesa"; 
+                dados.metodo_pagamento = metodoPagamento; 
             }
 
             const { error } = await _sb.from('chamadas_sala').insert([dados]);
@@ -443,7 +453,6 @@
             alert("ERRO DO SUPABASE:\n" + (e.message || JSON.stringify(e))); 
         }
     }
-
 
     async function verificarSessaoCliente() {
         const { data: { session } } = await _sb.auth.getSession();
@@ -506,16 +515,31 @@
     }
     async function clienteLogout() { await _sb.auth.signOut(); window.location.reload(); }
 
+    function ocultarMeuPedido(id) {
+        let ocultos = JSON.parse(localStorage.getItem('pedidos_ocultos') || '[]');
+        if (!ocultos.includes(id)) {
+            ocultos.push(id);
+            localStorage.setItem('pedidos_ocultos', JSON.stringify(ocultos));
+        }
+        abrirConta(); 
+    }
+
     async function abrirConta() {
         document.getElementById('contaModal').style.display = 'block';
         const container = document.getElementById('lista-meus-pedidos');
         if(!clienteAtual) { container.innerHTML = "<p>Faça login primeiro.</p>"; return; }
         
         const { data: pedidos } = await _sb.from('pedidos').select('*').eq('cliente_id', clienteAtual.id).order('created_at', { ascending: false });
+        
         if(!pedidos || pedidos.length === 0) { container.innerHTML = "<p>Ainda não tem pedidos.</p>"; return; }
 
+        const pedidosOcultos = JSON.parse(localStorage.getItem('pedidos_ocultos') || '[]');
+        const pedidosVisiveis = pedidos.filter(p => !pedidosOcultos.includes(p.id));
+
+        if(pedidosVisiveis.length === 0) { container.innerHTML = "<p>Ainda não tem pedidos.</p>"; return; }
+
         const agora = new Date();
-        container.innerHTML = pedidos.map(p => {
+        container.innerHTML = pedidosVisiveis.map(p => {
             const dataAgendada = p.data_agendada ? new Date(p.data_agendada) : new Date(p.created_at);
             const diffMinutos = (dataAgendada - agora) / 60000;
             
@@ -533,6 +557,10 @@
                 btnAcoes += `<button onclick="sinalizarChegada(${p.id})" style="background:var(--ok); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;">Já Cheguei!</button>`;
             }
 
+            if(p.estado === 'finalizado' || p.estado === 'cancelado') {
+                btnAcoes += `<button onclick="ocultarMeuPedido(${p.id})" style="background:#e2e8f0; color:#475569; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;"><i class="fas fa-eye-slash"></i> Ocultar</button>`;
+            }
+
             return `
                 <div class="meu-pedido-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
@@ -543,7 +571,7 @@
                         Para: ${dataAgendada.toLocaleString('pt-PT')} <br>
                         Total: ${p.total.toFixed(2)}€
                     </div>
-                    <div>${btnAcoes}</div>
+                    <div style="text-align:right;">${btnAcoes}</div>
                 </div>
             `;
         }).join('');
@@ -561,43 +589,47 @@
         alert("O restaurante foi notificado da sua chegada!");
     }
 
-    // --- OUVINTE REALTIME (CLIENTE) CORRIGIDO ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         
-        // Só iniciamos a escuta se houver um cliente logado (Takeaway/Reserva) ou se estiver na Mesa
+        // Só iniciamos a escuta se houver um cliente logado ou se estiver na Mesa
         if(!clienteAtual && !mesaAtual) return;
 
         if(realtimeCanal) _sb.removeChannel(realtimeCanal);
         
-        // Define o filtro: se tiver login, escuta os pedidos dele. Se estiver na mesa, escuta a mesa.
         let filtroStr = clienteAtual ? `cliente_id=eq.${clienteAtual.id}` : `mesa=eq.${mesaAtual}`;
 
         realtimeCanal = _sb.channel('cliente-notifs')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: filtroStr }, payload => {
                 
                 const novoEstado = payload.new.estado;
+                const tipoPedido = payload.new.tipo_pedido;
                 const alerta = document.getElementById('cliente-alert');
                 const msgEl = document.getElementById('cliente-alert-msg');
                 
-                // 1. Alerta: Pedido foi Aceite (passou para Pendente)
+                try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
+
                 if(novoEstado === 'pendente') {
-                    if(navigator.vibrate) navigator.vibrate([100, 50, 100]); // Vibração curta dupla
-                    msgEl.innerText = "O restaurante confirmou o seu pedido! Vai para a cozinha.";
-                    alerta.style.background = "var(--primary)"; // Fica azul para "Aceite"
+                    if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+                    
+                    if (tipoPedido === 'reserva') {
+                        msgEl.innerText = "A sua Reserva foi confirmada pelo restaurante!";
+                    } else {
+                        msgEl.innerText = "O restaurante confirmou o seu pedido! Vai para a cozinha.";
+                    }
+
+                    alerta.style.background = "var(--primary)"; 
                     alerta.classList.add('show');
                     setTimeout(() => alerta.classList.remove('show'), 6000);
                 } 
-                // 2. Alerta: Pedido Pronto
                 else if(novoEstado === 'pronto') {
-                    if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300]); // Vibração longa
+                    if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300]); 
                     msgEl.innerText = "O seu pedido já está Pronto!";
-                    alerta.style.background = "var(--success)"; // Fica verde para "Pronto"
+                    alerta.style.background = "var(--success)"; 
                     alerta.classList.add('show');
                     setTimeout(() => alerta.classList.remove('show'), 8000);
                 }
 
-                // 3. Atualização Silenciosa: Se a janela "Os Meus Pedidos" estiver aberta, atualiza a lista sozinha!
                 const modalConta = document.getElementById('contaModal');
                 if (modalConta && modalConta.style.display === 'block') {
                     abrirConta();
@@ -746,7 +778,6 @@
             document.getElementById('cart-text-btn').innerText = ''; 
             document.getElementById('btn-user-account').style.display = 'none'; 
             
-            // NOVO: Obriga o sistema a ligar as notificações também para clientes da mesa!
             iniciarOuvinteCliente();
         }
 
@@ -834,7 +865,6 @@
         const cliPessoas = document.getElementById('cli-pessoas');
         if (cliPessoas) {
             cliPessoas.style.display = isReserva ? 'block' : 'none';
-            // Se for levantamento, limpa o valor para não enviar dados inválidos para a DB
             if (!isReserva) cliPessoas.value = ''; 
         }
         
