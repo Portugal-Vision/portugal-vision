@@ -173,12 +173,12 @@
             bottom: -150px; 
             left: 50%; 
             transform: translateX(-50%); 
-            background: #1e293b; /* Fundo escuro e de alto contraste */
+            background: #1e293b; 
             color: white; 
             padding: 16px 25px; 
             border-radius: 50px; 
             font-weight: bold; 
-            z-index: 2147483647; /* Absolutamente acima de qualquer janela modal */
+            z-index: 2147483647; 
             box-shadow: 0 15px 35px rgba(0,0,0, 0.4); 
             display: flex; 
             align-items: center; 
@@ -189,7 +189,7 @@
             justify-content: center;
             text-align: center;
         }
-        #cliente-alert.show { bottom: 100px; } /* Aparece acima do botão do carrinho */
+        #cliente-alert.show { bottom: 100px; }
     </style>
 </head>
 <body>
@@ -563,16 +563,19 @@
             const diffMinutos = (dataAgendada - agora) / 60000;
             
             let corBadge = 'bg-pendente'; let textoBadge = 'Pendente';
+            if(p.estado === 'reserva_confirmada') { corBadge = 'bg-preparacao'; textoBadge = 'Confirmada'; }
             if(p.estado === 'preparacao') { corBadge = 'bg-preparacao'; textoBadge = 'Na Cozinha'; }
             if(p.estado === 'pronto') { corBadge = 'bg-pronto'; textoBadge = 'Pronto!'; }
             if(p.estado === 'cancelado') { corBadge = 'bg-danger'; textoBadge = 'Cancelado'; }
             if(p.estado === 'finalizado') { corBadge = 'bg-pronto'; textoBadge = 'Concluído'; }
             
             let btnAcoes = '';
-            if(diffMinutos > 60 && p.estado === 'aguarda_confirmacao') {
+            if(diffMinutos > 60 && (p.estado === 'aguarda_confirmacao' || p.estado === 'reserva_confirmada')) {
                 btnAcoes += `<button onclick="cancelarMeuPedido(${p.id})" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:11px;">Cancelar</button>`;
             }
-            if(p.tipo_pedido === 'reserva' && diffMinutos <= 120 && diffMinutos >= -30 && p.estado !== 'cancelado' && p.estado !== 'finalizado') {
+            
+            // O botão JÁ CHEGUEI só aparece se a reserva tiver sido confirmada (reserva_confirmada)
+            if((p.tipo_pedido === 'reserva' || p.tipo_pedido === 'mesa') && p.estado === 'reserva_confirmada' && diffMinutos <= 120 && diffMinutos >= -30) {
                 btnAcoes += `<button onclick="sinalizarChegada(${p.id})" style="background:var(--ok); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;">Já Cheguei!</button>`;
             }
 
@@ -606,6 +609,7 @@
     async function sinalizarChegada(id) {
         await _sb.from('chamadas_sala').insert([{ loja_id: lojaAtual.id, tipo_chamada: 'chegada_reserva', mesa: id.toString() }]);
         alert("O restaurante foi notificado da sua chegada!");
+        fecharModal('contaModal');
     }
 
     function iniciarOuvinteCliente() {
@@ -622,21 +626,40 @@
                 
                 const novoEstado = payload.new.estado;
                 const tipoPedido = payload.new.tipo_pedido;
+                const mesaAtribuida = payload.new.mesa;
                 const alerta = document.getElementById('cliente-alert');
                 const msgEl = document.getElementById('cliente-alert-msg');
                 
+                // REDIRECIONAMENTO AUTOMÁTICO DE RESERVA PARA MESA
+                if (tipoPedido === 'mesa' && novoEstado === 'reserva_confirmada' && mesaAtribuida) {
+                    try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
+                    if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+                    
+                    msgEl.innerText = `A sua Reserva foi aceite! Mesa ${mesaAtribuida} atribuída. A abrir a mesa...`;
+                    alerta.style.background = "var(--primary)"; 
+                    alerta.classList.add('show');
+                    
+                    setTimeout(() => {
+                        window.location.href = `?loja=${lojaAtual.slug}&mesa=${mesaAtribuida}`;
+                    }, 3500);
+                    return; 
+                }
+
+                // FILTRO DE SILÊNCIO PARA COZINHA (Ignorar alertas de fogão na Sala/Reserva)
+                if ((tipoPedido === 'mesa' || tipoPedido === 'reserva') && ['pendente', 'preparacao', 'pronto'].includes(novoEstado)) {
+                    // Atualiza a lista mas não mostra o alerta toast no ecrã
+                    const modalConta = document.getElementById('contaModal');
+                    if (modalConta && modalConta.style.display === 'block') abrirConta();
+                    return; 
+                }
+
+                // NOTIFICAÇÕES PARA LEVANTAMENTO / TAKEAWAY
                 try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
 
                 if(novoEstado === 'pendente') {
                     if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
-                    
-                    if (tipoPedido === 'reserva') {
-                        msgEl.innerText = "A sua Reserva foi confirmada pelo restaurante!";
-                    } else {
-                        msgEl.innerText = "O restaurante confirmou o seu pedido! Vai para a cozinha.";
-                    }
-
-                    alerta.style.background = "var(--p)"; 
+                    msgEl.innerText = "O restaurante confirmou o seu pedido! Vai para a cozinha.";
+                    alerta.style.background = "var(--primary)"; 
                     alerta.classList.add('show');
                     setTimeout(() => alerta.classList.remove('show'), 6000);
                 } 
