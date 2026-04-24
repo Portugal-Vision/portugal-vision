@@ -100,23 +100,21 @@
 </head>
 <body>
 
-<div id="login-screen">
-    <div class="login-box">
+<div id="login-screen" style="display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--bg);">
+    <div class="login-box" style="background: white; padding: 40px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
         <h2 style="margin-top:0; color: var(--primary);"><i class="fas fa-tablet-alt"></i> Painel de Sala</h2>
         <p style="color: #64748b; margin-bottom: 25px;">Acesso restrito a colaboradores.</p>
         
         <div style="text-align: left; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #64748b;">1. Identificador da Loja</div>
-        <input type="text" id="slug-loja" class="input-form" placeholder="Ex: restaurante-santos" oninput="procurarLoja()">
+        <input type="text" id="slug-loja" class="input-form" placeholder="Ex: restaurante-santos">
         
-        <div id="label-empregado" style="display: none; text-align: left; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #64748b;">2. Nome do Colaborador</div>
-        <select id="select-empregado" class="input-form" style="display: none;" onchange="mostrarPin()">
-            <option value="">A procurar equipa...</option>
-        </select>
+        <div style="text-align: left; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #64748b;">2. Utilizador</div>
+        <input type="text" id="nome-empregado" class="input-form" placeholder="Ex: Carlos Santos">
         
-        <div id="label-pin" style="display: none; text-align: left; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #64748b;">3. PIN de Acesso</div>
-        <input type="password" id="pin-empregado" class="input-form" placeholder="******" maxlength="6" style="display: none; text-align: center; letter-spacing: 10px; font-size: 24px;">
+        <div style="text-align: left; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #64748b;">3. PIN de Acesso</div>
+        <input type="password" id="pin-empregado" class="input-form" placeholder="******" maxlength="6" style="text-align: center; letter-spacing: 10px; font-size: 24px;">
         
-        <button onclick="fazerLoginEmpregado()" class="btn-login" id="btn-login-text" style="display: none; margin-top: 15px;"><i class="fas fa-sign-in-alt"></i> Iniciar Turno</button>
+        <button onclick="fazerLoginEmpregado()" class="btn-login" id="btn-login-text" style="margin-top: 15px;"><i class="fas fa-sign-in-alt"></i> Entrar</button>
     </div>
 </div>
 
@@ -251,85 +249,54 @@
     let canalNotificacoesCozinha = null; 
     let pedidoEditando = null; 
 
-    async function procurarLoja() {
-        const inputSlug = document.getElementById('slug-loja').value.toLowerCase().trim();
-        const selectEmp = document.getElementById('select-empregado');
-        const labelEmp = document.getElementById('label-empregado');
-        const inputPin = document.getElementById('pin-empregado');
-        const labelPin = document.getElementById('label-pin');
-        const btnLogin = document.getElementById('btn-login-text');
-
-        // Se o utilizador apagar o nome da loja, esconde o resto
-        if(inputSlug.length < 3) {
-            selectEmp.style.display = 'none'; labelEmp.style.display = 'none';
-            inputPin.style.display = 'none'; labelPin.style.display = 'none';
-            btnLogin.style.display = 'none'; 
-            return;
-        }
-
-        // Procura a loja no Supabase
-        const { data: loja } = await _sb.from('lojas').select('id, slug').eq('slug', inputSlug).maybeSingle();
-        
-        if (loja) {
-            minhaLojaId = loja.id;
-            // Se a loja existe, procura os empregados dessa loja
-            const { data: equipa } = await _sb.from('empregados').select('*').eq('loja_id', minhaLojaId);
-            
-            if (equipa && equipa.length > 0) {
-                // Preenche a dropdown com os nomes
-                selectEmp.innerHTML = '<option value="" disabled selected>Selecione o seu nome...</option>' + 
-                                      equipa.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
-                selectEmp.style.display = 'block';
-                labelEmp.style.display = 'block';
-                
-                // Mantém o PIN escondido até ele escolher o nome
-                inputPin.style.display = 'none'; labelPin.style.display = 'none'; btnLogin.style.display = 'none';
-            } else {
-                selectEmp.innerHTML = '<option value="" disabled selected>Nenhum colaborador configurado.</option>';
-                selectEmp.style.display = 'block'; labelEmp.style.display = 'block';
-                inputPin.style.display = 'none'; labelPin.style.display = 'none'; btnLogin.style.display = 'none';
-            }
-        } else {
-            // Loja não encontrada, esconde os passos seguintes
-            selectEmp.style.display = 'none'; labelEmp.style.display = 'none';
-            inputPin.style.display = 'none'; labelPin.style.display = 'none';
-            btnLogin.style.display = 'none';
-        }
-    }
-
-    // Função disparada quando o empregado seleciona o próprio nome na Dropdown
-    function mostrarPin() {
-        const selectEmp = document.getElementById('select-empregado');
-        if (selectEmp.value) {
-            document.getElementById('pin-empregado').style.display = 'block';
-            document.getElementById('label-pin').style.display = 'block';
-            document.getElementById('btn-login-text').style.display = 'block';
-            
-            // Foca automaticamente no campo do PIN para ser mais rápido
-            document.getElementById('pin-empregado').focus(); 
-        }
-    }
-
     async function fazerLoginEmpregado() {
-        const empId = document.getElementById('select-empregado').value;
-        const pinDigitado = document.getElementById('pin-empregado').value;
+        const slug = document.getElementById('slug-loja').value.toLowerCase().trim();
+        const nome = document.getElementById('nome-empregado').value.trim();
+        const pinDigitado = document.getElementById('pin-empregado').value.trim();
 
-        if (!empId || !pinDigitado) return alert("Selecione o seu nome e insira o PIN.");
+        if (!slug || !nome || !pinDigitado) return alert("Por favor, preencha a Loja, o Utilizador e o PIN.");
 
         const btn = document.getElementById('btn-login-text');
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; 
+        btn.disabled = true;
 
-        const { data: empregado } = await _sb.from('empregados').select('nome').eq('id', empId).eq('pin_acesso', pinDigitado).maybeSingle();
+        try {
+            // 1. Validar se a loja existe
+            const { data: loja } = await _sb.from('lojas').select('id').eq('slug', slug).maybeSingle();
+            
+            if (!loja) {
+                alert("❌ Loja não encontrada. Verifique o Identificador da Loja.");
+                btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Entrar`; 
+                btn.disabled = false;
+                return;
+            }
 
-        if (empregado) {
-            nomeOperadorAtual = empregado.nome;
-            sessionStorage.setItem('pv_sala_loja_id', minhaLojaId);
-            sessionStorage.setItem('pv_sala_operador', nomeOperadorAtual);
-            iniciarDashboard(minhaLojaId);
-        } else {
-            alert("❌ PIN incorreto.");
-            document.getElementById('pin-empregado').value = "";
-            btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Iniciar Turno`; btn.disabled = false;
+            // 2. Validar se o Utilizador e PIN correspondem à loja
+            // Usamos .ilike() para que "Carlos Santos" ou "carlos santos" funcionem igual
+            const { data: empregado } = await _sb.from('empregados')
+                .select('id, nome')
+                .eq('loja_id', loja.id)
+                .ilike('nome', nome) 
+                .eq('pin_acesso', pinDigitado)
+                .maybeSingle();
+
+            if (empregado) {
+                minhaLojaId = loja.id;
+                nomeOperadorAtual = empregado.nome; 
+                sessionStorage.setItem('pv_sala_loja_id', minhaLojaId);
+                sessionStorage.setItem('pv_sala_operador', nomeOperadorAtual);
+                iniciarDashboard(minhaLojaId);
+            } else {
+                alert("❌ Nome de Utilizador ou PIN incorretos.");
+                document.getElementById('pin-empregado').value = ""; // Limpa só o PIN para tentar novamente
+                btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Entrar`; 
+                btn.disabled = false;
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao comunicar com o servidor.");
+            btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Entrar`; 
+            btn.disabled = false;
         }
     }
 
@@ -779,5 +746,4 @@
 </script>
 </body>
 </html>
-
 
