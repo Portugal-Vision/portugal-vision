@@ -228,7 +228,7 @@
         }
     }
 
-    async function fazerLoginEmpregado() {
+async function fazerLoginEmpregado() {
         const empId = document.getElementById('select-empregado').value;
         const pinDigitado = document.getElementById('pin-empregado').value;
 
@@ -237,6 +237,19 @@
         const btn = document.getElementById('btn-login-text');
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; 
         btn.disabled = true;
+
+        // Tenta colocar a página em Ecrã Inteiro (Fullscreen API)
+        // Colocamos isto aqui em cima porque o browser exige que o pedido de fullscreen 
+        // aconteça "perto" do clique físico do utilizador, antes de operações demoradas (como o await da DB).
+        try {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Erro ao tentar ecrã inteiro: ${err.message}`);
+                });
+            }
+        } catch (e) {
+            console.log("O dispositivo não suporta Ecrã Inteiro automático.");
+        }
 
         const { data: empregado } = await _sb.from('empregados').select('nome').eq('id', empId).eq('pin_acesso', pinDigitado).maybeSingle();
 
