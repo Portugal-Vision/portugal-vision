@@ -387,6 +387,7 @@
 
         carregarDados();
         
+        // CIRURGIA 1: Ouvir 'pronto' para tocar campainha da Cozinha
         _sb.channel('sala-updates')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, () => { tocarSomAlerta('campainha'); carregarDados(); })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, (payload) => { 
@@ -395,6 +396,10 @@
               }
               if (payload.new.status_presenca === 'atrasado' && payload.old.status_presenca !== 'atrasado') {
                   tocarSomAlerta('alarme');
+              }
+              // Novo: Se a cozinha puser PRONTO, avisa a sala!
+              if (payload.new.estado === 'pronto' && payload.old.estado !== 'pronto') {
+                  tocarSomAlerta('campainha');
               }
               carregarDados(); 
           })
@@ -562,7 +567,8 @@
                     btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${idConf}, 'pendente')"><i class="fas fa-fire"></i> Enviar p/ Cozinha</button>
                            <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedido(${idConf})"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; 
                 } else if (m.tudoPronto) { 
-                    btn = `<button class="btn-action btn-success" data-metodo="${metodoSelecionadoPeloCliente}" onclick="prepararFechoMesa('Mesa ${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', this.dataset.metodo)"><i class="fas fa-euro-sign"></i> Pagar e Fechar (${m.totalAcumulado.toFixed(2)}€)</button>`; 
+                    // CIRURGIA 3: Botão da Mesa lê o método
+                    btn = `<button class="btn-action btn-success" onclick="prepararFechoMesa('Mesa ${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}')"><i class="fas fa-euro-sign"></i> Pagar e Fechar (${m.totalAcumulado.toFixed(2)}€)</button>`; 
                 } else {
                     btn = `<button class="btn-action btn-resolve" style="opacity:0.5;">Mesa em Consumo...</button>`;
                 }
@@ -584,6 +590,8 @@
         let icon = tipo === 'levantamento' ? '<i class="fas fa-shopping-bag" style="color:#8b5cf6;"></i>' : '<i class="far fa-calendar-check" style="color:#14b8a6;"></i>';
         let cClass = tipo === 'levantamento' ? 'pedido-takeaway' : 'pedido-reserva'; let estHtml = ''; let btn = '';
         
+        let metodoTakeaway = p.metodo_pagamento || ''; // Apanha o método de pagamento original
+
         if(p.estado === 'aguarda_confirmacao') { 
             cClass += ' aguarda-confirmacao'; 
             if(tipo === 'levantamento') {
@@ -600,10 +608,10 @@
         } 
         else if(p.estado === 'pendente') { estHtml = `<span style="color: var(--danger); font-weight:bold;">Aguardar fogão</span>`; btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')"><i class="fas fa-bell"></i> Marcar Pronto (Balcão)</button>`; } 
         else if(p.estado === 'preparacao') { estHtml = `<span style="color: var(--primary); font-weight:bold;">Na Cozinha 🍳</span>`; btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')">Marcar Pronto</button>`; } 
-        // CIRURGIA 1 E 2: O botão de Fechar Takeaway agora abre o Modal!
         else if(p.estado === 'pronto') { 
             estHtml = `<span style="color: var(--success); font-weight:bold;">Pronto! 🔔</span>`; 
-            btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '')"><i class="fas fa-check-double"></i> Entregue / Fechar</button>`; 
+            // CIRURGIA 3: Botão de Fechar Externo lê o método original do pedido
+            btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '${metodoTakeaway}')"><i class="fas fa-check-double"></i> Entregue / Fechar</button>`; 
         }
         
         else if(p.estado === 'reserva_confirmada') {
@@ -719,8 +727,8 @@
         } 
     }
     
+    // CIRURGIA 3: Injetar o método e forçar fallback para 'Dinheiro' apenas se vier vazio ou "undefined"
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
-        // Ajusta o ecrã para não dizer "Mesa Takeaway" mas sim "Pedido Takeaway"
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.getElementById('pagar-mesa-num').innerText = mesa;
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
@@ -732,7 +740,8 @@
         document.getElementById('pagar-mesa-total').innerText = total.toFixed(2);
         document.getElementById('pagar-mesa-ids').value = idsStr;
         
-        if (metodoPreferido) {
+        // Verifica se a variável tem valor válido, caso contrário limpa para Dinheiro
+        if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
             document.getElementById('pagar-mesa-metodo').value = metodoPreferido;
         } else {
             document.getElementById('pagar-mesa-metodo').value = "Dinheiro";
@@ -741,6 +750,7 @@
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
     }
 
+    // CIRURGIA 2: Timeout forçado para garantir que a UI limpa o cartão
     async function confirmarFechoMesa() {
         const idsStr = document.getElementById('pagar-mesa-ids').value;
         const ids = JSON.parse(idsStr);
@@ -754,7 +764,12 @@
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             fecharModal('modal-pagar-mesa');
-            carregarDados();
+            
+            // Aguarda 150ms para a base de dados respirar e força o redraw total
+            setTimeout(() => {
+                carregarDados();
+            }, 150);
+            
         } catch(e) {
             alert("Erro ao fechar mesa.");
         } finally {
@@ -806,9 +821,11 @@
     }
     function addPOS(id, n, p) { const it = posCarrinho.find(i=>i.id===id); if(it) it.qtde++; else posCarrinho.push({id, nome:n, preco:p, qtde:1}); atualizaPOSCart(); }
     function atualizaPOSCart() { posTotal = 0; document.getElementById('pos-cart-list').innerHTML = posCarrinho.map(i => { posTotal += (i.preco*i.qtde); return `<li>${i.qtde}x ${i.nome} - ${(i.preco*i.qtde).toFixed(2)}€</li>`; }).join(''); document.getElementById('pos-total').innerText = posTotal.toFixed(2); }
+    
+    // POS envia sempre com "Dinheiro" por defeito. O empregado corrige no fim, ao fechar a mesa.
     async function enviarPedidoPOS() {
         const mesaStr = document.getElementById('pos-mesa').value; if(!mesaStr) return alert("Insira o Nº da mesa ou Nome."); if(posCarrinho.length === 0) return alert("Carrinho vazio.");
-        await _sb.from('pedidos').insert([{ loja_id: minhaLojaId, tipo_pedido: isNaN(mesaStr) ? 'levantamento' : 'mesa', mesa: isNaN(mesaStr) ? null : mesaStr, nome_cliente: isNaN(mesaStr) ? mesaStr : null, itens: posCarrinho, total: posTotal, estado: 'pendente' }]); fecharModal('modal-pos');
+        await _sb.from('pedidos').insert([{ loja_id: minhaLojaId, tipo_pedido: isNaN(mesaStr) ? 'levantamento' : 'mesa', mesa: isNaN(mesaStr) ? null : mesaStr, nome_cliente: isNaN(mesaStr) ? mesaStr : null, itens: posCarrinho, total: posTotal, estado: 'pendente', metodo_pagamento: 'Dinheiro' }]); fecharModal('modal-pos');
     }
 
     async function abrirFechoTurno() {
@@ -832,4 +849,3 @@
 </script>
 </body>
 </html>
-
