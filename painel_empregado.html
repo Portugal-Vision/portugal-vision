@@ -386,7 +386,7 @@
 
         carregarDados();
         
-        // CIRURGIA: Escutar status_presenca para o "Já Cheguei" com alerta sonoro
+        // CIRURGIA: Escutar status_presenca para o "Já Cheguei" e também reagir ao DELETE!
         _sb.channel('sala-updates')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, () => { tocarSomAlerta('campainha'); carregarDados(); })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, (payload) => { 
@@ -397,6 +397,7 @@
               carregarDados(); 
           })
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, () => { carregarDados(); })
+          .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, () => { carregarDados(); }) // CORREÇÃO PARA O DELETE EM TEMPO REAL
           .subscribe();
 
         iniciarEscutaNotificacoes();
@@ -590,7 +591,6 @@
             } else {
                 const infoPessoas = p.numero_pessoas ? `<strong>👥 Para ${p.numero_pessoas} pessoas.</strong>` : '';
                 estHtml = `<span style="color: var(--warning); font-weight:bold;">⚠️ Validar Reserva<br>${infoPessoas}</span>`; 
-                // CIRURGIA: Aceita sem pedir mesa
                 btn = `<button class="btn-action btn-warning" onclick="aceitarReserva(${p.id})"><i class="fas fa-check"></i> Aceitar (Sem Mesa)</button>
                        <button class="btn-action" style="background:var(--danger); color:white; flex: 0.3;" onclick="apagarPedido(${p.id})" title="Rejeitar"><i class="fas fa-times"></i></button>`;
             }
@@ -599,14 +599,13 @@
         else if(p.estado === 'preparacao') { estHtml = `<span style="color: var(--primary); font-weight:bold;">Na Cozinha 🍳</span>`; btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')">Marcar Pronto</button>`; } 
         else if(p.estado === 'pronto') { estHtml = `<span style="color: var(--success); font-weight:bold;">Pronto! 🔔</span>`; btn = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'finalizado')"><i class="fas fa-check-double"></i> Entregue/Pago</button>`; }
         
-        // CIRURGIA: Lógica Inteligente de Reserva (Atrasos, No-Show, "Já Cheguei")
         else if(p.estado === 'reserva_confirmada') {
             const dataAgendada = p.data_agendada ? new Date(p.data_agendada) : new Date(p.created_at);
             const agora = new Date();
             const diffMinutos = (agora - dataAgendada) / 60000;
 
             if (p.status_presenca === 'no_local') {
-                cClass += ' piscar-card'; // Pisca para chamar a atenção
+                cClass += ' piscar-card'; 
                 estHtml = `<span style="color: var(--success); font-weight:bold; font-size: 1.1em;"><i class="fas fa-walking fa-bounce"></i> Cliente à Porta!</span>`;
                 btn = `<button class="btn-action btn-success" onclick="abrirModalAceitarReserva(${p.id})"><i class="fas fa-chair"></i> Sentar Cliente (Atribuir Mesa)</button>`;
             } else if (p.status_presenca === 'atrasado') {
@@ -615,7 +614,7 @@
                        <button class="btn-action" style="background:var(--danger); color:white; flex: 0.3;" onclick="apagarPedido(${p.id})" title="Cancelar"><i class="fas fa-times"></i></button>`;
             } else {
                 if (diffMinutos > 30) {
-                    cClass += ' piscar-card'; // Pisca vermelho indicando No-Show
+                    cClass += ' piscar-card'; 
                     estHtml = `<span style="color: var(--danger); font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> NO-SHOW (Atraso > 30m)</span>`;
                     btn = `<button class="btn-action" style="background:var(--danger); color:white;" onclick="apagarPedido(${p.id})"><i class="fas fa-times"></i> Cancelar Reserva</button>`;
                 } else {
@@ -648,14 +647,12 @@
     async function resolverChamada(id) { await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id); }
     async function avancarPedido(id, est) { await _sb.from('pedidos').update({ estado: est }).eq('id', id); }
     
-    // CIRURGIA: Aceitar reserva mantendo na coluna das reservas (sem pedir mesa)
     async function aceitarReserva(id) { 
         await _sb.from('pedidos').update({ estado: 'reserva_confirmada' }).eq('id', id); 
     }
 
     function abrirModalAceitarReserva(id) { document.getElementById('reserva-id-escondido').value = id; document.getElementById('input-mesa-reserva').value = ''; document.getElementById('modal-mesa-reserva').style.display = 'flex'; }
     
-    // CIRURGIA: Agora sim, empurra o cliente para a Sala e recarrega o telemóvel dele
     async function confirmarMesaReserva() {
         const id = document.getElementById('reserva-id-escondido').value; const mesa = document.getElementById('input-mesa-reserva').value.trim();
         if (!mesa) return alert("Por favor, introduza o número da mesa a que a reserva pertence.");
@@ -663,7 +660,7 @@
         await _sb.from('pedidos').update({ 
             mesa: mesa, 
             tipo_pedido: 'mesa', 
-            estado: 'pendente', // Ativa a fila para cozinha caso tenham encomendado comida
+            estado: 'pendente',
             status_presenca: 'sentado'
         }).eq('id', id); 
         
@@ -707,7 +704,14 @@
     }
 
     async function confirmarTakeaway(id) { if(confirm("ATENÇÃO:\nO pagamento MBWay já caiu na conta?\nA fatura foi emitida com os dados corretos?\n\n(Se sim, o pedido avança para a cozinha).")) { await _sb.from('pedidos').update({ estado: 'pendente' }).eq('id', id); } }
-    async function apagarPedido(id) { if(confirm("Tem a certeza absoluta que deseja CANCELAR e APAGAR este pedido do sistema?")) { await _sb.from('pedidos').delete().eq('id', id); } }
+    
+    // CORREÇÃO AQUI: Faltava o carregarDados(); para atualizar a lista imediatamente
+    async function apagarPedido(id) { 
+        if(confirm("Tem a certeza absoluta que deseja CANCELAR e APAGAR este pedido do sistema?")) { 
+            await _sb.from('pedidos').delete().eq('id', id); 
+            carregarDados(); 
+        } 
+    }
     
     function prepararFechoMesa(mesa, total, idsStr) {
         document.getElementById('pagar-mesa-num').innerText = mesa;
