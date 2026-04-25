@@ -324,6 +324,7 @@
                 <option value="Dinheiro">💵 Dinheiro</option>
                 <option value="Multibanco">💳 Multibanco</option>
                 <option value="MBWay">📱 MBWay</option>
+                <option value="Ticket Refeição">🎫 Ticket Refeição</option>
             </select>
         </div>
 
@@ -407,7 +408,7 @@
     const nomeDiasInt = {1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo"};
 
     const legalTexts = {
-        termos: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusively como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p>`,
+        termos: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O catálogo digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p>`,
         privacidade: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Privacidade e RGPD</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Navegação:</strong> A navegação neste catálogo digital é livre. O registo é exigido apenas para validação de pedidos online (Takeaway/Reserva) e comunicação de estado.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Dados Analíticos:</strong> A Portugal Vision recolhe apenas dados estatísticos totalmente anónimos para garantir o bom funcionamento do sistema.</p>`,
         cookies: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do navegador) apenas para gerir a sua Sessão de Login, a persistência de Sala e o "Carrinho de Compras".</p>`
     };
@@ -645,7 +646,6 @@
                 const alerta = document.getElementById('cliente-alert');
                 const msgEl = document.getElementById('cliente-alert-msg');
                 
-                // CIRURGIA 2: A Limpeza (Finalizado OU Cancelado)
                 if (mesaAtual && (novoEstado === 'finalizado' || novoEstado === 'cancelado')) {
                     localStorage.removeItem('pv_mesa_sessao');
                     if (novoEstado === 'finalizado') {
@@ -658,7 +658,6 @@
                     return;
                 }
 
-                // A Magia do URL (Gatilho)
                 if (!mesaAtual && mesaAtribuida && payload.new.status_presenca === 'sentado' && (tipoPedido === 'reserva' || tipoPedido === 'mesa')) {
                     try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
                     if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
@@ -703,7 +702,6 @@
                 }
 
             })
-            // CIRURGIA 3: Escutar o evento DELETE (Quando o empregado clica no caixote do lixo)
             .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pedidos', filter: filtroStr }, payload => {
                 if (mesaAtual) {
                     localStorage.removeItem('pv_mesa_sessao');
@@ -820,7 +818,7 @@
         const slug = urlParams.get('loja');
         let paramMesa = urlParams.get('mesa'); 
 
-        // CIRURGIA 1: Redução do TTL para 2 horas
+        // 1. Redução do TTL para 2 horas
         const TTL_HOURS = 2;
         const storedSessaoObj = JSON.parse(localStorage.getItem('pv_mesa_sessao'));
         
@@ -831,11 +829,10 @@
             const hoursPassed = (Date.now() - storedSessaoObj.timestamp) / (1000 * 60 * 60);
             if (hoursPassed < TTL_HOURS) {
                 mesaAtual = storedSessaoObj.mesa;
-                // Força o parâmetro no URL se não estiver lá para manter a consistência
                 if (!urlParams.has('mesa')) {
                     const sep = window.location.search ? '&' : '?';
                     window.location.href = window.location.href + sep + 'mesa=' + mesaAtual;
-                    return; // Bloqueia o carregamento porque a página vai recarregar sozinha
+                    return; 
                 }
             } else {
                 localStorage.removeItem('pv_mesa_sessao');
@@ -855,7 +852,7 @@
 
         lojaAtual = loja;
 
-        // --- VERIFICAÇÃO DE SEGURANÇA NA ENTRADA ---
+        // 2. VERIFICAÇÃO DE SEGURANÇA NA ENTRADA 
         if (mesaAtual) {
             const { data: pedidosAtivos } = await _sb
                 .from('pedidos')
@@ -863,7 +860,7 @@
                 .eq('loja_id', lojaAtual.id)
                 .eq('mesa', mesaAtual)
                 .neq('estado', 'finalizado')
-                .neq('estado', 'cancelado') // Não conta pedidos cancelados
+                .neq('estado', 'cancelado') 
                 .limit(1);
 
             if (!pedidosAtivos || pedidosAtivos.length === 0) {
