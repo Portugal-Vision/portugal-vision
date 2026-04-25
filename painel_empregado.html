@@ -196,7 +196,7 @@
 <div id="modal-pagar-mesa" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header">
-            <h3 style="margin:0;">Fechar Mesa <span id="pagar-mesa-num"></span></h3>
+            <h3 style="margin:0;">Fechar Pedido <span id="pagar-mesa-num" style="display: none;"></span></h3>
             <span class="close-modal" onclick="fecharModal('modal-pagar-mesa')"><i class="fas fa-times"></i></span>
         </div>
         <div class="modal-body">
@@ -206,6 +206,7 @@
                 <option value="Dinheiro">💵 Dinheiro</option>
                 <option value="Multibanco">💳 Multibanco</option>
                 <option value="MBWay">📱 MBWay</option>
+                <option value="Ticket Refeição">🎫 Ticket Refeição</option>
             </select>
             <input type="hidden" id="pagar-mesa-ids">
             <button class="btn-login btn-success" style="background: var(--success); margin-top: 15px;" onclick="confirmarFechoMesa()">
@@ -386,14 +387,12 @@
 
         carregarDados();
         
-        // CIRURGIA 1: Escutar status_presenca para o "Atrasado" também
         _sb.channel('sala-updates')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, () => { tocarSomAlerta('campainha'); carregarDados(); })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, (payload) => { 
               if (payload.new.status_presenca === 'no_local' && payload.old.status_presenca !== 'no_local') {
                   tocarSomAlerta('campainha');
               }
-              // Novo Alerta Sonoro para o Atraso
               if (payload.new.status_presenca === 'atrasado' && payload.old.status_presenca !== 'atrasado') {
                   tocarSomAlerta('alarme');
               }
@@ -417,9 +416,8 @@
             ).subscribe();
     }
 
-    // CIRURGIA 2: Som da Cozinha nativo
     function dispararAlertaCozinha(mensagem) {
-        tocarSomAlerta('alarme_grave'); // Usa o sintetizador agora!
+        tocarSomAlerta('alarme_grave'); 
 
         document.body.classList.add('piscar-ecra');
         setTimeout(() => document.body.classList.remove('piscar-ecra'), 8000);
@@ -510,13 +508,13 @@
                 let piscarClass = chamadasMesa.length > 0 ? 'piscar-card' : '';
                 
                 let chamadasHtml = '';
-                let metodoSelecionadoPeloCliente = ''; // CIRURGIA 3: Para pescar a info de pagamento
+                let metodoSelecionadoPeloCliente = ''; 
 
                 chamadasMesa.forEach(c => {
                     const isC = c.tipo_chamada === 'conta'; 
                     if(isC) {
                         const metodo = c.metodo_pagamento || "Dinheiro";
-                        metodoSelecionadoPeloCliente = metodo; // Guarda a escolha do cliente
+                        metodoSelecionadoPeloCliente = metodo; 
 
                         const nif = (c.quer_nif && c.nif_cliente) ? `<br><strong style="color: var(--danger);">NIF:</strong> ${c.nif_cliente}` : '';
                         chamadasHtml += `<div style="background:#fef2f2; border:1px solid #fecaca; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.9em; color:var(--danger);">
@@ -564,8 +562,7 @@
                     btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${idConf}, 'pendente')"><i class="fas fa-fire"></i> Enviar p/ Cozinha</button>
                            <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedido(${idConf})"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; 
                 } else if (m.tudoPronto) { 
-                    // CIRURGIA 3: Injetar o método de pagamento no botão
-                    btn = `<button class="btn-action btn-success" data-metodo="${metodoSelecionadoPeloCliente}" onclick="prepararFechoMesa('${m.mesa}', ${m.totalAcumulado}, '${JSON.stringify(m.rondas.map(r=>r.id))}', this.dataset.metodo)"><i class="fas fa-euro-sign"></i> Pagar e Fechar (${m.totalAcumulado.toFixed(2)}€)</button>`; 
+                    btn = `<button class="btn-action btn-success" data-metodo="${metodoSelecionadoPeloCliente}" onclick="prepararFechoMesa('Mesa ${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', this.dataset.metodo)"><i class="fas fa-euro-sign"></i> Pagar e Fechar (${m.totalAcumulado.toFixed(2)}€)</button>`; 
                 } else {
                     btn = `<button class="btn-action btn-resolve" style="opacity:0.5;">Mesa em Consumo...</button>`;
                 }
@@ -603,7 +600,11 @@
         } 
         else if(p.estado === 'pendente') { estHtml = `<span style="color: var(--danger); font-weight:bold;">Aguardar fogão</span>`; btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')"><i class="fas fa-bell"></i> Marcar Pronto (Balcão)</button>`; } 
         else if(p.estado === 'preparacao') { estHtml = `<span style="color: var(--primary); font-weight:bold;">Na Cozinha 🍳</span>`; btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto')">Marcar Pronto</button>`; } 
-        else if(p.estado === 'pronto') { estHtml = `<span style="color: var(--success); font-weight:bold;">Pronto! 🔔</span>`; btn = `<button class="btn-action btn-resolve" onclick="avancarPedido(${p.id}, 'finalizado')"><i class="fas fa-check-double"></i> Entregue/Pago</button>`; }
+        // CIRURGIA 1 E 2: O botão de Fechar Takeaway agora abre o Modal!
+        else if(p.estado === 'pronto') { 
+            estHtml = `<span style="color: var(--success); font-weight:bold;">Pronto! 🔔</span>`; 
+            btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '')"><i class="fas fa-check-double"></i> Entregue / Fechar</button>`; 
+        }
         
         else if(p.estado === 'reserva_confirmada') {
             const dataAgendada = p.data_agendada ? new Date(p.data_agendada) : new Date(p.created_at);
@@ -718,13 +719,19 @@
         } 
     }
     
-    // CIRURGIA 3: Injetar o método de pagamento recebido na chamada
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
-        document.getElementById('pagar-mesa-num').innerText = mesa;
+        // Ajusta o ecrã para não dizer "Mesa Takeaway" mas sim "Pedido Takeaway"
+        if (mesa === 'Takeaway' || mesa === 'Reserva') {
+            document.getElementById('pagar-mesa-num').innerText = mesa;
+            document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
+        } else {
+            document.getElementById('pagar-mesa-num').innerText = mesa;
+            document.querySelector('#modal-pagar-mesa h3').innerHTML = 'Fechar Mesa <span id="pagar-mesa-num">' + mesa + '</span>';
+        }
+
         document.getElementById('pagar-mesa-total').innerText = total.toFixed(2);
         document.getElementById('pagar-mesa-ids').value = idsStr;
         
-        // Se houver método de pagamento preferido, seleciona-o. Se não, predefine para Dinheiro.
         if (metodoPreferido) {
             document.getElementById('pagar-mesa-metodo').value = metodoPreferido;
         } else {
@@ -755,7 +762,6 @@
         }
     }
 
-    // Função de Som Melhorada com Alarme para Cozinha e Atrasos
     function tocarSomAlerta(tipo) { 
         try { 
             const ctx = new (window.AudioContext || window.webkitAudioContext)(); 
@@ -773,7 +779,6 @@
                 osc.start(ctx.currentTime); 
                 osc.stop(ctx.currentTime + 0.5); 
             } else if (tipo === 'alarme') {
-                // Som de Atraso (Dois bipes agudos rápidos)
                 osc.frequency.setValueAtTime(1200, ctx.currentTime); 
                 osc.type = 'square'; 
                 gain.gain.setValueAtTime(0, ctx.currentTime); 
@@ -784,7 +789,6 @@
                 osc.start(ctx.currentTime); 
                 osc.stop(ctx.currentTime + 0.4);
             } else if (tipo === 'alarme_grave') {
-                // Som da Cozinha (Tom grave e mais longo)
                 osc.frequency.setValueAtTime(300, ctx.currentTime); 
                 osc.type = 'sawtooth'; 
                 gain.gain.setValueAtTime(0, ctx.currentTime); 
