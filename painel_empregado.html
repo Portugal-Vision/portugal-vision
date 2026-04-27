@@ -302,6 +302,122 @@
     let timerAtualizacao = null; 
     let acaoSegurancaPendente = null; 
 
+    // --- CIRURGIA NOVO PEDIDO MANUAL (POS) ---
+    function abrirPOS() {
+        posCarrinho = [];
+        posTotal = 0;
+        document.getElementById('pos-mesa').value = '';
+        renderizarPOS();
+        atualizarCarrinhoPOS();
+        document.getElementById('modal-pos').style.display = 'flex';
+    }
+
+    function renderizarPOS() {
+        const container = document.getElementById('pos-produtos');
+        if (!produtosCatalogo || produtosCatalogo.length === 0) {
+            container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#94a3b8;">Nenhum produto disponível no catálogo.</p>';
+            return;
+        }
+        
+        container.innerHTML = produtosCatalogo.map(p => {
+            const precoFinal = p.desconto_percent > 0 ? p.preco * (1 - p.desconto_percent / 100) : p.preco;
+            return `
+                <div class="pos-item" onclick="adicionarAoPOS(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFinal})">
+                    <img src="${p.imagem_url || 'https://via.placeholder.com/150?text=Sem+Imagem'}" alt="${p.nome}">
+                    <strong style="font-size:0.9em;">${p.nome}</strong>
+                    <span style="color:var(--primary); font-weight:bold;">${precoFinal.toFixed(2)}€</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function adicionarAoPOS(id, nome, preco) {
+        const existente = posCarrinho.find(i => i.id === id);
+        if (existente) {
+            existente.qtde += 1;
+        } else {
+            posCarrinho.push({ id, nome, preco, qtde: 1 });
+        }
+        atualizarCarrinhoPOS();
+    }
+
+    function alterarQtdePOS(index, delta) {
+        posCarrinho[index].qtde += delta;
+        if (posCarrinho[index].qtde <= 0) {
+            posCarrinho.splice(index, 1);
+        }
+        atualizarCarrinhoPOS();
+    }
+
+    function atualizarCarrinhoPOS() {
+        const list = document.getElementById('pos-cart-list');
+        posTotal = 0;
+        
+        if (posCarrinho.length === 0) {
+            list.innerHTML = '<li style="color:#94a3b8; font-style:italic;">O carrinho está vazio.</li>';
+        } else {
+            list.innerHTML = posCarrinho.map((item, index) => {
+                const subtotal = item.qtde * item.preco;
+                posTotal += subtotal;
+                return `
+                    <li style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>${item.nome}</strong><br>
+                            <span style="font-size:0.85em; color:#64748b;">${item.preco.toFixed(2)}€/un</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button onclick="alterarQtdePOS(${index}, -1)" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px;">-</button>
+                            <span style="font-weight:bold; width:20px; text-align:center;">${item.qtde}</span>
+                            <button onclick="alterarQtdePOS(${index}, 1)" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px;">+</button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+        document.getElementById('pos-total').innerText = posTotal.toFixed(2);
+    }
+
+    async function enviarPedidoPOS() {
+        if (posCarrinho.length === 0) return alert("O carrinho está vazio. Adicione produtos antes de enviar.");
+        
+        const mesaInput = document.getElementById('pos-mesa').value.trim();
+        if (!mesaInput) return alert("Indique o número da mesa ou o nome para o Takeaway.");
+
+        const btn = document.querySelector('#modal-pos .btn-login');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A enviar...';
+        btn.disabled = true;
+
+        // Lógica simples: Se contiver letras, assumimos que é um Takeaway (nome pessoa). Se for só número, é mesa.
+        const isMesa = /^\d+$/.test(mesaInput) || mesaInput.toLowerCase().includes('esplanada') || mesaInput.toLowerCase().includes('mesa');
+        const tipoPedido = isMesa ? 'mesa' : 'levantamento';
+
+        try {
+            const { error } = await _sb.from('pedidos').insert([{
+                loja_id: minhaLojaId,
+                tipo_pedido: tipoPedido,
+                mesa: isMesa ? mesaInput : null,
+                nome_cliente: !isMesa ? mesaInput : 'Cliente Sala',
+                itens: posCarrinho,
+                total: posTotal,
+                estado: 'pendente', // Vai direto para a cozinha/fila
+                status_presenca: isMesa ? 'sentado' : 'pendente',
+                metodo_pagamento: 'No Local'
+            }]);
+            
+            if (error) throw error;
+            
+            fecharModal('modal-pos');
+            posCarrinho = [];
+            carregarDados();
+        } catch (error) {
+            alert("Erro ao enviar pedido para a cozinha: " + error.message);
+        } finally {
+            btn.innerHTML = '<i class="fas fa-fire"></i> Enviar Direto para a Cozinha';
+            btn.disabled = false;
+        }
+    }
+
+
     // --- CIRURGIA 1: EFEITO LUPA ---
     function focarCartao(elemento) {
         event.stopPropagation(); // Previne que o clique dispare o removerFocoGeral
@@ -329,7 +445,6 @@
         const btn = document.querySelector('#modal-pin-seguranca .btn-warning');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A verificar...'; btn.disabled = true;
 
-        // CIRURGIA 3: O .maybeSingle() foi removido para não bloquear PINs iguais
         const { data, error } = await _sb.from('empregados')
             .select('id, nome')
             .eq('loja_id', minhaLojaId)
@@ -772,7 +887,6 @@
         fecharModal('modal-mesa-reserva');
     }
 
-
     // --- CIRURGIA 3: SOFT DELETE COM PIN ---
     function apagarPedidoSeguro(id) {
         pedirPin(() => efetuarCancelamentoLogico(id));
@@ -784,7 +898,6 @@
             carregarDados(); 
         } 
     }
-
 
     // --- CIRURGIA 3.1: EDIÇÃO COM PIN E BOTÕES GORDOS ---
     function abrirEdicaoSegura(id) {
