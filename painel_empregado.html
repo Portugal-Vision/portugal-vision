@@ -39,7 +39,7 @@
         .badge { background: #e2e8f0; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; }
         
         /* CIRURGIA 1: CARTÃO & EFEITO LUPA (FOCO) */
-        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-width 0.2s ease; }
+        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-width 0.2s ease;}
         .card.focado { transform: scale(1.08); box-shadow: 0 0 0 9999px rgba(0,0,0,0.4), 0 25px 50px -12px rgba(0,0,0,0.5); border-left-width: 10px; z-index: 100; position: relative; }
         .card.pedido-mesa { border-left-color: var(--primary); } .card.pedido-takeaway { border-left-color: #8b5cf6; } .card.pedido-reserva { border-left-color: #14b8a6; }
         .card.aguarda-confirmacao { border-left-color: var(--warning); background: #fffbeb; }
@@ -140,7 +140,8 @@
         </div>
     </header>
 
-    <div class="main-content" onclick="removerFocoGeral()"> <div class="coluna">
+    <div class="main-content" onclick="removerFocoGeral()"> 
+        <div class="coluna">
             <div class="coluna-header"><span><i class="fas fa-shopping-bag" style="color:#8b5cf6;"></i> Levantamentos</span><span class="badge" id="count-takeaway">0</span></div>
             <div id="lista-takeaway"><div class="empty-state"><i class="fas fa-box"></i><p>Sem pedidos.</p></div></div>
         </div>
@@ -164,7 +165,8 @@
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header" style="background: #fffbeb;">
             <h3 style="margin:0; color: var(--warning);"><i class="fas fa-user-shield"></i> Autorização</h3>
-            <div class="close-modal" onclick="fecharModal('modal-pin-seguranca')"><i class="fas fa-times"></i></div> </div>
+            <div class="close-modal" onclick="fecharModal('modal-pin-seguranca')"><i class="fas fa-times"></i></div> 
+        </div>
         <div class="modal-body">
             <p style="color:#475569; margin-bottom: 15px; font-size: 0.9em; font-weight: bold;">Insira um PIN de Operador válido para confirmar esta ação.</p>
             <input type="password" id="input-pin-seguranca" class="input-form pin-modal-input" placeholder="******" maxlength="6">
@@ -177,7 +179,8 @@
     <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-history"></i> Histórico de Turno (Hoje)</h3>
-            <div class="close-modal" onclick="fecharModal('modal-historico')"><i class="fas fa-times"></i></div> </div>
+            <div class="close-modal" onclick="fecharModal('modal-historico')"><i class="fas fa-times"></i></div> 
+        </div>
         <div class="modal-body" style="background: #f1f5f9;">
             <div id="lista-historico"></div>
         </div>
@@ -188,7 +191,8 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-cash-register"></i> Novo Pedido Manual</h3>
-            <div class="close-modal" onclick="fecharModal('modal-pos')"><i class="fas fa-times"></i></div> </div>
+            <div class="close-modal" onclick="fecharModal('modal-pos')"><i class="fas fa-times"></i></div> 
+        </div>
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
             <input type="text" id="pos-mesa" class="input-form" placeholder="Nº da Mesa ou Nome do Cliente (Takeaway)" style="margin:0;">
             <div class="pos-grid" id="pos-produtos"></div>
@@ -206,7 +210,8 @@
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header">
             <h3 style="margin:0;">Atribuir Mesa</h3>
-            <div class="close-modal" onclick="fecharModal('modal-mesa-reserva')"><i class="fas fa-times"></i></div> </div>
+            <div class="close-modal" onclick="fecharModal('modal-mesa-reserva')"><i class="fas fa-times"></i></div> 
+        </div>
         <div class="modal-body">
             <p style="color:#475569; margin-bottom: 15px;">Para onde vai encaminhar o cliente?</p>
             <input type="text" id="input-mesa-reserva" class="input-form" placeholder="Ex: 5 ou Esplanada 2">
@@ -220,7 +225,8 @@
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header">
             <h3 style="margin:0;">Fechar Pedido <span id="pagar-mesa-num" style="display: none;"></span></h3>
-            <div class="close-modal" onclick="fecharModal('modal-pagar-mesa')"><i class="fas fa-times"></i></div> </div>
+            <div class="close-modal" onclick="fecharModal('modal-pagar-mesa')"><i class="fas fa-times"></i></div> 
+        </div>
         <div class="modal-body">
             <h2 style="color: var(--primary); font-size: 2.5em; margin: 10px 0;"><span id="pagar-mesa-total">0.00</span>€</h2>
             <p style="color:#475569; margin-bottom: 15px;">Confirme o método de pagamento efetuado pelo cliente:</p>
@@ -239,10 +245,11 @@
 </div>
 
 <div id="modal-edicao" class="modal">
-    <div class="modal-content" style="max-width: 700px; max-height: 90vh;">
+    <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-edit"></i> Editar Pedido <span id="edit-pedido-id" style="color:var(--primary);"></span></h3>
-            <div class="close-modal" onclick="fecharModal('modal-edicao')"><i class="fas fa-times"></i></div> </div>
+            <div class="close-modal" onclick="fecharModal('modal-edicao')"><i class="fas fa-times"></i></div> 
+        </div>
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
                 <div><label style="font-size:12px; font-weight:bold; color:#64748b;">Nome do Cliente:</label><input type="text" id="edit-nome" class="input-form" style="margin:0; padding:8px;"></div>
@@ -251,7 +258,7 @@
             </div>
             <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 5px 0;">
             <h4 style="margin:0;">Produtos Associados a este Pedido</h4>
-            <div id="edit-lista-produtos" style="background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;"></div>
+            <div id="edit-lista-produtos" style="background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; max-height: 250px; overflow-y: auto;"></div>
             <div style="display: flex; gap: 10px; align-items: center; background: #f1f5f9; padding: 15px; border-radius: 10px;">
                 <select id="edit-add-produto-select" class="input-form" style="margin:0; flex: 1;"></select>
                 <button class="btn-login" style="width:auto; margin:0;" onclick="adicionarProdutoEdicao()"><i class="fas fa-plus"></i> Inserir</button>
@@ -267,7 +274,8 @@
     <div class="modal-content">
         <div class="modal-header no-print">
             <h3 style="margin:0;"><i class="fas fa-lock"></i> Fim de Turno</h3>
-            <div class="close-modal" onclick="fecharModal('modal-fecho')"><i class="fas fa-times"></i></div> </div>
+            <div class="close-modal" onclick="fecharModal('modal-fecho')"><i class="fas fa-times"></i></div> 
+        </div>
         <div class="modal-body">
             <div style="background: #e0f2fe; color: #0369a1; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.95em; border: 1px solid #bae6fd;">
                 <i class="fas fa-info-circle"></i> O fecho de turno tranca as contas e notifica o Lojista.
@@ -313,14 +321,14 @@
         setTimeout(() => document.getElementById('input-pin-seguranca').focus(), 100);
     }
 
-async function validarPinSeguranca() {
+    async function validarPinSeguranca() {
         const pinDigitado = document.getElementById('input-pin-seguranca').value;
         if(!pinDigitado) return;
 
         const btn = document.querySelector('#modal-pin-seguranca .btn-warning');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A verificar...'; btn.disabled = true;
 
-        // O erro estava aqui! Removemos o .maybeSingle() para não bloquear se houver PINs repetidos na equipa
+        // CORREÇÃO: Removemos o .maybeSingle() para não bloquear se houver PINs repetidos na equipa
         const { data, error } = await _sb.from('empregados')
             .select('id, nome')
             .eq('loja_id', minhaLojaId)
@@ -551,7 +559,7 @@ async function validarPinSeguranca() {
             chamadasAtivas[c.mesa].push(c);
         });
 
-        // Separar tipos de pedidos
+        // Separar tipos de pedidos (Oculta finalizados e cancelados)
         const takeaways = pedidos.filter(p => p.tipo_pedido === 'levantamento');
         const reservas = pedidos.filter(p => p.tipo_pedido === 'reserva');
         const mesas = pedidos.filter(p => p.tipo_pedido === 'mesa');
@@ -836,6 +844,8 @@ async function validarPinSeguranca() {
         try { const { error } = await _sb.from('pedidos').update({ nome_cliente: novoNome || null, nif_cliente: novoNif || null, quer_nif: !!novoNif, mesa: novaMesa || null, itens: pedidoEditando.itens, total: pedidoEditando.total }).eq('id', pedidoEditando.id); if (error) throw error; fecharModal('modal-edicao'); carregarDados(); } catch (e) { alert("Erro ao atualizar a base de dados: " + e.message); } finally { btn.innerHTML = `<i class="fas fa-save"></i> Guardar Alterações`; btn.disabled = false; }
     }
 
+    async function confirmarTakeaway(id) { if(confirm("ATENÇÃO:\nO pagamento MBWay já caiu na conta?\nA fatura foi emitida com os dados corretos?\n\n(Se sim, o pedido avança para a cozinha).")) { await _sb.from('pedidos').update({ estado: 'pendente' }).eq('id', id); } }
+    
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.getElementById('pagar-mesa-num').innerText = mesa;
@@ -904,6 +914,7 @@ async function validarPinSeguranca() {
                 const desc = p.tipo_pedido === 'mesa' ? `Mesa ${p.mesa}` : `Takeaway/Reserva (${p.nome_cliente || 'Anónimo'})`;
                 const infoNif = p.nif_cliente ? `<br><small style="color:#64748b;">NIF: ${p.nif_cliente}</small>` : '';
                 
+                // Botão reabrir pede PIN!
                 const btnReabrir = `<button onclick="pedirPin(() => efetuarReabertura(${p.id}))" class="btn-mini-edit" style="background:var(--warning); padding:8px 12px; font-weight:bold; font-size:12px;"><i class="fas fa-undo"></i> Reabrir Pedido</button>`;
                 
                 return `<div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
