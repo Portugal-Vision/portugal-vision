@@ -213,7 +213,7 @@
     <p id="motivo-fecho">Este website não se encontra ativo no momento.</p>
 </div>
 
-<div id="legalModal" class="modal">
+<div id="legalModal" class="modal" style="z-index: 10000;">
     <div class="modal-content">
         <span class="close-modal" onclick="closeLegalModal()">×</span>
         <div id="modalText"></div>
@@ -255,9 +255,9 @@
             <input type="email" id="auth-email-reg" class="input-form" placeholder="E-mail">
             <input type="password" id="auth-pass-reg" class="input-form" placeholder="Password Segura">
             
-            <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #64748b; margin-top: 10px; cursor: pointer;">
+            <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #64748b; margin-top: 10px; cursor: pointer; line-height: 1.4;">
                 <input type="checkbox" id="auth-termos-reg" style="margin:0; width: 16px; height: 16px; flex-shrink: 0;">
-                Li e aceito os Termos e Condições e a Política de Privacidade deste serviço.
+                <span>Li e aceito os <a onclick="showLegal('termos'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;">Termos e Condições</a> e a <a onclick="showLegal('privacidade'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;">Política de Privacidade</a> deste serviço.</span>
             </label>
 
             <button class="btn-checkout" onclick="clienteRegisto()">Criar Conta</button>
@@ -451,7 +451,7 @@
 
     function showLegal(type) {
         document.getElementById('modalText').innerHTML = legalTexts[type];
-        document.getElementById('legalModal').style.display = 'block';
+        document.getElementById('legalModal').style.display = 'flex';
     }
     
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -862,8 +862,6 @@
 
     function aplicarTemaVisual(temaId) {
         const root = document.documentElement;
-        // Se for "padrao", não faz nada (usa o que está no CSS). 
-        // Caso contrário, aplica as paletas claras criadas no painel do lojista.
         if (temaId === 'minimalista') {
             root.style.setProperty('--bg', '#ffffff');
             root.style.setProperty('--p', '#1e293b');
@@ -993,7 +991,7 @@
 
         registarVisita(loja.id, loja.views_total || 0);
 
-        const { data: produtos } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
+        const { data: produtos } = await _sb.from('produtos').select('*, taxa_iva').eq('loja_id', loja.id).eq('oculto', false);
         todosProdutos = produtos || [];
         
         const cats = [...new Set(todosProdutos.map(p => p.categoria))].filter(Boolean);
@@ -1011,13 +1009,37 @@
 
     function virarCartao(id) { document.getElementById(`card-${id}`).classList.toggle('flipped'); }
 
-    function checarPontoCarne(idProduto, nome, precoRaw, desconto, categoria, event) {
+    // --- NOVA LÓGICA INTELIGENTE DO PONTO DA CARNE ---
+    function checarPontoCarne(idProduto, nome, precoRaw, desconto, categoria, descricao, event) {
         event.stopPropagation();
         
-        // Verifica se a categoria exige pergunta de ponto da carne
-        const catLower = categoria.toLowerCase();
-        if (catLower.includes('carne') || catLower.includes('grelhado')) {
-            // Guarda dados na memória temporária para usar no pop-up
+        const catLower = (categoria || "").toLowerCase();
+        const nomeLower = (nome || "").toLowerCase();
+        const descLower = (descricao || "").toLowerCase();
+        
+        const textoTudo = catLower + " " + nomeLower + " " + descLower;
+
+        // Palavras que indicam que a carne é grelhada/frita e precisa de ponto
+        const palavrasAtivadoras = ['bife', 'picanha', 'maminha', 'hambúrguer', 'hamburguer', 'entrecôte', 'entrecote', 'grelhad', 'costeleta', 'vazia', 'lombinho', 'posta'];
+        
+        // Palavras que indicam que o prato de carne NÃO precisa de ponto (estufados, cozidos)
+        const palavrasIgnoradas = ['cozido', 'feijoada', 'estufad', 'rojões', 'rojoes', 'jardineira', 'ensopado', 'assado no forno'];
+
+        // Só considera ativar se a categoria principal remeter para Carne
+        let éCarne = catLower.includes('carne') || catLower.includes('grelhado');
+        
+        let precisaDePonto = false;
+
+        if (éCarne) {
+            let temAtivador = palavrasAtivadoras.some(palavra => textoTudo.includes(palavra));
+            let temIgnorado = palavrasIgnoradas.some(palavra => textoTudo.includes(palavra));
+
+            if (temAtivador && !temIgnorado) {
+                precisaDePonto = true;
+            }
+        }
+
+        if (precisaDePonto) {
             tempCarneId = idProduto;
             tempCarneNome = nome;
             tempCarnePreco = precoRaw;
@@ -1025,7 +1047,6 @@
             
             document.getElementById('modal-ponto-carne').style.display = 'flex';
         } else {
-            // Segue normal para o carrinho
             adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, null, event.currentTarget);
         }
     }
@@ -1036,28 +1057,35 @@
         adicionarAoCarrinho(tempCarneId, nomeFinal, tempCarnePreco, tempCarneDesconto, pontoEscolhido, null);
         
         fecharModal('modal-ponto-carne');
-        alert("Adicionado com sucesso!");
     }
 
-    // BotaoDOM passado quando a inserção é direta, para fazer o efeito verde.
     function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, pontoOpicional, botaoDOM) {
         if (!mesaAtual && !clienteAtual) {
-            document.getElementById('authModal').style.display = 'block';
+            document.getElementById('authModal').style.display = 'flex';
             alert("Para fazer encomendas de Takeaway ou Reservas, por favor inicie sessão ou crie conta primeiro.");
             return; 
         }
 
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         
-        // Se a carne tiver um ponto diferente, consideramos um produto diferente no carrinho.
-        const idUnicoCarrinho = pontoOpicional ? `${idProduto}-${pontoOpicional}` : idProduto;
+        const idUnicoCarrinho = pontoOpicional ? `${idProduto}-${pontoOpicional.replace(/\s+/g, '')}` : idProduto;
         
         const itemExistente = carrinho.find(item => item.idUnico === idUnicoCarrinho);
         if (itemExistente) { 
             itemExistente.qtde += 1; 
         } else { 
-            // O backend também precisará do ID real do produto para estatísticas, logo mandamos os dois.
-            carrinho.push({ idUnico: idUnicoCarrinho, id: idProduto, nome: nome, preco: precoFinal, qtde: 1 }); 
+            // Procuro no array global a taxa de IVA para enviar para o backend
+            const prodNaBase = todosProdutos.find(p => p.id === idProduto);
+            const ivaProd = prodNaBase ? prodNaBase.taxa_iva : 0;
+
+            carrinho.push({ 
+                idUnico: idUnicoCarrinho, 
+                id: idProduto, 
+                nome: nome, 
+                preco: precoFinal, 
+                taxa_iva: ivaProd,
+                qtde: 1 
+            }); 
         }
         
         atualizarFloater();
@@ -1067,6 +1095,14 @@
             botaoDOM.innerHTML = `<i class="fas fa-check"></i> Adicionado!`;
             botaoDOM.style.background = "#166534"; 
             setTimeout(() => { botaoDOM.innerHTML = originalText; botaoDOM.style.background = "var(--ok)"; }, 1500);
+        } else {
+            // Caso em que vem do pop-up da carne (não temos o DOM do botão inicial facilmente aqui, então usamos alerta visual)
+            const alerta = document.getElementById('cliente-alert');
+            const msgEl = document.getElementById('cliente-alert-msg');
+            msgEl.innerText = "Adicionado ao carrinho!";
+            alerta.style.background = "var(--ok)"; 
+            alerta.classList.add('show');
+            setTimeout(() => alerta.classList.remove('show'), 2000);
         }
     }
 
@@ -1259,7 +1295,6 @@
             const final = calcularPrecoFinal(precoFixo, desc).toFixed(2);
             
             let alergeniosHtml = '';
-            // Exibimos alergenios sempre se o lojista preencheu.
             if(p.alergenios && p.alergenios.length > 0) {
                 alergeniosHtml = `<div class="alergenios-badge" onclick="showLegal('alergenios'); event.stopPropagation();" style="cursor:pointer;" title="Ver detalhes"><i class="fas fa-exclamation-circle"></i> Contém: ${p.alergenios.join(', ')} <i class="fas fa-info-circle"></i></div>`;
             }
@@ -1282,10 +1317,10 @@
 
             let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> Esgotado</div>` : '';
             
-            // O BOTÃO DE ADICIONAR MUDOU. AGORA CHAMA checarPontoCarne em vez de adicionarAoCarrinho direto.
+            // O BOTÃO DE ADICIONAR COM A CHAMADA INTELIGENTE
             let btnAdicionar = isEsgotado 
                 ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Produto Esgotado</button>`
-                : `<button onclick="checarPontoCarne(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFixo}, ${desc}, '${p.categoria || ''}', event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
+                : `<button onclick="checarPontoCarne(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFixo}, ${desc}, '${p.categoria || ''}', '${p.descricao ? p.descricao.replace(/'/g, "\\'").replace(/\n/g, ' ') : ''}', event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
 
             return `
                 <div class="card-container" id="card-${p.id}">
@@ -1340,7 +1375,6 @@
         renderizar(filtrados);
     }
 
-    // Adiciona o texto dos Alergénios dinamicamente no legalTexts
     legalTexts.alergenios = `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><i class="fas fa-info-circle"></i> Guia de Alergénios</h3>
         <div style="font-size: 0.9em; line-height: 1.6; color: #475569; max-height: 60vh; overflow-y: auto;">
             <p>Se tem dúvidas sobre os alergénios apresentados nos nossos pratos, consulte esta lista (Reg. 1169/2011):</p>
