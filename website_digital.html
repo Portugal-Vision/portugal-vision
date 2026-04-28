@@ -435,7 +435,6 @@
     let clienteAtual = null; 
     let realtimeCanal = null;
     
-    // Variáveis temporárias para o pop-up da Carne
     let tempCarneId = null;
     let tempCarneNome = null;
     let tempCarnePreco = null;
@@ -518,7 +517,6 @@
                 clienteAtual = userData;
                 document.getElementById('btn-user-account').style.display = 'flex';
                 
-                // MENSAGEM DE BOAS VINDAS
                 const saudacao = document.getElementById('boas-vindas-cliente');
                 saudacao.innerText = `Olá, ${clienteAtual.nome} 👋`;
                 saudacao.style.display = 'block';
@@ -1009,45 +1007,45 @@
 
     function virarCartao(id) { document.getElementById(`card-${id}`).classList.toggle('flipped'); }
 
-    // --- NOVA LÓGICA INTELIGENTE DO PONTO DA CARNE ---
-    function checarPontoCarne(idProduto, nome, precoRaw, desconto, categoria, descricao, event) {
+    // NOVA LÓGICA INTELIGENTE DO PONTO DA CARNE
+    function checarPontoCarne(idProduto, precoRaw, desconto, event) {
         event.stopPropagation();
         
-        const catLower = (categoria || "").toLowerCase();
-        const nomeLower = (nome || "").toLowerCase();
-        const descLower = (descricao || "").toLowerCase();
+        const p = todosProdutos.find(item => item.id === idProduto);
+        if (!p) return;
+
+        const catLower = (p.categoria || "").toLowerCase();
+        const nomeLower = (p.nome || "").toLowerCase();
+        const descLower = (p.descricao || "").toLowerCase();
         
         const textoTudo = catLower + " " + nomeLower + " " + descLower;
 
-        // Palavras que indicam que a carne é grelhada/frita e precisa de ponto
-        const palavrasAtivadoras = ['bife', 'picanha', 'maminha', 'hambúrguer', 'hamburguer', 'entrecôte', 'entrecote', 'grelhad', 'costeleta', 'vazia', 'lombinho', 'posta'];
+        // Palavras ativadoras
+        const palavrasAtivadoras = ['bife', 'picanha', 'maminha', 'hambúrguer', 'hamburguer', 'entrecôte', 'entrecote', 'grelhad', 'costeleta', 'vazia', 'lombinho', 'posta', 'prego', 'preguinho', 'bitoque'];
         
-        // Palavras que indicam que o prato de carne NÃO precisa de ponto (estufados, cozidos)
+        // Palavras de exceção (ignoram a regra do ponto)
         const palavrasIgnoradas = ['cozido', 'feijoada', 'estufad', 'rojões', 'rojoes', 'jardineira', 'ensopado', 'assado no forno'];
 
-        // Só considera ativar se a categoria principal remeter para Carne
-        let éCarne = catLower.includes('carne') || catLower.includes('grelhado');
+        let éCarne = catLower.includes('carne') || catLower.includes('grelhado') || catLower.includes('snack') || catLower.includes('sandes');
         
         let precisaDePonto = false;
 
-        if (éCarne) {
-            let temAtivador = palavrasAtivadoras.some(palavra => textoTudo.includes(palavra));
-            let temIgnorado = palavrasIgnoradas.some(palavra => textoTudo.includes(palavra));
+        let temAtivadorNoNome = palavrasAtivadoras.some(palavra => nomeLower.includes(palavra));
+        let temIgnorado = palavrasIgnoradas.some(palavra => textoTudo.includes(palavra));
 
-            if (temAtivador && !temIgnorado) {
-                precisaDePonto = true;
-            }
+        if ((éCarne && palavrasAtivadoras.some(palavra => textoTudo.includes(palavra)) && !temIgnorado) || (temAtivadorNoNome && !temIgnorado)) {
+            precisaDePonto = true;
         }
 
         if (precisaDePonto) {
             tempCarneId = idProduto;
-            tempCarneNome = nome;
+            tempCarneNome = p.nome;
             tempCarnePreco = precoRaw;
             tempCarneDesconto = desconto;
             
             document.getElementById('modal-ponto-carne').style.display = 'flex';
         } else {
-            adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, null, event.currentTarget);
+            adicionarAoCarrinho(idProduto, p.nome, precoRaw, desconto, null, event.currentTarget);
         }
     }
 
@@ -1068,14 +1066,16 @@
 
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         
-        const idUnicoCarrinho = pontoOpicional ? `${idProduto}-${pontoOpicional.replace(/\s+/g, '')}` : idProduto;
+        // CORREÇÃO DOS IDs ÚNICOS
+        const idBaseString = String(idProduto);
+        const idUnicoCarrinho = pontoOpicional ? `${idBaseString}-${pontoOpicional.replace(/\s+/g, '')}` : idBaseString;
         
-        const itemExistente = carrinho.find(item => item.idUnico === idUnicoCarrinho);
+        const itemExistente = carrinho.find(item => String(item.idUnico) === String(idUnicoCarrinho));
+        
         if (itemExistente) { 
             itemExistente.qtde += 1; 
         } else { 
-            // Procuro no array global a taxa de IVA para enviar para o backend
-            const prodNaBase = todosProdutos.find(p => p.id === idProduto);
+            const prodNaBase = todosProdutos.find(p => String(p.id) === idBaseString);
             const ivaProd = prodNaBase ? prodNaBase.taxa_iva : 0;
 
             carrinho.push({ 
@@ -1096,7 +1096,6 @@
             botaoDOM.style.background = "#166534"; 
             setTimeout(() => { botaoDOM.innerHTML = originalText; botaoDOM.style.background = "var(--ok)"; }, 1500);
         } else {
-            // Caso em que vem do pop-up da carne (não temos o DOM do botão inicial facilmente aqui, então usamos alerta visual)
             const alerta = document.getElementById('cliente-alert');
             const msgEl = document.getElementById('cliente-alert-msg');
             msgEl.innerText = "Adicionado ao carrinho!";
@@ -1161,6 +1160,7 @@
         carrinho.forEach(item => {
             const subtotal = item.preco * item.qtde;
             totalPreco += subtotal;
+            // CORREÇÃO DOS BOTÕES + E - : Enviar idUnico exatamente como string nas plicas ''
             html += `
                 <div class="cart-item">
                     <div class="cart-item-info">
@@ -1183,10 +1183,11 @@
     function fecharCarrinho() { document.getElementById('cartModal').style.display = 'none'; }
 
     function alterarQtde(idUnicoCarrinho, delta) {
-        const item = carrinho.find(i => i.idUnico === idUnicoCarrinho);
+        // CORREÇÃO: Comparar garantindo que ambos são strings
+        const item = carrinho.find(i => String(i.idUnico) === String(idUnicoCarrinho));
         if (item) {
             item.qtde += delta;
-            if (item.qtde <= 0) { carrinho = carrinho.filter(i => i.idUnico !== idUnicoCarrinho); }
+            if (item.qtde <= 0) { carrinho = carrinho.filter(i => String(i.idUnico) !== String(idUnicoCarrinho)); }
             atualizarFloater();
             if (carrinho.length > 0) { abrirCarrinho(); }
         }
@@ -1317,10 +1318,10 @@
 
             let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> Esgotado</div>` : '';
             
-            // O BOTÃO DE ADICIONAR COM A CHAMADA INTELIGENTE
+            // O BOTÃO DE ADICIONAR COM A CHAMADA INTELIGENTE CORRIGIDA (SÓ MANDA O ID PARA A FUNÇÃO)
             let btnAdicionar = isEsgotado 
                 ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Produto Esgotado</button>`
-                : `<button onclick="checarPontoCarne(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFixo}, ${desc}, '${p.categoria || ''}', '${p.descricao ? p.descricao.replace(/'/g, "\\'").replace(/\n/g, ' ') : ''}', event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
+                : `<button onclick="checarPontoCarne(${p.id}, ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
 
             return `
                 <div class="card-container" id="card-${p.id}">
