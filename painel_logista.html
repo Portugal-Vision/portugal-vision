@@ -402,12 +402,16 @@
             <div id="ai-suggestion-box" class="ai-suggestion hidden"></div>
             
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px">
-                <div style="grid-column: span 3; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; display: flex; align-items: center; gap: 10px;">
+                <div style="grid-column: span 3; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
                     <label style="font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" id="p-visibilidade" checked style="width: 18px; height: 18px; margin: 0;">
                         Mostrar no Website Público
                     </label>
-                    <span style="font-size: 11px; color: #475569;">(Desmarque se for um artigo de uso interno, ex: copo de vinho, bagaço, etc...)</span>
+                    
+                    <label style="font-weight: bold; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 8px; background: #fef2f2; padding: 5px 10px; border-radius: 6px; border: 1px solid #fecaca;">
+                        <input type="checkbox" id="p-pede-ponto" style="width: 16px; height: 16px; margin: 0;">
+                        🥩 Perguntar Ponto da Carne?
+                    </label>
                 </div>
 
                 <input type="text" id="p-nome" placeholder="Nome (Ex: Bacalhau à Brás)" style="grid-column: span 2">
@@ -587,7 +591,6 @@
 
     let canalNotificacoes = null;
 
-    // --- AQUI ESTÁ A CORREÇÃO DO TIPO DE NEGÓCIO ---
     const configNegocios = {
         restaurante: {
             tags: [
@@ -1206,7 +1209,7 @@
                 document.getElementById('s-views').innerText = infoLoja.views_total || 0;
             }
 
-            const { data: prods } = await _sb.from('produtos').select('*').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
+            const { data: prods } = await _sb.from('produtos').select('*, taxa_iva, pede_ponto').eq('loja_id', lojaAtiva.id).order('created_at', {ascending: false});
             produtosLocais = prods || [];
             let totalBytes = 0;
             const grid = document.getElementById('grid-prods');
@@ -1228,6 +1231,9 @@
                 }
                 if (p.dia_semana !== null && p.dia_semana !== undefined && p.dia_semana !== "") {
                     infoExtraHtml += `<div style="font-size: 11px; color: var(--s); margin-top: 2px; font-weight: 600;"><i class="fas fa-calendar-day"></i> Exclusivo: ${nomeDiasInt[p.dia_semana]}</div>`;
+                }
+                if (p.pede_ponto) {
+                    infoExtraHtml += `<div style="font-size: 11px; color: var(--accent); margin-top: 2px; font-weight: 600;"><i class="fas fa-fire"></i> Pede Ponto da Carne</div>`;
                 }
 
                 const precoFixo = parseFloat(p.preco) || 0;
@@ -1309,8 +1315,6 @@
         const precoVal = parseFloat(document.getElementById('p-preco').value);
         if(!document.getElementById('p-nome').value || isNaN(precoVal)) return alert("Nome e preço são obrigatórios.");
 
-        // AQUI ESTAVA O ERRO DE CACHE (parseInt em vez de parseFloat na taxa_iva e falha caso estivesse vazio).
-        // Se a coluna 'taxa_iva' for texto na Base de Dados, isto vai falhar. Garante que no Supabase a coluna é NUMERIC.
         const taxaIvaVal = parseFloat(document.getElementById('p-taxa-iva').value) || 0;
 
         let stockVal = document.getElementById('p-stock').value;
@@ -1320,6 +1324,7 @@
         diaVal = (diaVal !== "") ? parseInt(diaVal) : null;
         
         const ocultarProduto = !document.getElementById('p-visibilidade').checked;
+        const pedePontoCarne = document.getElementById('p-pede-ponto').checked;
 
         const dados = {
             nome: document.getElementById('p-nome').value,
@@ -1333,7 +1338,8 @@
             loja_id: lojaAtiva.id,
             stock: stockVal,             
             dia_semana: diaVal,
-            oculto: ocultarProduto
+            oculto: ocultarProduto,
+            pede_ponto: pedePontoCarne
         };
 
         btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A GUARDAR...`;
@@ -1355,10 +1361,12 @@
             if (id) { res = await _sb.from('produtos').update(dados).eq('id', id); } 
             else { res = await _sb.from('produtos').insert([dados]); }
 
-            // O ERRO APARECIA AQUI QUANDO "taxa_iva" NÃO ESTAVA CRIADA NO SUPABASE.
             if(res.error) {
                 if(res.error.message.includes("Could not find the 'taxa_iva' column")) {
-                    throw new Error("A coluna 'taxa_iva' não existe na tabela 'produtos' no Supabase. Por favor, crie-a como tipo numérico antes de guardar.");
+                    throw new Error("A coluna 'taxa_iva' não existe na tabela 'produtos' no Supabase.");
+                }
+                if(res.error.message.includes("Could not find the 'pede_ponto' column")) {
+                    throw new Error("A coluna 'pede_ponto' não existe na tabela 'produtos' no Supabase. Por favor, crie-a como tipo 'boolean' antes de guardar.");
                 }
                 throw res.error;
             }
@@ -1391,6 +1399,7 @@
         document.querySelectorAll('#p-alergenios-container input').forEach(c => c.checked = false);
         
         document.getElementById('p-visibilidade').checked = true;
+        document.getElementById('p-pede-ponto').checked = false;
 
         document.getElementById('form-title').innerHTML = `<i class="fas fa-box-open"></i> Publicar Artigo`;
         document.getElementById('btn-cancel').classList.add('hidden');
@@ -1414,6 +1423,7 @@
         document.getElementById('p-dia-semana').value = p.dia_semana !== null ? p.dia_semana : "";
         
         document.getElementById('p-visibilidade').checked = !p.oculto;
+        document.getElementById('p-pede-ponto').checked = p.pede_ponto || false;
 
         const tags = p.tipo_tag || [];
         document.querySelectorAll('#p-tags-container input').forEach(c => c.checked = tags.includes(c.value));
