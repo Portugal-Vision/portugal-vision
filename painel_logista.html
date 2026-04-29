@@ -168,6 +168,18 @@
         .notificacao-icon { font-size: 24px; animation: pulse-ring 2s infinite; }
         @keyframes pulse-ring { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
+        /* MÓDULOS DE FICHA TÉCNICA E ANEXO */
+        .btn-ficha-rapida {
+            display: inline-flex; align-items: center; gap: 4px; 
+            font-size: 10px; font-weight: bold; padding: 4px 8px; 
+            border-radius: 6px; cursor: pointer; transition: 0.2s;
+            margin-top: 6px; margin-right: 4px; border: none;
+        }
+        .btn-ficha-rapida.texto { background: #e0f2fe; color: #0284c7; }
+        .btn-ficha-rapida.texto:hover { background: #bae6fd; }
+        .btn-ficha-rapida.anexo { background: #dcfce7; color: #059669; text-decoration: none;}
+        .btn-ficha-rapida.anexo:hover { background: #bbf7d0; }
+
         /* -----------------------------------------------------
            CSS MODO EDIÇÃO E IMPRESSÃO
            ----------------------------------------------------- */
@@ -652,6 +664,23 @@
     </div>
 </div>
 
+<div id="modal-ficha-tecnica" class="hidden no-print" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; padding: 0; border-radius: 16px; max-width: 600px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+        <div style="background: #f8fafc; padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 id="modal-ficha-titulo" style="margin:0; color:var(--p);"><i class="fas fa-clipboard-list" style="color:var(--s);"></i> Notas da Cozinha</h3>
+                <small id="modal-ficha-subtitulo" style="color: #64748b;"></small>
+            </div>
+            <button onclick="fecharModalFicha()" style="background:transparent; color:#64748b; border:none; font-size:20px; cursor:pointer; width:auto; padding:5px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="padding: 20px; overflow-y: auto; flex: 1;">
+            <div id="modal-ficha-conteudo" style="font-size: 14px; color: #334155; line-height: 1.6; white-space: pre-wrap;"></div>
+        </div>
+        <div id="modal-ficha-footer" style="padding: 15px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: right;">
+            </div>
+    </div>
+</div>
+
 <div id="print-area"></div>
 
 <div id="print-area-wrapper" class="hidden">
@@ -718,6 +747,33 @@
 
     function mostrarInfoAlergenios() { document.getElementById('modal-alergenios').classList.remove('hidden'); }
     function fecharInfoAlergenios() { document.getElementById('modal-alergenios').classList.add('hidden'); }
+
+    // --- FUNÇÕES DO NOVO MODAL DE FICHA TÉCNICA ---
+    function abrirModalFicha(idProduto) {
+        const p = produtosLocais.find(item => item.id === idProduto);
+        if(!p) return;
+
+        document.getElementById('modal-ficha-titulo').innerHTML = `<i class="fas fa-clipboard-list" style="color:var(--s);"></i> ${p.nome}`;
+        document.getElementById('modal-ficha-subtitulo').innerText = p.categoria || "Sem Categoria";
+        
+        let textoNotas = p.ficha_tecnica_texto || "Sem notas de confeção registadas.";
+        document.getElementById('modal-ficha-conteudo').innerText = textoNotas;
+
+        const footer = document.getElementById('modal-ficha-footer');
+        if (p.ficha_tecnica_url) {
+            footer.innerHTML = `<a href="${p.ficha_tecnica_url}" target="_blank" class="btn-ficha-rapida anexo" style="font-size: 13px; padding: 8px 16px;"><i class="fas fa-paperclip"></i> Abrir Documento Original</a>`;
+            footer.style.display = 'block';
+        } else {
+            footer.innerHTML = '';
+            footer.style.display = 'none';
+        }
+
+        document.getElementById('modal-ficha-tecnica').classList.remove('hidden');
+    }
+
+    function fecharModalFicha() {
+        document.getElementById('modal-ficha-tecnica').classList.add('hidden');
+    }
 
     function atualizarLayoutNegocio() {
         const tipo = document.getElementById('v-tipo-negocio').value || 'restaurante';
@@ -1286,7 +1342,7 @@
                                 <div contenteditable="true" spellcheck="false" style="white-space: pre-wrap;">${p.ficha_tecnica_texto ? p.ficha_tecnica_texto : 'Nenhuma nota interna registada para este artigo.'}</div>
                             </div>
                             
-                            ${p.ficha_tecnica_url ? `<div style="margin-top: 20px; font-size: 13px; color: var(--s); font-weight: bold;"><i class="fas fa-paperclip"></i> Este artigo possui um documento anexo digitalizado no sistema.</div>` : ''}
+                            ${p.ficha_tecnica_url ? `<div style="margin-top: 20px; font-size: 13px; color: var(--s); font-weight: bold;"><a href="${p.ficha_tecnica_url}" target="_blank" style="color:var(--s); text-decoration:none;"><i class="fas fa-paperclip"></i> Abrir Documento Anexo Original</a></div>` : ''}
                         </div>
                     `;
                 }
@@ -1440,6 +1496,19 @@
                     htmlPreco += ` <span style="color: var(--err); font-size: 12px; font-weight: bold; margin-left: 6px;">-${desc}%</span>`;
                 }
 
+                // NOVO: Botões de Ficha Técnica Direta no Card
+                let fichaInternaHtml = "";
+                if(p.ficha_tecnica_texto || p.ficha_tecnica_url) {
+                    fichaInternaHtml = `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">`;
+                    if(p.ficha_tecnica_texto) {
+                        fichaInternaHtml += `<button class="btn-ficha-rapida texto" onclick="abrirModalFicha(${p.id})"><i class="fas fa-file-alt"></i> Ler Notas</button>`;
+                    }
+                    if(p.ficha_tecnica_url) {
+                        fichaInternaHtml += `<a href="${p.ficha_tecnica_url}" target="_blank" class="btn-ficha-rapida anexo"><i class="fas fa-paperclip"></i> Anexo</a>`;
+                    }
+                    fichaInternaHtml += `</div>`;
+                }
+
                 grid.innerHTML += `
                 <div class="prod-card ${p.oculto ? 'oculto' : ''}">
                     <div class="prod-actions">
@@ -1458,7 +1527,7 @@
                         ${infoExtraHtml}
                         <br><span style="font-size: 11px; color: #94a3b8; font-weight: 500;">IVA incluído</span>
                         <br>${alergeniosHtml}
-                        ${p.ficha_tecnica_texto ? `<div style="font-size: 10px; color: #92400e; margin-top: 5px;"><i class="fas fa-file-medical"></i> Tem Ficha Técnica</div>` : ''}
+                        ${fichaInternaHtml}
                     </div>
                 </div>`;
             });
@@ -1484,7 +1553,6 @@
 
     function criarSlug(texto) { return texto.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'); }
 
-    // --- LÓGICA ATUALIZADA: GERAR DESCRICAO COM LEITURA DE PDF ---
     async function gerarDescricaoIA() {
         const nomeProd = document.getElementById('p-nome').value;
         const btn = document.getElementById('btn-ia');
@@ -1498,12 +1566,11 @@
         try {
             let bodyData = { nomeProduto: nomeProd };
 
-            // Se houver um ficheiro carregado, vamos convertê-lo e enviá-lo para a IA
             if (fichaFileInput.files && fichaFileInput.files.length > 0) {
                 const file = fichaFileInput.files[0];
                 const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result.split(',')[1]); // Extrai apenas os dados base64
+                    reader.onload = () => resolve(reader.result.split(',')[1]); 
                     reader.onerror = error => reject(error);
                     reader.readAsDataURL(file);
                 });
@@ -1520,18 +1587,13 @@
 
             const respostaIA = data.dados_ia;
             
-            // 1. Atualizar Descrição Pública
             if(respostaIA.descricao_publica) {
                 document.getElementById('p-ingredientes').value = respostaIA.descricao_publica;
             }
 
-            // 2. Marcar Alergénios Automaticamente
             if(respostaIA.alergenios && Array.isArray(respostaIA.alergenios)) {
-                // Primeiro desmarca todos
                 document.querySelectorAll('#p-alergenios-container input').forEach(c => c.checked = false);
-                // Depois marca os que a IA encontrou
                 document.querySelectorAll('#p-alergenios-container input').forEach(c => {
-                    // Verificação flexível (ignorando maiúsculas/minúsculas e acentos)
                     const alergenioEncontrado = respostaIA.alergenios.some(a => 
                         a.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 
                         c.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -1540,7 +1602,6 @@
                 });
             }
 
-            // 3. Atualizar Notas Internas (Com confirmação se já existir texto)
             if(respostaIA.notas_internas) {
                 const campoNotas = document.getElementById('p-ficha-texto');
                 const notasAtuais = campoNotas.value.trim();
