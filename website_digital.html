@@ -448,7 +448,6 @@
         cookies: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do navegador) apenas para gerir a sua Sessão de Login, a persistência de Sala e o "Carrinho de Compras".</p>`
     };
 
-    // A NOVA FUNÇÃO DO PARSER (Garante a formatação bonita)
     function parseMarkdownToMenuHTML(text) {
         if(!text) return '';
         let lines = text.split('\n');
@@ -462,7 +461,7 @@
             
             if(t.startsWith('###')) {
                 if(ingredientes.length > 0) {
-                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
                     ingredientes = [];
                 }
                 html += `<div style="font-weight:bold; font-size:1.05em; margin-top:15px; margin-bottom:4px; color:var(--p);">${t.replace(/^###\s*/, '')}</div>`;
@@ -472,7 +471,7 @@
             } 
             else {
                 if(ingredientes.length > 0) {
-                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
                     ingredientes = [];
                 }
                 html += `<div style="margin-bottom:6px;">${t}</div>`;
@@ -480,7 +479,7 @@
         });
         
         if(ingredientes.length > 0) {
-            html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+            html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
         }
         
         return html;
@@ -671,6 +670,18 @@
                 btnAcoes += `<button onclick="ocultarMeuPedido(${p.id})" style="background:#e2e8f0; color:#475569; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;"><i class="fas fa-eye-slash"></i> Ocultar</button>`;
             }
 
+            let itensHtml = '';
+            if (p.itens && Array.isArray(p.itens) && p.itens.length > 0) {
+                itensHtml = `<div style="margin: 10px 0; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85em;">`;
+                p.itens.forEach(item => {
+                    itensHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span><b style="color: var(--p);">${item.qtde}x</b> ${item.nome}</span>
+                                    <span style="color: #64748b;">${(item.preco * item.qtde).toFixed(2)}€</span>
+                                  </div>`;
+                });
+                itensHtml += `</div>`;
+            }
+
             return `
                 <div class="meu-pedido-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
@@ -681,6 +692,7 @@
                         Para: ${dataAgendada.toLocaleString('pt-PT')} <br>
                         Total: ${p.total.toFixed(2)}€
                     </div>
+                    ${itensHtml}
                     <div style="text-align:right;">${btnAcoes}</div>
                 </div>
             `;
@@ -1009,7 +1021,6 @@
         if(loja.morada) document.getElementById('footer-morada').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loja.morada}`;
         
         const mEnc = encodeURIComponent(loja.morada || loja.nome);
-        // O LINK OFICIAL E CORRIGIDO DA GOOGLE MAPS PARA PESQUISA
         document.getElementById('link-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${mEnc}`;
         document.getElementById('link-waze').href = `https://waze.com/ul?q=${mEnc}&navigate=yes`;
 
@@ -1355,7 +1366,6 @@
                 ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Produto Esgotado</button>`
                 : `<button onclick="checarPontoCarne(${p.id}, ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
 
-            // INJEÇÃO DA FUNÇÃO DO PARSER PARA TEXTO BONITO NAS COSTAS DO CARTÃO
             return `
                 <div class="card-container" id="card-${p.id}">
                     <div class="card-inner">
