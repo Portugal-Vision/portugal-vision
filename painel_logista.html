@@ -231,9 +231,16 @@
         
         .print-item-allergens { margin-top: 15px; font-size: 14px; color: #b45309; text-transform: uppercase; letter-spacing: 1px; font-family: 'Inter', sans-serif; font-weight: bold;}
 
-        /* ESTILOS ESPECÍFICOS: FICHA TÉCNICA */
+        /* ESTILOS ESPECÍFICOS: FICHA TÉCNICA E COMPRAS */
         .ficha-tecnica-box { text-align: left !important; align-items: flex-start !important; }
-        .ficha-internal-notes { background: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 10px; margin-top: 20px; width: 100%; font-size: 14px; color: #92400e; font-family: 'Inter', sans-serif; }
+        /* CORREÇÃO 2: Tamanho de letra reduzido para caber na folha A4 */
+        .ficha-internal-notes { background: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 10px; margin-top: 20px; width: 100%; font-size: 12px; color: #92400e; font-family: 'Inter', sans-serif; line-height: 1.5; }
+        
+        /* CORREÇÃO 3: Tabela de Compras Editável */
+        .compras-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
+        .compras-table th { background: #f1f5f9; padding: 12px; font-size: 14px; color: #475569; border: 1px solid #cbd5e1; }
+        .compras-table td { padding: 8px 12px; border: 1px solid #cbd5e1; vertical-align: top; }
+        .compras-cat-title { font-weight: bold; font-size: 16px; background: #e2e8f0; padding: 10px; margin-top: 30px; margin-bottom: 0; color: #0f172a; border: 1px solid #cbd5e1; border-bottom: none;}
 
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -431,7 +438,7 @@
                 <button style="background: #475569; width: auto; flex: 1;" onclick="gerarRelatorioPDF()"><i class="fas fa-file-pdf"></i> Exportar Fecho</button>
                 <button style="background: var(--ia); width: auto; flex: 1; border: 1px solid #7c3aed; box-shadow: 0 4px 10px rgba(139,92,246,0.3);" onclick="gerarMenuFisico('menu')"><i class="fas fa-book-open"></i> Imprimir Menu</button>
                 <button style="background: var(--warn); width: auto; flex: 1; border: 1px solid #d97706; box-shadow: 0 4px 10px rgba(245,158,11,0.3);" onclick="gerarMenuFisico('ficha')"><i class="fas fa-utensils"></i> Imprimir Fichas</button>
-                <button style="background: #0284c7; width: auto; flex: 1; border: 1px solid #0369a1; box-shadow: 0 4px 10px rgba(2,132,199,0.3);" onclick="gerarListaCompras()"><i class="fas fa-shopping-cart"></i> Gerar Lista de Compras</button>
+                <button style="background: #0284c7; width: auto; flex: 1; border: 1px solid #0369a1; box-shadow: 0 4px 10px rgba(2,132,199,0.3);" onclick="gerarTemplateCompras()"><i class="fas fa-shopping-cart"></i> Lista de Compras</button>
             </div>
             <hr style="border: 0; border-bottom: 1px dashed #e2e8f0; margin-bottom: 20px;">
 
@@ -666,6 +673,7 @@
     </div>
 </div>
 
+<!-- MODAL: VISUALIZADOR DE NOTAS INTERNAS -->
 <div id="modal-ficha-tecnica" class="hidden no-print" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: white; padding: 0; border-radius: 16px; max-width: 600px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
         <div style="background: #f8fafc; padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
@@ -876,7 +884,7 @@
         if(!email) return alert("Insira o seu e-mail.");
         const { error } = await _sb.auth.resetPasswordForEmail(email);
         if(error) alert("Erro: " + error.message);
-        else alert("Se o e-mail existir na nossa base, receberá um link de recuperação na sua caixa de entrada.");
+        else alert("Se o e-mail existir na nossa base, receberá link de recuperação na sua caixa de entrada.");
     }
 
     async function registar() {
@@ -1227,72 +1235,50 @@
         document.body.classList.remove('is-printing-report');
     }
 
-    // --- NOVA FUNÇÃO: GERAR LISTA DE COMPRAS ---
-    function gerarListaCompras() {
-        const produtosEmFalta = produtosLocais.filter(p => {
-            // Filtramos apenas produtos com stock igual ou inferior a 5 e que não seja null ou string vazia
-            return p.stock !== null && p.stock !== undefined && p.stock !== "" && parseInt(p.stock) <= 5;
-        });
-
-        if(produtosEmFalta.length === 0) {
-            return alert("Boas notícias! Todos os seus artigos têm um nível de stock superior a 5.");
-        }
-
-        // Ordenar alfabeticamente pela categoria, depois pelo nome
-        produtosEmFalta.sort((a, b) => {
-            const catA = a.categoria || 'Sem categoria';
-            const catB = b.categoria || 'Sem categoria';
-            if(catA < catB) return -1;
-            if(catA > catB) return 1;
-            return a.nome.localeCompare(b.nome);
-        });
-
-        const dataPt = new Date().toLocaleDateString('pt-PT');
-        const nomeLoja = lojaAtiva.nome || "Portugal Vision";
-
-        let html = `
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
-            <h1 style="margin: 0 0 10px 0;">${nomeLoja}</h1>
-            <p style="margin: 0; font-size: 16px; font-weight: bold;">Lista de Reposição de Stock - ${dataPt}</p>
-        </div>
+    // CORREÇÃO 1: Formatação Horizontal do Menu
+    function parseMarkdownToMenuHTML(text) {
+        if(!text) return '';
+        let lines = text.split('\n');
+        let html = '';
+        let ingredientes = [];
         
-        <p style="font-size: 14px; margin-bottom: 20px;"><i>Artigos com nível de stock de alerta (5 ou menos doses/unidades).</i></p>
-
-        <table class="print-table" style="width: 100%;">
-            <thead>
-                <tr>
-                    <th style="width: 20%;">Categoria</th>
-                    <th style="width: 45%;">Artigo</th>
-                    <th style="width: 15%; text-align: center;">Stock Atual</th>
-                    <th style="width: 20%; text-align: center;">A Encomendar</th>
-                </tr>
-            </thead>
-            <tbody>`;
-
-        produtosEmFalta.forEach(p => {
-            const corAlerta = p.stock <= 0 ? 'color: red; font-weight: bold;' : '';
-            html += `
-                <tr>
-                    <td>${p.categoria || '-'}</td>
-                    <td style="font-weight: bold;">${p.nome}</td>
-                    <td style="text-align: center; ${corAlerta}">${p.stock}</td>
-                    <td style="text-align: center;">______________</td>
-                </tr>`;
+        lines.forEach(l => {
+            let t = l.trim();
+            if(!t) return;
+            t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Se for um título (ex: ### Ingredientes)
+            if(t.startsWith('###')) {
+                // Se já tínhamos recolhido ingredientes de uma lista anterior, fechamos e imprimimos na horizontal
+                if(ingredientes.length > 0) {
+                    html += `<div style="margin-bottom:15px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+                    ingredientes = [];
+                }
+                html += `<div style="font-weight:bold; font-size:1.1em; margin-top:20px; margin-bottom:4px;">${t.replace(/^###\s*/, '')}</div>`;
+            } 
+            // Se for um bullet point (ingrediente)
+            else if (t.startsWith('* ') || t.startsWith('- ')) {
+                ingredientes.push(t.replace(/^[\*\-]\s*/, ''));
+            } 
+            // Texto normal
+            else {
+                if(ingredientes.length > 0) {
+                    html += `<div style="margin-bottom:15px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+                    ingredientes = [];
+                }
+                html += `<div style="margin-bottom:8px;">${t}</div>`;
+            }
         });
-
-        html += `</tbody></table>
-        <div style="margin-top: 40px; font-size: 12px; color: #666; text-align: center;">
-            Documento gerado automaticamente pela plataforma Portugal Vision.
-        </div>`;
-
-        document.getElementById('preview-title').innerHTML = '<i class="fas fa-shopping-cart"></i> Lista de Compras';
-        document.getElementById('preview-subtitle').innerText = 'Verifique a tabela antes de imprimir.';
-        document.getElementById('print-preview-content').innerHTML = html;
-        document.querySelector('.container').classList.add('hidden');
-        document.getElementById('print-area-wrapper').classList.remove('hidden');
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        
+        // Imprime os últimos ingredientes recolhidos, se houver
+        if(ingredientes.length > 0) {
+            html += `<div style="margin-bottom:15px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+        }
+        
+        return html;
     }
 
+    // Função original mantida para Fichas Técnicas (mantém a lista vertical para a cozinha)
     function parseMarkdownToHTML(text) {
         if(!text) return '';
         let lines = text.split('\n');
@@ -1321,6 +1307,69 @@
         if(inList) html += '</ul>';
         return html;
     }
+
+    // CORREÇÃO 3: Nova Lista de Compras por Categoria
+    function gerarTemplateCompras() {
+        const dataPt = new Date().toLocaleDateString('pt-PT');
+        const nomeLoja = lojaAtiva.nome || "Portugal Vision";
+        
+        const categoriasDeCompra = [
+            "Carnes", 
+            "Peixes e Mariscos", 
+            "Legumes, Frutas e Ervas", 
+            "Mercearia Seca (Arroz, Massas, Azeite...)", 
+            "Laticínios e Ovos", 
+            "Bebidas"
+        ];
+
+        let html = `
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
+            <h1 style="margin: 0 0 10px 0;">${nomeLoja}</h1>
+            <p style="margin: 0; font-size: 16px; font-weight: bold;">Lista de Compras Semanal - ${dataPt}</p>
+        </div>
+        
+        <p style="font-size: 14px; margin-bottom: 20px; text-align: center; color: #475569;">
+            <i>Preencha os artigos em falta nas respetivas secções antes de imprimir ou imprimir em branco para preencher à mão.</i>
+        </p>
+        
+        <div style="width: 100%; max-width: 800px; margin: 0 auto;">
+        `;
+
+        categoriasDeCompra.forEach(cat => {
+            html += `
+            <div class="compras-cat-title">${cat}</div>
+            <table class="compras-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60%;">Artigo a Encomendar</th>
+                        <th style="width: 20%; text-align: center;">Quantidade</th>
+                        <th style="width: 20%; text-align: center;">Fornecedor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                </tbody>
+            </table>
+            `;
+        });
+
+        html += `
+        </div>
+        <div style="margin-top: 40px; font-size: 12px; color: #666; text-align: center;">
+            Template gerado pela plataforma Portugal Vision.
+        </div>`;
+
+        document.getElementById('preview-title').innerHTML = '<i class="fas fa-shopping-cart"></i> Template de Compras';
+        document.getElementById('preview-subtitle').innerText = 'Pode escrever diretamente nas linhas da tabela antes de imprimir.';
+        document.getElementById('print-preview-content').innerHTML = html;
+        document.querySelector('.container').classList.add('hidden');
+        document.getElementById('print-area-wrapper').classList.remove('hidden');
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
 
     function gerarMenuFisico(tipoImpressao) {
         let html = '';
@@ -1375,7 +1424,8 @@
                             
                             <div class="print-content">
                                 <div class="print-item-title" contenteditable="true" spellcheck="false">${p.nome}</div>
-                                <div class="print-item-desc" contenteditable="true" spellcheck="false">${parseMarkdownToHTML(p.descricao)}</div>
+                                <!-- USO DA NOVA FUNÇÃO HORIZONTAL AQUI -->
+                                <div class="print-item-desc" contenteditable="true" spellcheck="false">${parseMarkdownToMenuHTML(p.descricao)}</div>
                             </div>
 
                             <div class="print-footer-price">
