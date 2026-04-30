@@ -195,7 +195,7 @@
         .print-menu-item {
             background: white;
             width: 210mm;
-            min-height: 297mm;
+            min-height: 297mm; /* MUDANÇA: Permite que a folha estique se houver muito texto */
             box-sizing: border-box;
             padding: 2.5cm;
             box-shadow: 0 10px 25px rgba(0,0,0,0.25);
@@ -233,14 +233,16 @@
 
         /* ESTILOS ESPECÍFICOS: FICHA TÉCNICA E COMPRAS */
         .ficha-tecnica-box { text-align: left !important; align-items: flex-start !important; }
-        /* CORREÇÃO 2: Tamanho de letra reduzido para caber na folha A4 */
         .ficha-internal-notes { background: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 10px; margin-top: 20px; width: 100%; font-size: 12px; color: #92400e; font-family: 'Inter', sans-serif; line-height: 1.5; }
         
-        /* CORREÇÃO 3: Tabela de Compras Editável */
         .compras-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
         .compras-table th { background: #f1f5f9; padding: 12px; font-size: 14px; color: #475569; border: 1px solid #cbd5e1; }
         .compras-table td { padding: 8px 12px; border: 1px solid #cbd5e1; vertical-align: top; }
         .compras-cat-title { font-weight: bold; font-size: 16px; background: #e2e8f0; padding: 10px; margin-top: 30px; margin-bottom: 0; color: #0f172a; border: 1px solid #cbd5e1; border-bottom: none;}
+        
+        /* NOVO: Botão de adicionar linha */
+        .btn-add-row { background: #e0f2fe; color: #0284c7; border: 1px dashed #7dd3fc; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: block; margin-top: 8px; width: fit-content;}
+        .btn-add-row:hover { background: #bae6fd; }
 
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -269,9 +271,8 @@
                 box-shadow: none;
                 margin: 0;
                 width: 210mm;
-                height: 297mm;
+                min-height: 297mm; /* MUDANÇA: Substitui height por min-height para permitir quebra de página */
                 page-break-after: always;
-                page-break-inside: avoid;
             }
 
             @page { margin: 0; }
@@ -1235,7 +1236,7 @@
         document.body.classList.remove('is-printing-report');
     }
 
-    // CORREÇÃO 1: Formatação Horizontal do Menu
+    // Função de formatação horizontal (para o Menu)
     function parseMarkdownToMenuHTML(text) {
         if(!text) return '';
         let lines = text.split('\n');
@@ -1247,20 +1248,16 @@
             if(!t) return;
             t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
-            // Se for um título (ex: ### Ingredientes)
             if(t.startsWith('###')) {
-                // Se já tínhamos recolhido ingredientes de uma lista anterior, fechamos e imprimimos na horizontal
                 if(ingredientes.length > 0) {
                     html += `<div style="margin-bottom:15px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
                     ingredientes = [];
                 }
                 html += `<div style="font-weight:bold; font-size:1.1em; margin-top:20px; margin-bottom:4px;">${t.replace(/^###\s*/, '')}</div>`;
             } 
-            // Se for um bullet point (ingrediente)
             else if (t.startsWith('* ') || t.startsWith('- ')) {
                 ingredientes.push(t.replace(/^[\*\-]\s*/, ''));
             } 
-            // Texto normal
             else {
                 if(ingredientes.length > 0) {
                     html += `<div style="margin-bottom:15px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
@@ -1270,7 +1267,6 @@
             }
         });
         
-        // Imprime os últimos ingredientes recolhidos, se houver
         if(ingredientes.length > 0) {
             html += `<div style="margin-bottom:15px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
         }
@@ -1278,7 +1274,7 @@
         return html;
     }
 
-    // Função original mantida para Fichas Técnicas (mantém a lista vertical para a cozinha)
+    // Função de formatação vertical (para as Fichas Técnicas)
     function parseMarkdownToHTML(text) {
         if(!text) return '';
         let lines = text.split('\n');
@@ -1308,7 +1304,14 @@
         return html;
     }
 
-    // CORREÇÃO 3: Nova Lista de Compras por Categoria
+    // NOVO: Função para adicionar linhas dinamicamente na tabela de compras
+    window.adicionarLinhaCompra = function(btn) {
+        const tbody = btn.previousElementSibling.querySelector('tbody');
+        const novaLinha = document.createElement('tr');
+        novaLinha.innerHTML = '<td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td>';
+        tbody.appendChild(novaLinha);
+    };
+
     function gerarTemplateCompras() {
         const dataPt = new Date().toLocaleDateString('pt-PT');
         const nomeLoja = lojaAtiva.nome || "Portugal Vision";
@@ -1329,7 +1332,7 @@
         </div>
         
         <p style="font-size: 14px; margin-bottom: 20px; text-align: center; color: #475569;">
-            <i>Preencha os artigos em falta nas respetivas secções antes de imprimir ou imprimir em branco para preencher à mão.</i>
+            <i>Preencha os artigos nas respetivas secções e use o botão [+] se precisar de mais linhas.</i>
         </p>
         
         <div style="width: 100%; max-width: 800px; margin: 0 auto;">
@@ -1353,6 +1356,7 @@
                     <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                 </tbody>
             </table>
+            <button class="btn-add-row no-print" onclick="adicionarLinhaCompra(this)"><i class="fas fa-plus"></i> Adicionar Linha</button>
             `;
         });
 
@@ -1363,7 +1367,7 @@
         </div>`;
 
         document.getElementById('preview-title').innerHTML = '<i class="fas fa-shopping-cart"></i> Template de Compras';
-        document.getElementById('preview-subtitle').innerText = 'Pode escrever diretamente nas linhas da tabela antes de imprimir.';
+        document.getElementById('preview-subtitle').innerText = 'Escreva diretamente nas linhas. Na impressão, os botões [ + ] ficarão invisíveis.';
         document.getElementById('print-preview-content').innerHTML = html;
         document.querySelector('.container').classList.add('hidden');
         document.getElementById('print-area-wrapper').classList.remove('hidden');
@@ -1424,7 +1428,6 @@
                             
                             <div class="print-content">
                                 <div class="print-item-title" contenteditable="true" spellcheck="false">${p.nome}</div>
-                                <!-- USO DA NOVA FUNÇÃO HORIZONTAL AQUI -->
                                 <div class="print-item-desc" contenteditable="true" spellcheck="false">${parseMarkdownToMenuHTML(p.descricao)}</div>
                             </div>
 
