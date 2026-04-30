@@ -1312,7 +1312,7 @@
         tbody.appendChild(novaLinha);
     };
 
-    function gerarTemplateCompras() {
+function gerarTemplateCompras() {
         const dataPt = new Date().toLocaleDateString('pt-PT');
         const nomeLoja = lojaAtiva.nome || "Portugal Vision";
         
@@ -1325,17 +1325,19 @@
             "Bebidas"
         ];
 
+        // A MUDANÇA ESTÁ AQUI: Adicionámos a div .print-menu-item para criar a "folha branca"
         let html = `
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
-            <h1 style="margin: 0 0 10px 0;">${nomeLoja}</h1>
-            <p style="margin: 0; font-size: 16px; font-weight: bold;">Lista de Compras Semanal - ${dataPt}</p>
-        </div>
-        
-        <p style="font-size: 14px; margin-bottom: 20px; text-align: center; color: #475569;">
-            <i>Preencha os artigos nas respetivas secções e use o botão [+] se precisar de mais linhas.</i>
-        </p>
-        
-        <div style="width: 100%; max-width: 800px; margin: 0 auto;">
+        <div class="print-menu-item" style="display: block; text-align: left; padding: 2cm;">
+            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
+                <h1 style="margin: 0 0 10px 0; color: #0f172a;">${nomeLoja}</h1>
+                <p style="margin: 0; font-size: 16px; font-weight: bold; color: #334155;">Lista de Compras Semanal - ${dataPt}</p>
+            </div>
+            
+            <p style="font-size: 14px; margin-bottom: 20px; text-align: center; color: #475569;">
+                <i>Preencha os artigos nas respetivas secções e use o botão [+] se precisar de mais linhas.</i>
+            </p>
+            
+            <div style="width: 100%;">
         `;
 
         categoriasDeCompra.forEach(cat => {
@@ -1361,9 +1363,10 @@
         });
 
         html += `
-        </div>
-        <div style="margin-top: 40px; font-size: 12px; color: #666; text-align: center;">
-            Template gerado pela plataforma Portugal Vision.
+            </div>
+            <div style="margin-top: 40px; font-size: 12px; color: #666; text-align: center;">
+                Template gerado pela plataforma Portugal Vision.
+            </div>
         </div>`;
 
         document.getElementById('preview-title').innerHTML = '<i class="fas fa-shopping-cart"></i> Template de Compras';
