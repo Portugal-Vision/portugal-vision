@@ -150,7 +150,8 @@
         .mbway-info strong { color: #15803d; }
 
         .btn-checkout { background: var(--ok); color: white; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 1.1em; display: block; width: 100%; border: none; cursor: pointer; margin-top: 20px; transition: 0.3s; flex-shrink: 0;}
-        .btn-checkout:hover { background: #219653; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
+        .btn-checkout:hover:not(:disabled) { background: #219653; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
+        .btn-checkout:disabled { opacity: 0.7; cursor: wait; }
 
         .footer { background: transparent; padding: 40px 20px; text-align: center; margin-top: 20px; position: relative; z-index: 2; transition: 0.5s; border: none;}
         .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; margin-bottom: 20px; }
@@ -626,6 +627,7 @@
         abrirConta(); 
     }
 
+    // --- CORREÇÃO 1: TRANSPARÊNCIA NO HISTÓRICO (Os Meus Pedidos) ---
     async function abrirConta() {
         document.getElementById('contaModal').style.display = 'block';
         const container = document.getElementById('lista-meus-pedidos');
@@ -674,9 +676,9 @@
             if (p.itens && Array.isArray(p.itens) && p.itens.length > 0) {
                 itensHtml = `<div style="margin: 10px 0; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85em;">`;
                 p.itens.forEach(item => {
-                    itensHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    itensHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #f1f5f9; padding-bottom: 4px;">
                                     <span><b style="color: var(--p);">${item.qtde}x</b> ${item.nome}</span>
-                                    <span style="color: #64748b;">${(item.preco * item.qtde).toFixed(2)}€</span>
+                                    <span style="color: #64748b; font-weight: 600;">${(item.preco * item.qtde).toFixed(2)}€</span>
                                   </div>`;
                 });
                 itensHtml += `</div>`;
@@ -970,6 +972,14 @@
         lojaAtual = loja;
         aplicarTemaVisual(loja.tema_sazonal);
 
+        // --- CORREÇÃO 4: ESCUDO JURÍDICO E TERMOS (DL 24/2014) ---
+        const nomeLoja = lojaAtual.nome || "Estabelecimento";
+        const nifLoja = lojaAtual.nif || "N/A";
+        legalTexts.termos = `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3>
+        <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Identificação da Entidade:</strong> O presente serviço digital é operado pelo estabelecimento <strong>${nomeLoja}</strong>, com o NIF <strong>${nifLoja}</strong>.</p>
+        <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Direito de Livre Resolução (DL 24/2014):</strong> Ao abrigo do Artigo 17.º, alínea d) do Decreto-Lei n.º 24/2014, o consumidor não goza do direito de livre resolução nos contratos de fornecimento de bens que, por natureza, não possam ser devolvidos ou sejam suscetíveis de se deteriorarem rapidamente. <strong>Não são aceites cancelamentos ou devoluções após o início da confeção do pedido.</strong></p>
+        <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira responsabilidade do Lojista. Confirme as suas alergias no momento do pedido.</p>`;
+
         if (mesaAtual) {
             const { data: pedidosAtivos } = await _sb
                 .from('pedidos')
@@ -1237,6 +1247,27 @@
         }
     }
 
+    // --- CORREÇÃO 2: VALIDAÇÃO NIF MATEMÁTICA ---
+    function validarNIF(nif) {
+        if (!nif || nif.length !== 9) return false;
+        const prefix1 = nif.substring(0, 1);
+        const prefix2 = nif.substring(0, 2);
+        const validos1 = ['1', '2', '3', '5', '6', '8', '9'];
+        const validos2 = ['45', '70', '71', '72', '77', '79', '90', '91', '98', '99'];
+        
+        if (!validos1.includes(prefix1) && !validos2.includes(prefix2)) return false;
+
+        let soma = 0;
+        for (let i = 0; i < 8; i++) {
+            soma += parseInt(nif.charAt(i)) * (9 - i);
+        }
+        let checkDigit = 11 - (soma % 11);
+        if (checkDigit >= 10) checkDigit = 0;
+        
+        return checkDigit === parseInt(nif.charAt(8));
+    }
+
+    // --- CORREÇÃO 3: ESTABILIDADE DE CHECKOUT E INTEGRAÇÃO DO NIF ---
     async function validarEEnviarPedido() {
         if(carrinho.length === 0) return;
         
@@ -1247,7 +1278,7 @@
         }
 
         const btnFinal = document.getElementById('btn-checkout-final');
-        btnFinal.innerText = "A enviar pedido...";
+        btnFinal.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A processar...`;
         btnFinal.disabled = true;
 
         let totalPreco = carrinho.reduce((sum, item) => sum + (item.preco * item.qtde), 0);
@@ -1283,6 +1314,9 @@
                         nifCliente = document.getElementById('cli-nif').value;
                         querNif = true;
                         if(!nifCliente) throw new Error("Selecionou NIF. Por favor insira o número.");
+                        if(!validarNIF(nifCliente)) {
+                            throw new Error("O NIF inserido é inválido. Por favor, verifique e corrija.");
+                        }
                     }
                 } else if (tipoPedido === 'reserva') {
                     numPessoas = document.getElementById('cli-pessoas').value;
