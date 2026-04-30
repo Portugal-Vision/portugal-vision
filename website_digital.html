@@ -448,6 +448,44 @@
         cookies: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do navegador) apenas para gerir a sua Sessão de Login, a persistência de Sala e o "Carrinho de Compras".</p>`
     };
 
+    // A NOVA FUNÇÃO DO PARSER (Garante a formatação bonita)
+    function parseMarkdownToMenuHTML(text) {
+        if(!text) return '';
+        let lines = text.split('\n');
+        let html = '';
+        let ingredientes = [];
+        
+        lines.forEach(l => {
+            let t = l.trim();
+            if(!t) return;
+            t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            if(t.startsWith('###')) {
+                if(ingredientes.length > 0) {
+                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+                    ingredientes = [];
+                }
+                html += `<div style="font-weight:bold; font-size:1.05em; margin-top:15px; margin-bottom:4px; color:var(--p);">${t.replace(/^###\s*/, '')}</div>`;
+            } 
+            else if (t.startsWith('* ') || t.startsWith('- ')) {
+                ingredientes.push(t.replace(/^[\*\-]\s*/, ''));
+            } 
+            else {
+                if(ingredientes.length > 0) {
+                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+                    ingredientes = [];
+                }
+                html += `<div style="margin-bottom:6px;">${t}</div>`;
+            }
+        });
+        
+        if(ingredientes.length > 0) {
+            html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' &bull; ')}</div>`;
+        }
+        
+        return html;
+    }
+
     function showLegal(type) {
         document.getElementById('modalText').innerHTML = legalTexts[type];
         document.getElementById('legalModal').style.display = 'flex';
@@ -518,7 +556,7 @@
                 document.getElementById('btn-user-account').style.display = 'flex';
                 
                 const saudacao = document.getElementById('boas-vindas-cliente');
-                saudacao.innerText = `Seja bem vinda(o), ${clienteAtual.nome} 👋`;
+                saaudacao.innerText = `Seja bem vinda(o), ${clienteAtual.nome} 👋`;
                 saudacao.style.display = 'block';
 
                 iniciarOuvinteCliente();
@@ -971,6 +1009,7 @@
         if(loja.morada) document.getElementById('footer-morada').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loja.morada}`;
         
         const mEnc = encodeURIComponent(loja.morada || loja.nome);
+        // O LINK OFICIAL E CORRIGIDO DA GOOGLE MAPS PARA PESQUISA
         document.getElementById('link-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${mEnc}`;
         document.getElementById('link-waze').href = `https://waze.com/ul?q=${mEnc}&navigate=yes`;
 
@@ -1007,7 +1046,6 @@
 
     function virarCartao(id) { document.getElementById(`card-${id}`).classList.toggle('flipped'); }
 
-    // NOVA LÓGICA INTELIGENTE DO PONTO DA CARNE
     function checarPontoCarne(idProduto, precoRaw, desconto, event) {
         event.stopPropagation();
         
@@ -1020,10 +1058,8 @@
         
         const textoTudo = catLower + " " + nomeLower + " " + descLower;
 
-        // Palavras ativadoras
         const palavrasAtivadoras = ['bife', 'picanha', 'maminha', 'hambúrguer', 'hamburguer', 'entrecôte', 'entrecote', 'grelhad', 'costeleta', 'vazia', 'lombinho', 'posta', 'prego', 'preguinho', 'bitoque'];
         
-        // Palavras de exceção (ignoram a regra do ponto)
         const palavrasIgnoradas = ['cozido', 'feijoada', 'estufad', 'rojões', 'rojoes', 'jardineira', 'ensopado', 'assado no forno'];
 
         let éCarne = catLower.includes('carne') || catLower.includes('grelhado') || catLower.includes('snack') || catLower.includes('sandes');
@@ -1066,7 +1102,6 @@
 
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         
-        // CORREÇÃO DOS IDs ÚNICOS
         const idBaseString = String(idProduto);
         const idUnicoCarrinho = pontoOpicional ? `${idBaseString}-${pontoOpicional.replace(/\s+/g, '')}` : idBaseString;
         
@@ -1160,7 +1195,6 @@
         carrinho.forEach(item => {
             const subtotal = item.preco * item.qtde;
             totalPreco += subtotal;
-            // CORREÇÃO DOS BOTÕES + E - : Enviar idUnico exatamente como string nas plicas ''
             html += `
                 <div class="cart-item">
                     <div class="cart-item-info">
@@ -1183,7 +1217,6 @@
     function fecharCarrinho() { document.getElementById('cartModal').style.display = 'none'; }
 
     function alterarQtde(idUnicoCarrinho, delta) {
-        // CORREÇÃO: Comparar garantindo que ambos são strings
         const item = carrinho.find(i => String(i.idUnico) === String(idUnicoCarrinho));
         if (item) {
             item.qtde += delta;
@@ -1318,11 +1351,11 @@
 
             let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> Esgotado</div>` : '';
             
-            // O BOTÃO DE ADICIONAR COM A CHAMADA INTELIGENTE CORRIGIDA (SÓ MANDA O ID PARA A FUNÇÃO)
             let btnAdicionar = isEsgotado 
                 ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Produto Esgotado</button>`
                 : `<button onclick="checarPontoCarne(${p.id}, ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
 
+            // INJEÇÃO DA FUNÇÃO DO PARSER PARA TEXTO BONITO NAS COSTAS DO CARTÃO
             return `
                 <div class="card-container" id="card-${p.id}">
                     <div class="card-inner">
@@ -1346,7 +1379,7 @@
 
                         <div class="card-back">
                             <h4>${p.nome}</h4>
-                            <div class="card-desc">${p.descricao ? p.descricao.replace(/\n/g, '<br>') : 'Sem descrição disponível.'}</div>
+                            <div class="card-desc">${p.descricao ? parseMarkdownToMenuHTML(p.descricao) : 'Sem descrição disponível.'}</div>
                             ${alergeniosHtml}
                             ${btnAdicionar}
                             <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;">
