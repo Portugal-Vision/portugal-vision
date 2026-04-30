@@ -195,7 +195,7 @@
         .print-menu-item {
             background: white;
             width: 210mm;
-            min-height: 297mm; /* MUDANÇA: Permite que a folha estique se houver muito texto */
+            min-height: 297mm;
             box-sizing: border-box;
             padding: 2.5cm;
             box-shadow: 0 10px 25px rgba(0,0,0,0.25);
@@ -272,7 +272,7 @@
                 box-shadow: none;
                 margin: 0;
                 width: 210mm;
-                min-height: 297mm; /* MUDANÇA: Substitui height por min-height para permitir quebra de página */
+                min-height: 297mm; 
                 page-break-after: always;
             }
 
@@ -755,6 +755,40 @@
         }
     };
 
+    // Validação de Telefone (Portugal)
+    function validarTelefonePT(telefone) {
+        if (!telefone) return false;
+        let limpo = telefone.replace(/\D/g, ''); 
+        if (limpo.startsWith('00351')) limpo = limpo.substring(5);
+        else if (limpo.startsWith('351')) limpo = limpo.substring(3);
+        if (limpo.length !== 9) return false;
+        if (!['2', '9', '7', '8'].includes(limpo.charAt(0))) return false;
+        return true;
+    }
+
+    // Validação Matemática do NIF Português
+    function validarNIF(nif) {
+        if (!nif) return false;
+        let limpo = nif.replace(/\D/g, ''); 
+        if (limpo.length !== 9) return false;
+        if (!['1', '2', '3', '5', '6', '8', '9'].includes(limpo.charAt(0))) return false;
+        
+        let total = limpo[0] * 9 + limpo[1] * 8 + limpo[2] * 7 + limpo[3] * 6 + limpo[4] * 5 + limpo[5] * 4 + limpo[6] * 3 + limpo[7] * 2;
+        let modulo11 = total - parseInt(total / 11) * 11;
+        let comparador = modulo11 === 1 || modulo11 === 0 ? 0 : 11 - modulo11;
+        
+        return limpo[8] == comparador;
+    }
+
+    // Validação Lógica de Morada
+    function validarMorada(morada) {
+        if (!morada) return false;
+        let limpo = morada.trim();
+        if (limpo.length < 10) return false; 
+        if (!/\d/.test(limpo)) return false; 
+        return true;
+    }
+
     function mostrarInfoAlergenios() { document.getElementById('modal-alergenios').classList.remove('hidden'); }
     function fecharInfoAlergenios() { document.getElementById('modal-alergenios').classList.add('hidden'); }
 
@@ -1236,7 +1270,6 @@
         document.body.classList.remove('is-printing-report');
     }
 
-    // Função de formatação horizontal (para o Menu)
     function parseMarkdownToMenuHTML(text) {
         if(!text) return '';
         let lines = text.split('\n');
@@ -1274,7 +1307,6 @@
         return html;
     }
 
-    // Função de formatação vertical (para as Fichas Técnicas)
     function parseMarkdownToHTML(text) {
         if(!text) return '';
         let lines = text.split('\n');
@@ -1304,7 +1336,6 @@
         return html;
     }
 
-    // NOVO: Função para adicionar linhas dinamicamente na tabela de compras
     window.adicionarLinhaCompra = function(btn) {
         const tbody = btn.previousElementSibling.querySelector('tbody');
         const novaLinha = document.createElement('tr');
@@ -1312,7 +1343,7 @@
         tbody.appendChild(novaLinha);
     };
 
-function gerarTemplateCompras() {
+    function gerarTemplateCompras() {
         const dataPt = new Date().toLocaleDateString('pt-PT');
         const nomeLoja = lojaAtiva.nome || "Portugal Vision";
         
@@ -1325,7 +1356,6 @@ function gerarTemplateCompras() {
             "Bebidas"
         ];
 
-        // A MUDANÇA ESTÁ AQUI: Adicionámos a div .print-menu-item para criar a "folha branca"
         let html = `
         <div class="print-menu-item" style="display: block; text-align: left; padding: 2cm;">
             <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
@@ -1376,7 +1406,6 @@ function gerarTemplateCompras() {
         document.getElementById('print-area-wrapper').classList.remove('hidden');
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
-
 
     function gerarMenuFisico(tipoImpressao) {
         let html = '';
@@ -1493,14 +1522,38 @@ function gerarTemplateCompras() {
     async function atualizarPerfil() {
         const btn = document.getElementById('btn-save-profile');
         const telRaw = document.getElementById('v-tel-edit').value;
+        const nifRaw = document.getElementById('v-nif-edit').value;
+        const moradaRaw = document.getElementById('v-morada-edit').value;
+
+        // 1. VALIDAÇÃO DE NIF
+        if (nifRaw && !validarNIF(nifRaw)) {
+            alert("⚠️ O NIF introduzido não é válido (Erro de Módulo 11). Corrija antes de guardar.");
+            document.getElementById('v-nif-edit').focus();
+            return;
+        }
+
+        // 2. VALIDAÇÃO DE TELEFONE
+        if (telRaw && !validarTelefonePT(telRaw)) {
+            alert("⚠️ O Número de Contacto é inválido. Introduza um número português correto (9 dígitos).");
+            document.getElementById('v-tel-edit').focus();
+            return;
+        }
+
+        // 3. VALIDAÇÃO DE MORADA
+        if (moradaRaw && !validarMorada(moradaRaw)) {
+            alert("⚠️ A morada está incompleta. Precisa de mais de 10 caracteres e um número (porta ou código postal).");
+            document.getElementById('v-morada-edit').focus();
+            return;
+        }
+
         const telFormatado = formatarNumeroPT(telRaw);
 
         const dados = {
             nome: document.getElementById('v-nome-edit').value,
             gerente: document.getElementById('v-gerente-edit').value,
-            nif: document.getElementById('v-nif-edit').value,
+            nif: nifRaw,
             telefone: telFormatado,
-            morada: document.getElementById('v-morada-edit').value,
+            morada: moradaRaw,
             tipo_negocio: document.getElementById('v-tipo-negocio').value, 
             tema_sazonal: document.getElementById('v-tema-sazonal').value, 
             ferias_inicio: document.getElementById('f-inicio').value || null,
