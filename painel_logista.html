@@ -1291,9 +1291,9 @@
                 if(inList) { html += '</ul>'; inList = false; }
                 html += `<div style="font-weight:bold; font-size:1.1em; margin-top:20px; margin-bottom:8px;">${t.replace(/^###\s*/, '')}</div>`;
             } 
-            else if (t.startsWith('* ')) {
+            else if (t.startsWith('* ') || t.startsWith('- ')) {
                 if(!inList) { html += '<ul style="text-align:left; display:inline-block; margin: 5px auto; padding-left: 20px;">'; inList = true; }
-                html += `<li>${t.replace(/^\*\s*/, '')}</li>`;
+                html += `<li>${t.replace(/^[\*\-]\s*/, '')}</li>`;
             } 
             else {
                 if(inList) { html += '</ul>'; inList = false; }
