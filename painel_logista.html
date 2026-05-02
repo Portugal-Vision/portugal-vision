@@ -276,6 +276,12 @@
                 page-break-after: always;
             }
 
+            /* NOVO: MODO HORÁRIO DA LOJA NA HORIZONTAL */
+            body.is-printing-horario { margin: 0; padding: 0; }
+            body.is-printing-horario @page { size: A4 landscape; margin: 10mm; }
+            body.is-printing-horario .container, body.is-printing-horario #print-area-wrapper { display: none !important; }
+            body.is-printing-horario #print-area { display: flex !important; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 95vh; font-family: 'Inter', sans-serif; }
+
             @page { margin: 0; }
         }
 
@@ -286,6 +292,9 @@
             .logo-box { margin: 0 auto; }
             .info-perfil > div { grid-template-columns: 1fr !important; }
             .header-loja > div:last-child { flex-direction: row !important; width: 100%; }
+            /* Correções de Responsividade Requisitadas */
+            .dia-config > div:last-child > div { grid-template-columns: 1fr !important; }
+            .metrics-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -304,7 +313,12 @@
         <div id="f-login">
             <input type="email" id="l-email" placeholder="E-mail">
             <input type="password" id="l-pass" placeholder="Password">
-            <a onclick="selTab('reset')" style="cursor:pointer; font-size:12px; display:block; text-align:right; margin-bottom:10px; color: var(--s);">Esqueceu-se da password?</a>
+            
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <a onclick="selTab('reset-email')" style="cursor:pointer; font-size:12px; color: var(--s);">Esqueceu-se do E-mail?</a>
+                <a onclick="selTab('reset')" style="cursor:pointer; font-size:12px; color: var(--s);">Esqueceu-se da password?</a>
+            </div>
+            
             <button onclick="login()"><i class="fas fa-sign-in-alt"></i> ENTRAR</button>
         </div>
 
@@ -326,6 +340,15 @@
         <div id="f-reset" class="hidden">
             <input type="email" id="reset-email" placeholder="E-mail da Conta">
             <button onclick="recuperarSenha()"><i class="fas fa-envelope"></i> ENVIAR LINK DE RECUPERAÇÃO</button>
+            <button onclick="selTab('login')" style="background:none; color:var(--s); font-size:12px; margin-top:10px; box-shadow:none;"><i class="fas fa-arrow-left"></i> Voltar ao Login</button>
+        </div>
+
+        <!-- NOVO: Recuperação de E-mail via NIF -->
+        <div id="f-reset-email" class="hidden">
+            <p style="font-size:13px; color:#64748b; text-align:center; margin-top:0;">Insira o NIF da sua Loja para identificarmos o e-mail associado.</p>
+            <input type="text" id="reset-nif" placeholder="NIF da Loja">
+            <button onclick="recuperarEmail()"><i class="fas fa-search"></i> RECUPERAR E-MAIL</button>
+            <div id="rec-email-result" style="margin-top:15px; font-size:13px; font-weight:bold; color:var(--p); text-align:center;"></div>
             <button onclick="selTab('login')" style="background:none; color:var(--s); font-size:12px; margin-top:10px; box-shadow:none;"><i class="fas fa-arrow-left"></i> Voltar ao Login</button>
         </div>
     </div>
@@ -444,31 +467,67 @@
             </div>
             <hr style="border: 0; border-bottom: 1px dashed #e2e8f0; margin-bottom: 20px;">
 
-            <div class="config-mbway">
-                <h4 style="margin: 0 0 10px 0; color: var(--ok); display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-mobile-screen-button"></i> Pagamentos MBWay
-                </h4>
-                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                    <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                        <input type="checkbox" id="v-mbway-ativo" onchange="marcarAltPerfil()" style="width: 18px; height: 18px; margin: 0;">
-                        Ativar MBWay na loja
-                    </label>
-                    <input type="tel" id="v-mbway-num" oninput="marcarAltPerfil()" placeholder="Nº telemóvel associado" style="margin: 0; max-width: 250px; padding: 8px 12px;">
-                </div>
-                <small style="color: #666; display: block; margin-top: 5px;">Os clientes verão este número ao finalizar o pedido de Takeaway no Website.</small>
-            </div>
-
-            <div class="config-takeaway">
+            <!-- NOVO: Configurações de Serviços (Takeaway e Reservas) -->
+            <div class="config-takeaway" style="background: #f0f9ff; border-color: #bae6fd; border-left-color: var(--s);">
                 <h4 style="margin: 0 0 10px 0; color: var(--s); display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-shopping-bag"></i> Serviço de Takeaway / Levantamento
+                    <i class="fas fa-concierge-bell"></i> Serviços Ativos no Website
                 </h4>
-                <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                    <input type="checkbox" id="v-takeaway-ativo" onchange="marcarAltPerfil()" style="width: 18px; height: 18px; margin: 0;" checked>
-                    Aceitar encomendas para Levantamento no Local (Mostra o botão no Website)
-                </label>
+                <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:10px;">
+                    <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="v-takeaway-ativo" onchange="marcarAltPerfil()" style="width: 18px; height: 18px; margin: 0;" checked>
+                        Ativar Takeaway / Levantamento
+                    </label>
+                    <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="v-reservas-ativo" onchange="marcarAltPerfil()" style="width: 18px; height: 18px; margin: 0;" checked>
+                        Ativar Reservas de Mesa
+                    </label>
+                </div>
             </div>
 
-            <button id="btn-save-profile" class="btn-save-main" onclick="atualizarPerfil()"><i class="fas fa-save"></i> Guardar Alterações do Perfil</button>
+            <!-- NOVO: Configurações de Pagamentos e Integrações -->
+            <div class="config-mbway" style="background: #f8fafc; border-color: #cbd5e1; border-left-color: #64748b;">
+                <h4 style="margin: 0 0 10px 0; color: #475569; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-credit-card"></i> Métodos de Pagamento (Loja Física e Website)
+                </h4>
+                <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
+                    <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="v-pag-dinheiro" onchange="marcarAltPerfil()" style="width: 18px; height: 18px; margin: 0;" checked> Dinheiro
+                    </label>
+                    <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="v-pag-mb" onchange="marcarAltPerfil()" style="width: 18px; height: 18px; margin: 0;" checked> Multibanco
+                    </label>
+                    <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="v-pag-ticket" onchange="marcarAltPerfil()" style="width: 18px; height: 18px; margin: 0;" checked> Ticket Refeição
+                    </label>
+                </div>
+
+                <h5 style="margin: 0 0 10px 0; color: #0284c7; font-size: 13px;"><i class="fas fa-mobile-screen-button"></i> Configuração MBWay</h5>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <select id="v-mbway-provider" onchange="marcarAltPerfil()" style="margin: 0; width: auto; max-width: 200px;">
+                        <option value="manual">Manual (Apresentar Nº)</option>
+                        <option value="ifthenpay">API Ifthenpay</option>
+                        <option value="eupago">API EuPago</option>
+                    </select>
+                    <input type="text" id="v-mbway-key" oninput="marcarAltPerfil()" placeholder="Nº Telemóvel ou API Key" style="margin: 0; max-width: 300px; flex: 1;">
+                </div>
+            </div>
+
+            <!-- NOVO: Configurações de Faturação -->
+            <div class="config-takeaway" style="background: #fdf4ff; border-color: #f5d0fe; border-left-color: #d946ef;">
+                <h4 style="margin: 0 0 10px 0; color: #a21caf; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-file-invoice"></i> Faturação Eletrónica (API)
+                </h4>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <select id="v-fat-provider" onchange="marcarAltPerfil()" style="margin: 0; width: auto; max-width: 200px;">
+                        <option value="">Sem Integração</option>
+                        <option value="moloni">Moloni</option>
+                        <option value="vendus">Vendus</option>
+                    </select>
+                    <input type="text" id="v-fat-key" oninput="marcarAltPerfil()" placeholder="Client ID / Access Token" style="margin: 0; max-width: 300px; flex: 1;">
+                </div>
+            </div>
+
+            <button id="btn-save-profile" class="btn-save-main" onclick="atualizarPerfil()"><i class="fas fa-save"></i> Guardar Alterações do Perfil e Configurações</button>
             
         </div>
 
@@ -636,7 +695,10 @@
                     </label>
                 </div>
 
-                <button onclick="replicarSegunda()" style="background:var(--s); color:white; font-size:12px; margin-bottom:15px; border:none; width: auto; display: inline-block;"><i class="fas fa-copy"></i> Copiar Segunda para todos</button>
+                <!-- NOVO: Botão para imprimir cartaz do horário -->
+                <button style="background:#0284c7; color:white; font-size:12px; margin-bottom:15px; border:none; width: auto; display: inline-block;" onclick="imprimirAvisoHorario()"><i class="fas fa-print"></i> Imprimir Horário (A4 Horizontal)</button>
+                <button onclick="replicarSegunda()" style="background:var(--s); color:white; font-size:12px; margin-bottom:15px; border:none; width: auto; display: inline-block; margin-left: 10px;"><i class="fas fa-copy"></i> Copiar Segunda para todos</button>
+                
                 <div id="horarios-lista"></div>
                 <button id="btn-save-config" class="btn-save-main" onclick="salvarHorarios()" style="margin-top: 15px;"><i class="fas fa-save"></i> ATUALIZAR HORÁRIOS</button>
             </div>
@@ -899,7 +961,7 @@
         </div>`).join('');
 
     function selTab(m) {
-        ['f-login', 'f-reg', 'f-reset'].forEach(id => {
+        ['f-login', 'f-reg', 'f-reset', 'f-reset-email'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.classList.add('hidden');
         });
@@ -907,10 +969,37 @@
         if(target) target.classList.remove('hidden');
         
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        if(m !== 'reset') {
+        if(m === 'login' || m === 'reg') {
             const tabId = m === 'login' ? 't-login' : 't-reg';
             const tabEl = document.getElementById(tabId);
             if(tabEl) tabEl.classList.add('active');
+        }
+    }
+
+    // NOVO: Função para recuperar e-mail via NIF
+    async function recuperarEmail() {
+        const nif = document.getElementById('reset-nif').value;
+        if(!nif) return alert("Insira o NIF da loja.");
+        
+        const btn = document.querySelector('#f-reset-email button');
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A PROCURAR...`;
+        btn.disabled = true;
+
+        try {
+            const { data, error } = await _sb.from('lojas').select('email').eq('nif', nif).maybeSingle();
+            
+            if(error || !data) {
+                alert("Nenhuma loja encontrada com esse NIF no nosso sistema.");
+            } else {
+                const parts = data.email.split('@');
+                const masked = parts[0].substring(0, 3) + "***@" + parts[1];
+                document.getElementById('rec-email-result').innerHTML = `E-mail associado:<br><span style="font-size:16px;">${masked}</span>`;
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            btn.innerHTML = `<i class="fas fa-search"></i> RECUPERAR E-MAIL`;
+            btn.disabled = false;
         }
     }
 
@@ -944,7 +1033,8 @@
                 auth_id: authData.user.id,
                 nome: nomeInput, email: emailInput, slug: criarSlug(nomeInput),
                 plano: 'free', aceitou_termos: true, created_at: new Date(),
-                takeaway_ativo: true
+                takeaway_ativo: true, reservas_ativo: true,
+                pag_dinheiro: true, pag_mb: true, pag_ticket: true
             };
 
             const { data: lojaData, error: lojaError } = await _sb.from('lojas').insert([dadosLoja]).select().single();
@@ -1009,10 +1099,19 @@
         document.getElementById('f-fim').value = lojaAtiva.ferias_fim || "";
         document.getElementById('f-ativa').checked = lojaAtiva.em_ferias || false;
         
-        document.getElementById('v-mbway-ativo').checked = lojaAtiva.mbway_ativo || false;
-        document.getElementById('v-mbway-num').value = lojaAtiva.mbway_num || "";
-        
+        // Carregar configurações de serviços e pagamentos
         document.getElementById('v-takeaway-ativo').checked = lojaAtiva.takeaway_ativo !== false;
+        document.getElementById('v-reservas-ativo').checked = lojaAtiva.reservas_ativo !== false;
+
+        document.getElementById('v-pag-dinheiro').checked = lojaAtiva.pag_dinheiro !== false;
+        document.getElementById('v-pag-mb').checked = lojaAtiva.pag_mb !== false;
+        document.getElementById('v-pag-ticket').checked = lojaAtiva.pag_ticket !== false;
+
+        document.getElementById('v-mbway-provider').value = lojaAtiva.mbway_provider || "manual";
+        document.getElementById('v-mbway-key').value = lojaAtiva.mbway_num || lojaAtiva.mbway_key || "";
+        
+        document.getElementById('v-fat-provider').value = lojaAtiva.fat_provider || "";
+        document.getElementById('v-fat-key').value = lojaAtiva.fat_key || "";
 
         const h = lojaAtiva.horarios || {};
         diasSemana.forEach((_, i) => {
@@ -1186,6 +1285,45 @@
             await _sb.from('empregados').delete().eq('id', id);
             carregarStaff();
         }
+    }
+
+    // NOVO: Função para imprimir cartaz de horários
+    function imprimirAvisoHorario() {
+        let html = `<div style="text-align:center; padding: 20px; font-family: 'Inter', sans-serif;">
+            <h1 style="font-size: 50px; margin-bottom: 10px; color: #0f172a;">${lojaAtiva.nome || 'A Nossa Loja'}</h1>
+            <h2 style="font-size: 35px; color: #475569; margin-bottom: 40px; border-bottom: 3px solid #cbd5e1; padding-bottom: 20px;">Horário de Funcionamento</h2>
+            <div style="display:flex; flex-wrap:wrap; justify-content:center; gap: 30px; font-size: 24px;">
+        `;
+        
+        diasSemana.forEach((dia, i) => {
+            let h = lojaAtiva.horarios[i] || {status: 'fechado'};
+            if(h.status === 'aberto') {
+                html += `<div style="background:#f1f5f9; padding:20px 40px; border-radius:15px; border:2px solid #cbd5e1; width: 300px;">
+                    <strong style="display:block; font-size:28px; color:#0f172a; margin-bottom:10px;">${dia}</strong>
+                    ${h.abertura || '--:--'} às ${h.fecho || '--:--'}
+                </div>`;
+            } else {
+                html += `<div style="background:#fee2e2; padding:20px 40px; border-radius:15px; border:2px solid #fecaca; width: 300px;">
+                    <strong style="display:block; font-size:28px; color:#991b1b; margin-bottom:10px;">${dia}</strong>
+                    Encerrado
+                </div>`;
+            }
+        });
+        html += `</div>`;
+
+        if(lojaAtiva.em_ferias && lojaAtiva.ferias_inicio && lojaAtiva.ferias_fim) {
+            const dataFim = new Date(lojaAtiva.ferias_fim).toLocaleDateString('pt-PT');
+            html += `<div style="margin-top: 50px; background: #fef2f2; border: 3px dashed #ef4444; padding: 30px; border-radius: 20px; display: inline-block;">
+                <h3 style="color:#b91c1c; font-size: 30px; margin:0;"><i class="fas fa-umbrella-beach"></i> Encontramo-nos de Férias</h3>
+                <p style="font-size: 24px; margin-top:15px; color: #7f1d1d;">Estaremos de volta no dia <b>${dataFim}</b>.</p>
+            </div>`;
+        }
+
+        html += `</div>`;
+        document.getElementById('print-area').innerHTML = html;
+        document.body.classList.add('is-printing-horario');
+        window.print();
+        document.body.classList.remove('is-printing-horario');
     }
 
     async function gerarRelatorioPDF() {
@@ -1559,9 +1697,15 @@
             ferias_inicio: document.getElementById('f-inicio').value || null,
             ferias_fim: document.getElementById('f-fim').value || null,
             em_ferias: document.getElementById('f-ativa').checked,
-            mbway_ativo: document.getElementById('v-mbway-ativo').checked,
-            mbway_num: document.getElementById('v-mbway-num').value,
-            takeaway_ativo: document.getElementById('v-takeaway-ativo').checked
+            takeaway_ativo: document.getElementById('v-takeaway-ativo').checked,
+            reservas_ativo: document.getElementById('v-reservas-ativo').checked,
+            pag_dinheiro: document.getElementById('v-pag-dinheiro').checked,
+            pag_mb: document.getElementById('v-pag-mb').checked,
+            pag_ticket: document.getElementById('v-pag-ticket').checked,
+            mbway_provider: document.getElementById('v-mbway-provider').value,
+            mbway_key: document.getElementById('v-mbway-key').value,
+            fat_provider: document.getElementById('v-fat-provider').value,
+            fat_key: document.getElementById('v-fat-key').value
         };
         
         const { error } = await _sb.from('lojas').update(dados).eq('id', lojaAtiva.id);
