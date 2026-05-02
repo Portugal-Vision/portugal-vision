@@ -108,6 +108,12 @@
         .btn-circle { width: 32px; height: 32px; border-radius: 50%; border: none; color: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s; }
         .btn-circle:hover { transform: scale(1.1); }
 
+        /* NOVA CLASSE PARA GRELHA DO FORMULÁRIO PRODUTO */
+        .grid-publish { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .grid-publish-full { grid-column: span 3; }
+        .grid-publish-2col { grid-column: span 2; }
+        .grid-publish-1col { grid-column: span 1; }
+
         input, select, textarea { width: 100%; padding: 12px 14px; margin: 6px 0 12px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; font-size: 14px; background: #fff; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--s); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 
@@ -184,7 +190,7 @@
         .btn-ficha-rapida.anexo:hover { background: #bbf7d0; }
 
         /* -----------------------------------------------------
-           CSS MODO EDIÇÃO E IMPRESSÃO (CORRIGIDO PARA RESPONSIVIDADE)
+           CSS MODO EDIÇÃO E IMPRESSÃO
            ----------------------------------------------------- */
         
         [contenteditable="true"] { outline: none; border-radius: 6px; transition: 0.2s; padding: 2px 4px; box-sizing: border-box; }
@@ -269,7 +275,7 @@
             .print-table td.money { text-align: right; font-weight: bold; }
             .print-table tr:nth-child(even) { background-color: #f9f9f9; }
             
-            /* MODO: MENU A4 E FICHA TÉCNICA (RESTAURO DOS 210mm) */
+            /* MODO: MENU A4 E FICHA TÉCNICA */
             body.is-printing-menu .container { display: none !important; }
             body.is-printing-menu #print-area { display: none !important; }
             body.is-printing-menu #print-area-wrapper { display: block !important; padding: 0; background: transparent; }
@@ -287,11 +293,11 @@
                 max-width: none !important;
             }
 
-            /* MODO HORÁRIO DA LOJA NA HORIZONTAL */
+            /* MODO CARTAZES: HORÁRIO E FÉRIAS. FORÇA 1 PÁGINA RIGOROSA */
             body.is-printing-horario { margin: 0; padding: 0; }
-            body.is-printing-horario @page { size: A4 landscape; margin: 10mm; }
+            body.is-printing-horario @page { size: A4 landscape; margin: 0 !important; }
             body.is-printing-horario .container, body.is-printing-horario #print-area-wrapper { display: none !important; }
-            body.is-printing-horario #print-area { display: flex !important; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 95vh; font-family: 'Inter', sans-serif; }
+            body.is-printing-horario #print-area { display: block !important; width: 297mm; height: 209mm; overflow: hidden; page-break-inside: avoid; }
 
             @page { margin: 0; }
         }
@@ -305,9 +311,12 @@
             .header-loja > div:last-child { flex-direction: row !important; width: 100%; }
             
             .metrics-grid { grid-template-columns: 1fr 1fr; }
-            
-            /* Correções de Responsividade Requisitadas */
             .horarios-cozinha-grid { grid-template-columns: 1fr !important; }
+            
+            /* Correção da Grelha do Formulário (Imagem 3) */
+            .grid-publish { display: flex; flex-direction: column; gap: 10px; }
+            .grid-publish-full, .grid-publish-2col, .grid-publish-1col { grid-column: auto; width: 100%; }
+            
             #print-area-wrapper { padding: 10px; }
             .print-toolbar { flex-direction: column; text-align: center; }
             .print-toolbar > div:last-child { width: 100%; display: flex; flex-direction: column; }
@@ -549,8 +558,9 @@
             
             <div id="ai-suggestion-box" class="ai-suggestion hidden"></div>
             
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px">
-                <div style="grid-column: span 3; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <!-- APLICAÇÃO DA NOVA CLASSE PARA CORRIGIR MOBILE -->
+            <div class="grid-publish">
+                <div class="grid-publish-full" style="background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
                     <label style="font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" id="p-visibilidade" checked style="width: 18px; height: 18px; margin: 0;">
                         Mostrar no Website Público
@@ -562,7 +572,7 @@
                     </label>
                 </div>
 
-                <div style="grid-column: span 3; background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0; display: flex; gap: 20px; flex-wrap: wrap;">
+                <div class="grid-publish-full" style="background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0; display: flex; gap: 20px; flex-wrap: wrap;">
                     <label style="font-weight: bold; color: #065f46; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" id="p-almoco" checked style="width: 18px; height: 18px; margin: 0;">
                         ☀️ Disponível ao Almoço
@@ -573,9 +583,9 @@
                     </label>
                 </div>
 
-                <input type="text" id="p-nome" placeholder="Nome (Ex: Bacalhau à Brás)" style="grid-column: span 2">
+                <input type="text" id="p-nome" placeholder="Nome (Ex: Bacalhau à Brás)" class="grid-publish-2col">
                 
-                <div style="grid-column: span 1; display: flex; gap: 10px;">
+                <div class="grid-publish-1col" style="display: flex; gap: 10px;">
                     <input type="number" id="p-preco" placeholder="Preço (€)" style="flex: 2;">
                     <div style="flex: 1; position: relative; margin: 6px 0 12px;">
                         <input type="number" id="p-taxa-iva" placeholder="IVA" style="margin: 0; padding-right: 25px;" title="Taxa de IVA em % (Ex: 23, 13, 0)">
@@ -583,18 +593,18 @@
                     </div>
                 </div>
                 
-                <div style="grid-column: span 1">
+                <div class="grid-publish-1col">
                     <label style="font-size:12px; color:#64748b; font-weight: 600; margin-bottom: 4px; display: block;">Categoria:</label>
                     <input type="text" id="p-categoria" list="lista-categorias" autocomplete="off" placeholder="Escreva..." style="margin-top:0">
                     <datalist id="lista-categorias"></datalist>
                 </div>
                 
-                <div style="grid-column: span 1">
+                <div class="grid-publish-1col">
                     <label style="font-size:12px; color:#64748b; font-weight: 600; margin-bottom: 4px; display: block;">Stock / Doses:</label>
                     <input type="number" id="p-stock" placeholder="Ex: 20 (Vazio=Ilimitado)" style="margin-top:0" min="0">
                 </div>
 
-                <div style="grid-column: span 1">
+                <div class="grid-publish-1col">
                     <label style="font-size:12px; color:#64748b; font-weight: 600; margin-bottom: 4px; display: block;">Prato do Dia (Exclusivo):</label>
                     <select id="p-dia-semana" style="margin-top:0">
                         <option value="">Fixo (Sempre)</option>
@@ -608,9 +618,9 @@
                     </select>
                 </div>
 
-                <input type="number" id="p-desc" placeholder="Desc. Promocional %" style="grid-column: span 3">
+                <input type="number" id="p-desc" placeholder="Desc. Promocional %" class="grid-publish-full">
                 
-                <div style="grid-column: span 3">
+                <div class="grid-publish-full">
                     <div class="tags-group" id="p-tags-container"></div>
                 </div>
             </div>
@@ -706,9 +716,13 @@
                         <input type="checkbox" id="f-ativa" onchange="marcarAltPerfil()" style="width:auto; margin:0"> Ativar aviso de férias no Website
                     </label>
                 </div>
-
-                <button style="background:#0284c7; color:white; font-size:12px; margin-bottom:15px; border:none; width: auto; display: inline-block;" onclick="imprimirAvisoHorario()"><i class="fas fa-print"></i> Imprimir Horário (A4 Horizontal)</button>
-                <button onclick="replicarSegunda()" style="background:var(--s); color:white; font-size:12px; margin-bottom:15px; border:none; width: auto; display: inline-block; margin-left: 10px;"><i class="fas fa-copy"></i> Copiar Segunda para todos</button>
+                
+                <!-- BOTOES DE IMPRESSAO SEPARADOS -->
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <button style="background:#0284c7; color:white; font-size:12px; border:none; width: auto; flex: 1;" onclick="imprimirAvisoHorario()"><i class="fas fa-print"></i> Imprimir Horário (A4)</button>
+                    <button id="btn-print-ferias" style="background:var(--err); color:white; font-size:12px; border:none; width: auto; flex: 1; display: none;" onclick="imprimirAvisoFerias()"><i class="fas fa-plane-departure"></i> Imprimir Férias (A4)</button>
+                </div>
+                <button onclick="replicarSegunda()" style="background:var(--s); color:white; font-size:12px; margin-bottom:15px; border:none; width: auto; display: inline-block;"><i class="fas fa-copy"></i> Copiar Segunda para todos</button>
                 
                 <div id="horarios-lista"></div>
                 <button id="btn-save-config" class="btn-save-main" onclick="salvarHorarios()" style="margin-top: 15px;"><i class="fas fa-save"></i> ATUALIZAR HORÁRIOS</button>
@@ -1104,7 +1118,11 @@
 
         document.getElementById('f-inicio').value = lojaAtiva.ferias_inicio || "";
         document.getElementById('f-fim').value = lojaAtiva.ferias_fim || "";
-        document.getElementById('f-ativa').checked = lojaAtiva.em_ferias || false;
+        
+        // Ativar/Desativar botão de impressão de férias consoante checkbox
+        const checkboxFerias = document.getElementById('f-ativa');
+        checkboxFerias.checked = lojaAtiva.em_ferias || false;
+        document.getElementById('btn-print-ferias').style.display = checkboxFerias.checked ? 'block' : 'none';
         
         document.getElementById('v-takeaway-ativo').checked = lojaAtiva.takeaway_ativo !== false;
         document.getElementById('v-reservas-ativo').checked = lojaAtiva.reservas_ativo !== false;
@@ -1293,75 +1311,87 @@
         }
     }
 
+    // IMPRIMIR HORÁRIO NORMAL
     function imprimirAvisoHorario() {
-        let isFerias = document.getElementById('f-ativa').checked;
-        let html = '';
-
-        if(isFerias && lojaAtiva.ferias_inicio && lojaAtiva.ferias_fim) {
-            const dataInicioArr = lojaAtiva.ferias_inicio.split('-');
-            const dataFimArr = lojaAtiva.ferias_fim.split('-');
-            const dataInicioF = `${dataInicioArr[2]} / ${dataInicioArr[1]} / ${dataInicioArr[0]}`;
-            const dataFimF = `${dataFimArr[2]} / ${dataFimArr[1]} / ${dataFimArr[0]}`;
-            
-            const dataReabertura = new Date(lojaAtiva.ferias_fim);
-            dataReabertura.setDate(dataReabertura.getDate() + 1);
-            
-            const mesesPt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            const diaReabre = dataReabertura.getDate();
-            const mesReabre = mesesPt[dataReabertura.getMonth()];
-
-            html = `<div style="text-align:center; padding: 40px; font-family: 'Georgia', serif; height: 100%; display: flex; flex-direction: column; justify-content: space-between; border: 4px solid #0f172a;">
-                <div>
-                    <h1 style="font-size: 80px; margin-bottom: 20px; color: #0f172a; text-transform: uppercase; letter-spacing: 5px;">Aviso</h1>
-                    <p style="font-size: 32px; color: #334155; line-height: 1.5; margin-bottom: 60px; font-style: italic;">
-                        Informamos os nossos estimados clientes que este estabelecimento se encontra encerrado para descanso.
-                    </p>
-                    
-                    <h2 style="font-size: 45px; color: #0f172a; margin-bottom: 30px; border-bottom: 2px solid #cbd5e1; display: inline-block; padding-bottom: 10px;">Período de Férias</h2>
-                    
-                    <div style="font-size: 38px; color: #475569; margin-bottom: 40px; font-family: 'Inter', sans-serif;">
-                        <div style="margin-bottom: 15px;"><b>De:</b> ${dataInicioF}</div>
-                        <div><b>A:</b> ${dataFimF}</div>
-                    </div>
-                    
-                    <div style="font-size: 38px; color: #0f172a; margin-top: 50px;">
-                        Reabriremos no dia:<br>
-                        <b style="font-size: 55px; display: block; margin-top: 15px;">${diaReabre} de ${mesReabre}</b>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 50px;">
-                    <p style="font-size: 28px; color: #64748b; font-style: italic; margin-bottom: 40px;">Agradecemos a vossa compreensão.</p>
-                    <p style="font-size: 35px; color: #0f172a; font-weight: bold;">A Gerência</p>
-                </div>
-            </div>`;
-        } else {
-            html = `<div style="text-align:center; padding: 20px; font-family: 'Inter', sans-serif;">
+        let html = `<div style="text-align:center; padding: 20px; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; box-sizing: border-box;">
+            <div>
                 <h1 style="font-size: 50px; margin-bottom: 10px; color: #0f172a;">${lojaAtiva.nome || 'A Nossa Loja'}</h1>
                 <h2 style="font-size: 35px; color: #475569; margin-bottom: 40px; border-bottom: 3px solid #cbd5e1; padding-bottom: 20px;">Horário de Funcionamento</h2>
-                <div style="display:flex; flex-wrap:wrap; justify-content:center; gap: 30px; font-size: 24px;">
-            `;
+                
+                <div style="display:flex; flex-wrap:wrap; justify-content:center; gap: 20px; font-size: 24px;">`;
+        
+        diasSemana.forEach((dia, i) => {
+            let h = lojaAtiva.horarios[i] || {status: 'fechado'};
+            if(h.status === 'aberto') {
+                html += `<div style="background:#f1f5f9; padding:20px; border-radius:15px; border:2px solid #cbd5e1; width: 28%; min-width: 250px;">
+                    <strong style="display:block; font-size:28px; color:#0f172a; margin-bottom:10px;">${dia}</strong>
+                    ${h.abertura || '--:--'} às ${h.fecho || '--:--'}
+                </div>`;
+            } else {
+                html += `<div style="background:#fee2e2; padding:20px; border-radius:15px; border:2px solid #fecaca; width: 28%; min-width: 250px;">
+                    <strong style="display:block; font-size:28px; color:#991b1b; margin-bottom:10px;">${dia}</strong>
+                    Encerrado
+                </div>`;
+            }
+        });
+        
+        html += `   </div>
+            </div>
             
-            diasSemana.forEach((dia, i) => {
-                let h = lojaAtiva.horarios[i] || {status: 'fechado'};
-                if(h.status === 'aberto') {
-                    html += `<div style="background:#f1f5f9; padding:20px 40px; border-radius:15px; border:2px solid #cbd5e1; width: 300px;">
-                        <strong style="display:block; font-size:28px; color:#0f172a; margin-bottom:10px;">${dia}</strong>
-                        ${h.abertura || '--:--'} às ${h.fecho || '--:--'}
-                    </div>`;
-                } else {
-                    html += `<div style="background:#fee2e2; padding:20px 40px; border-radius:15px; border:2px solid #fecaca; width: 300px;">
-                        <strong style="display:block; font-size:28px; color:#991b1b; margin-bottom:10px;">${dia}</strong>
-                        Encerrado
-                    </div>`;
-                }
-            });
-            html += `</div>
-            <div style="margin-top: 60px; font-size: 30px; color: #0f172a; font-weight: bold; border-top: 2px dashed #cbd5e1; padding-top: 30px; display: inline-block;">
+            <div style="font-size: 35px; color: #0f172a; font-weight: bold; padding-top: 20px;">
                 A Gerência
             </div>
-            </div>`;
+        </div>`;
+        
+        document.getElementById('print-area').innerHTML = html;
+        document.body.classList.add('is-printing-horario');
+        window.print();
+        document.body.classList.remove('is-printing-horario');
+    }
+
+    // IMPRIMIR AVISO DE FÉRIAS
+    function imprimirAvisoFerias() {
+        if(!lojaAtiva.ferias_inicio || !lojaAtiva.ferias_fim) {
+            return alert("Defina primeiro as datas de início e fim das férias antes de imprimir.");
         }
+
+        const dataInicioArr = lojaAtiva.ferias_inicio.split('-');
+        const dataFimArr = lojaAtiva.ferias_fim.split('-');
+        const dataInicioF = `${dataInicioArr[2]} / ${dataInicioArr[1]} / ${dataInicioArr[0]}`;
+        const dataFimF = `${dataFimArr[2]} / ${dataFimArr[1]} / ${dataFimArr[0]}`;
+        
+        const dataReabertura = new Date(lojaAtiva.ferias_fim);
+        dataReabertura.setDate(dataReabertura.getDate() + 1);
+        
+        const mesesPt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const diaReabre = dataReabertura.getDate();
+        const mesReabre = mesesPt[dataReabertura.getMonth()];
+
+        let html = `<div style="text-align:center; padding: 40px; font-family: 'Georgia', serif; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <h1 style="font-size: 80px; margin-bottom: 20px; color: #0f172a; text-transform: uppercase; letter-spacing: 5px;">Aviso</h1>
+                <p style="font-size: 32px; color: #334155; line-height: 1.5; margin-bottom: 60px; font-style: italic;">
+                    Informamos os nossos estimados clientes que este estabelecimento se encontra encerrado para descanso.
+                </p>
+                
+                <h2 style="font-size: 45px; color: #0f172a; margin-bottom: 30px; border-bottom: 2px solid #cbd5e1; display: inline-block; padding-bottom: 10px;">Período de Férias</h2>
+                
+                <div style="font-size: 38px; color: #475569; margin-bottom: 40px; font-family: 'Inter', sans-serif;">
+                    <div style="margin-bottom: 15px;"><b>De:</b> ${dataInicioF}</div>
+                    <div><b>A:</b> ${dataFimF}</div>
+                </div>
+                
+                <div style="font-size: 38px; color: #0f172a; margin-top: 50px;">
+                    Reabriremos no dia:<br>
+                    <b style="font-size: 55px; display: block; margin-top: 15px;">${diaReabre} de ${mesReabre}</b>
+                </div>
+            </div>
+            
+            <div style="margin-top: auto; padding-top: 40px;">
+                <p style="font-size: 28px; color: #64748b; font-style: italic; margin-bottom: 20px;">Agradecemos a vossa compreensão.</p>
+                <p style="font-size: 35px; color: #0f172a; font-weight: bold; margin: 0;">A Gerência</p>
+            </div>
+        </div>`;
 
         document.getElementById('print-area').innerHTML = html;
         document.body.classList.add('is-printing-horario');
@@ -2087,7 +2117,6 @@
     function marcarAltPerfil() { document.getElementById('btn-save-profile').classList.add('pendente'); }
     function marcarAltHoras() { document.getElementById('btn-save-config').classList.add('pendente'); }
     
-    // ATUALIZADA: Lógica para esconder inputs num "Dia de Folga"
     function atualizarEstiloDia(i) { 
         const card = document.getElementById(`card-${i}`); 
         const status = document.getElementById(`h-${i}-status`).value; 
