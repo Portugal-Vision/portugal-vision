@@ -96,7 +96,6 @@
         .dia-config.aberto { border-left-color: var(--ok); background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .dia-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         
-        /* NOVA CLASSE PARA GRELHA DE HORÁRIOS DA COZINHA */
         .horarios-cozinha-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
@@ -1295,37 +1294,75 @@
     }
 
     function imprimirAvisoHorario() {
-        let html = `<div style="text-align:center; padding: 20px; font-family: 'Inter', sans-serif;">
-            <h1 style="font-size: 50px; margin-bottom: 10px; color: #0f172a;">${lojaAtiva.nome || 'A Nossa Loja'}</h1>
-            <h2 style="font-size: 35px; color: #475569; margin-bottom: 40px; border-bottom: 3px solid #cbd5e1; padding-bottom: 20px;">Horário de Funcionamento</h2>
-            <div style="display:flex; flex-wrap:wrap; justify-content:center; gap: 30px; font-size: 24px;">
-        `;
-        
-        diasSemana.forEach((dia, i) => {
-            let h = lojaAtiva.horarios[i] || {status: 'fechado'};
-            if(h.status === 'aberto') {
-                html += `<div style="background:#f1f5f9; padding:20px 40px; border-radius:15px; border:2px solid #cbd5e1; width: 300px;">
-                    <strong style="display:block; font-size:28px; color:#0f172a; margin-bottom:10px;">${dia}</strong>
-                    ${h.abertura || '--:--'} às ${h.fecho || '--:--'}
-                </div>`;
-            } else {
-                html += `<div style="background:#fee2e2; padding:20px 40px; border-radius:15px; border:2px solid #fecaca; width: 300px;">
-                    <strong style="display:block; font-size:28px; color:#991b1b; margin-bottom:10px;">${dia}</strong>
-                    Encerrado
-                </div>`;
-            }
-        });
-        html += `</div>`;
+        let isFerias = document.getElementById('f-ativa').checked;
+        let html = '';
 
-        if(lojaAtiva.em_ferias && lojaAtiva.ferias_inicio && lojaAtiva.ferias_fim) {
-            const dataFim = new Date(lojaAtiva.ferias_fim).toLocaleDateString('pt-PT');
-            html += `<div style="margin-top: 50px; background: #fef2f2; border: 3px dashed #ef4444; padding: 30px; border-radius: 20px; display: inline-block;">
-                <h3 style="color:#b91c1c; font-size: 30px; margin:0;"><i class="fas fa-umbrella-beach"></i> Encontramo-nos de Férias</h3>
-                <p style="font-size: 24px; margin-top:15px; color: #7f1d1d;">Estaremos de volta no dia <b>${dataFim}</b>.</p>
+        if(isFerias && lojaAtiva.ferias_inicio && lojaAtiva.ferias_fim) {
+            const dataInicioArr = lojaAtiva.ferias_inicio.split('-');
+            const dataFimArr = lojaAtiva.ferias_fim.split('-');
+            const dataInicioF = `${dataInicioArr[2]} / ${dataInicioArr[1]} / ${dataInicioArr[0]}`;
+            const dataFimF = `${dataFimArr[2]} / ${dataFimArr[1]} / ${dataFimArr[0]}`;
+            
+            const dataReabertura = new Date(lojaAtiva.ferias_fim);
+            dataReabertura.setDate(dataReabertura.getDate() + 1);
+            
+            const mesesPt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const diaReabre = dataReabertura.getDate();
+            const mesReabre = mesesPt[dataReabertura.getMonth()];
+
+            html = `<div style="text-align:center; padding: 40px; font-family: 'Georgia', serif; height: 100%; display: flex; flex-direction: column; justify-content: space-between; border: 4px solid #0f172a;">
+                <div>
+                    <h1 style="font-size: 80px; margin-bottom: 20px; color: #0f172a; text-transform: uppercase; letter-spacing: 5px;">Aviso</h1>
+                    <p style="font-size: 32px; color: #334155; line-height: 1.5; margin-bottom: 60px; font-style: italic;">
+                        Informamos os nossos estimados clientes que este estabelecimento se encontra encerrado para descanso.
+                    </p>
+                    
+                    <h2 style="font-size: 45px; color: #0f172a; margin-bottom: 30px; border-bottom: 2px solid #cbd5e1; display: inline-block; padding-bottom: 10px;">Período de Férias</h2>
+                    
+                    <div style="font-size: 38px; color: #475569; margin-bottom: 40px; font-family: 'Inter', sans-serif;">
+                        <div style="margin-bottom: 15px;"><b>De:</b> ${dataInicioF}</div>
+                        <div><b>A:</b> ${dataFimF}</div>
+                    </div>
+                    
+                    <div style="font-size: 38px; color: #0f172a; margin-top: 50px;">
+                        Reabriremos no dia:<br>
+                        <b style="font-size: 55px; display: block; margin-top: 15px;">${diaReabre} de ${mesReabre}</b>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 50px;">
+                    <p style="font-size: 28px; color: #64748b; font-style: italic; margin-bottom: 40px;">Agradecemos a vossa compreensão.</p>
+                    <p style="font-size: 35px; color: #0f172a; font-weight: bold;">A Gerência</p>
+                </div>
+            </div>`;
+        } else {
+            html = `<div style="text-align:center; padding: 20px; font-family: 'Inter', sans-serif;">
+                <h1 style="font-size: 50px; margin-bottom: 10px; color: #0f172a;">${lojaAtiva.nome || 'A Nossa Loja'}</h1>
+                <h2 style="font-size: 35px; color: #475569; margin-bottom: 40px; border-bottom: 3px solid #cbd5e1; padding-bottom: 20px;">Horário de Funcionamento</h2>
+                <div style="display:flex; flex-wrap:wrap; justify-content:center; gap: 30px; font-size: 24px;">
+            `;
+            
+            diasSemana.forEach((dia, i) => {
+                let h = lojaAtiva.horarios[i] || {status: 'fechado'};
+                if(h.status === 'aberto') {
+                    html += `<div style="background:#f1f5f9; padding:20px 40px; border-radius:15px; border:2px solid #cbd5e1; width: 300px;">
+                        <strong style="display:block; font-size:28px; color:#0f172a; margin-bottom:10px;">${dia}</strong>
+                        ${h.abertura || '--:--'} às ${h.fecho || '--:--'}
+                    </div>`;
+                } else {
+                    html += `<div style="background:#fee2e2; padding:20px 40px; border-radius:15px; border:2px solid #fecaca; width: 300px;">
+                        <strong style="display:block; font-size:28px; color:#991b1b; margin-bottom:10px;">${dia}</strong>
+                        Encerrado
+                    </div>`;
+                }
+            });
+            html += `</div>
+            <div style="margin-top: 60px; font-size: 30px; color: #0f172a; font-weight: bold; border-top: 2px dashed #cbd5e1; padding-top: 30px; display: inline-block;">
+                A Gerência
+            </div>
             </div>`;
         }
 
-        html += `</div>`;
         document.getElementById('print-area').innerHTML = html;
         document.body.classList.add('is-printing-horario');
         window.print();
