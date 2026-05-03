@@ -45,14 +45,18 @@
         .linha-fogo { display: flex; gap: 20px; padding: 20px; flex-grow: 1; overflow-x: auto; overflow-y: hidden; align-items: flex-start; scroll-behavior: smooth; }
         .linha-fogo::-webkit-scrollbar { height: 12px; } .linha-fogo::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
         
-        .radar-zone { width: 350px; min-width: 350px; background: var(--bg-radar); border-left: 2px solid var(--border-radar); display: flex; flex-direction: column; flex-shrink: 0; box-shadow: -10px 0 25px rgba(0,0,0,0.3); z-index: 5;}
+        .radar-zone { width: 380px; min-width: 380px; background: var(--bg-radar); border-left: 2px solid var(--border-radar); display: flex; flex-direction: column; flex-shrink: 0; box-shadow: -10px 0 25px rgba(0,0,0,0.3); z-index: 5;}
         .radar-header { padding: 20px; border-bottom: 2px solid var(--border-radar); font-weight: 900; font-size: 1.1em; color: #93c5fd; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);}
         .radar-body { flex-grow: 1; overflow-y: auto; padding: 15px; }
         .radar-body::-webkit-scrollbar { width: 6px; } .radar-body::-webkit-scrollbar-thumb { background: var(--border-radar); border-radius: 10px; }
         
-        .radar-item { background: rgba(30, 58, 138, 0.4); border: 1px solid var(--border-radar); padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-        .radar-item .qtde { font-weight: 900; color: #60a5fa; font-size: 1.4em; background: rgba(59, 130, 246, 0.1); padding: 5px 12px; border-radius: 6px;}
-        .radar-item .nome { font-weight: 600; font-size: 1.1em; line-height: 1.2; text-align: right; flex-grow: 1; padding-left: 15px; color: #e0e7ff;}
+        /* BLOCOS DE TEMPO NO RADAR */
+        .radar-hora-block { background: rgba(0, 0, 0, 0.4); color: var(--warning); padding: 8px 15px; border-radius: 8px; font-weight: 900; font-size: 1.1em; margin: 15px 0 10px 0; border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 8px; }
+        .radar-hora-block:first-child { margin-top: 0; }
+        
+        .radar-item { background: rgba(30, 58, 138, 0.4); border: 1px solid var(--border-radar); padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; margin-left: 10px; border-left: 4px solid var(--primary);}
+        .radar-item .qtde { font-weight: 900; color: #60a5fa; font-size: 1.3em; background: rgba(59, 130, 246, 0.1); padding: 5px 12px; border-radius: 6px;}
+        .radar-item .nome { font-weight: 600; font-size: 1.05em; line-height: 1.2; text-align: right; flex-grow: 1; padding-left: 15px; color: #e0e7ff;}
 
         /* CARTÃO DE PEDIDO (TICKET) */
         .ticket { background: var(--bg-card); border-radius: 12px; width: 350px; min-width: 350px; display: flex; flex-direction: column; overflow: hidden; border: 2px solid var(--border-color); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; max-height: 100%; }
@@ -152,7 +156,7 @@
     </header>
 
     <div class="workspace-container">
-        <!-- LINHA DE FOGO (A FAZER AGORA) -->
+        <!-- LINHA DE FOGO -->
         <div class="linha-fogo" id="linha-producao">
         </div>
         
@@ -312,7 +316,7 @@
         timerAtualizacao = setInterval(() => {
             carregarPedidosFogo();
             carregarRadarReservas();
-        }, 30000); // 30s refresh para garantir consistência visual.
+        }, 30000); // 30s refresh
 
         _sb.channel('cozinha-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
@@ -430,13 +434,12 @@
         }).join('');
     }
 
-    // --- NOVO MOTOR: RADAR DE RESERVAS (PRÓXIMAS 2 HORAS) ---
+    // --- NOVO MOTOR: RADAR DE RESERVAS POR BLOCOS DE TEMPO ---
     async function carregarRadarReservas() {
-        // Limite de 2 Horas no futuro
         const agora = new Date();
         const limiteFuturo = new Date(agora.getTime() + (2 * 60 * 60 * 1000));
         
-        // Puxa as reservas (pendentes ou confirmadas que ainda não saltaram para a linha de fogo)
+        // Puxa as reservas (aguarda_confirmacao ou reserva_confirmada)
         const { data: reservas } = await _sb.from('pedidos')
             .select('*')
             .eq('loja_id', minhaLojaId)
@@ -449,20 +452,26 @@
             return;
         }
 
-        let agregadorRadar = {};
+        // Objecto de agregação: { "20:00": { "Bacalhau": 2, "Bife": 1 }, "20:30": { "Bacalhau": 1 } }
+        let blocosTempo = {};
         let temComida = false;
 
         reservas.forEach(p => {
             if (!p.data_agendada) return;
             const dataAgendada = new Date(p.data_agendada);
             
-            // Só interessa o que for acontecer daqui a menos de 2 horas e que não ficou já para trás.
             if (dataAgendada > agora && dataAgendada <= limiteFuturo) {
+                // Formatar Hora (ex: "20:00")
+                const horaStr = dataAgendada.getHours().toString().padStart(2, '0') + ':' + dataAgendada.getMinutes().toString().padStart(2, '0');
+                
                 p.itens.forEach(item => {
                     if (!ignorarNaCozinha(item)) {
                         temComida = true;
-                        if (!agregadorRadar[item.nome]) agregadorRadar[item.nome] = 0;
-                        agregadorRadar[item.nome] += item.qtde;
+                        
+                        if (!blocosTempo[horaStr]) blocosTempo[horaStr] = {};
+                        if (!blocosTempo[horaStr][item.nome]) blocosTempo[horaStr][item.nome] = 0;
+                        
+                        blocosTempo[horaStr][item.nome] += item.qtde;
                     }
                 });
             }
@@ -473,15 +482,28 @@
             return;
         }
 
-        // Ordena por maior quantidade
-        const arrayAgregado = Object.entries(agregadorRadar).sort((a, b) => b[1] - a[1]);
+        // Ordenar as horas de forma crescente (ex: 20:00 antes de 20:30)
+        const horasOrdenadas = Object.keys(blocosTempo).sort();
+        
+        let htmlRadarFinal = '';
 
-        divRadar.innerHTML = arrayAgregado.map(([nome, qtde]) => `
-            <div class="radar-item">
-                <div class="qtde">${qtde}x</div>
-                <div class="nome">${nome}</div>
-            </div>
-        `).join('');
+        horasOrdenadas.forEach(hora => {
+            htmlRadarFinal += `<div class="radar-hora-block"><i class="fas fa-clock"></i> Para as ${hora}</div>`;
+            
+            // Ordenar os pratos dentro da hora por quantidade (decrescente)
+            const pratosDestaHora = Object.entries(blocosTempo[hora]).sort((a, b) => b[1] - a[1]);
+            
+            pratosDestaHora.forEach(([nome, qtde]) => {
+                htmlRadarFinal += `
+                    <div class="radar-item">
+                        <div class="qtde">${qtde}x</div>
+                        <div class="nome">${nome}</div>
+                    </div>
+                `;
+            });
+        });
+
+        divRadar.innerHTML = htmlRadarFinal;
     }
 
     async function mudarEstado(id, novoEstado) {
@@ -496,10 +518,10 @@
             const gain = ctx.createGain();
             osc.connect(gain);
             gain.connect(ctx.destination);
-            osc.type = "square"; // Som mais abrasivo/mecânico para cortar o barulho da cozinha
+            osc.type = "square"; 
             osc.frequency.setValueAtTime(800, ctx.currentTime);
             gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.1); // Volume Alto
+            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.1); 
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 1.2);
