@@ -569,7 +569,6 @@
         });
     }
 
-    // A FUNÇÃO QUE ESTAVA EM FALTA
     function calcularPrecoFinal(preco, desconto) {
         const p = parseFloat(preco) || 0;
         const d = parseInt(desconto) || 0;
@@ -906,6 +905,7 @@
         }
     }
 
+    // --- CORREÇÃO PONTO 3: ROTEAMENTO EXATO DE AVISOS NO CLIENTE ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         if(!clienteAtual && !mesaAtual) return;
@@ -918,6 +918,7 @@
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: filtroStr }, payload => {
                 
                 const novoEstado = payload.new.estado;
+                const oldEstado = payload.old ? payload.old.estado : null;
                 const tipoPedido = payload.new.tipo_pedido;
                 const mesaAtribuida = payload.new.mesa;
                 const alerta = document.getElementById('cliente-alert');
@@ -936,46 +937,38 @@
                 }
 
                 if (!mesaAtual && mesaAtribuida && payload.new.status_presenca === 'sentado' && (tipoPedido === 'reserva' || tipoPedido === 'mesa')) {
-                    try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
-                    if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
-                    
-                    msgEl.innerText = `A sua mesa (${mesaAtribuida}) está pronta! A reencaminhar...`;
-                    alerta.style.background = "var(--s)"; 
-                    alerta.classList.add('show');
-                    
+                    // Transição Fantasma: O cliente vai para a mesa sem avisos ruidosos.
                     setTimeout(() => {
                         const sep = window.location.search ? '&' : '?';
                         window.location.href = window.location.href + sep + 'mesa=' + mesaAtribuida;
-                    }, 3000);
+                    }, 500);
                     return; 
                 }
 
-                if ((tipoPedido === 'mesa' || tipoPedido === 'reserva') && ['pendente', 'preparacao', 'pronto'].includes(novoEstado)) {
-                    const modalConta = document.getElementById('contaModal');
-                    if (modalConta && modalConta.style.display === 'block') abrirConta();
-                    return; 
-                }
-
-                try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
-
-                if(novoEstado === 'pendente') {
-                    if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
-                    msgEl.innerText = "O restaurante confirmou o seu pedido! Vai para a cozinha.";
-                    alerta.style.background = "var(--s)"; 
-                    alerta.classList.add('show');
-                    setTimeout(() => alerta.classList.remove('show'), 6000);
-                } 
-                else if(novoEstado === 'pronto') {
-                    if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300]); 
-                    msgEl.innerText = "O seu pedido já está Pronto!";
-                    alerta.style.background = "var(--ok)"; 
-                    alerta.classList.add('show');
-                    setTimeout(() => alerta.classList.remove('show'), 8000);
-                }
-
+                // Atualização visual silenciosa de fundo
                 const modalConta = document.getElementById('contaModal');
                 if (modalConta && modalConta.style.display === 'block') {
                     abrirConta();
+                }
+
+                // Apenas dispara som e Toast em 'pendente' ou 'pronto' SE o estado tiver acabado de mudar
+                if (novoEstado !== oldEstado) {
+                    if(novoEstado === 'pendente') {
+                        try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
+                        if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+                        msgEl.innerText = "O restaurante confirmou o seu pedido! Vai para a cozinha.";
+                        alerta.style.background = "var(--s)"; 
+                        alerta.classList.add('show');
+                        setTimeout(() => alerta.classList.remove('show'), 6000);
+                    } 
+                    else if(novoEstado === 'pronto') {
+                        try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
+                        if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300]); 
+                        msgEl.innerText = "O seu pedido já está Pronto!";
+                        alerta.style.background = "var(--ok)"; 
+                        alerta.classList.add('show');
+                        setTimeout(() => alerta.classList.remove('show'), 8000);
+                    }
                 }
 
             })
