@@ -95,11 +95,12 @@
         .pos-item img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;}
         .pos-cart { background: #f8fafc; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px dashed #cbd5e1; }
 
-        .notificacao-toast { position: fixed; bottom: -100px; right: 20px; background: var(--danger); color: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); display: flex; align-items: center; gap: 15px; z-index: 9999; transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); max-width: 350px; }
+        /* SISTEMA DE NOTIFICAÇÕES (TOAST) DA SALA */
+        .notificacao-toast { position: fixed; bottom: -100px; right: 20px; background: var(--primary); color: white; padding: 16px 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); display: flex; align-items: center; gap: 15px; z-index: 9999; transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); max-width: 400px; }
         .notificacao-toast.mostrar { bottom: 20px; }
+        .notificacao-toast.alerta-cozinha { background: var(--success); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); }
+        .notificacao-toast.alerta-cliente { background: var(--danger); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); }
         .notificacao-icon { font-size: 24px; animation: pulse-ring 2s infinite; }
-        .piscar-ecra { animation: flash-border 1s infinite; }
-        @keyframes flash-border { 0% { box-shadow: inset 0 0 0px var(--danger); } 50% { box-shadow: inset 0 0 25px var(--danger); } 100% { box-shadow: inset 0 0 0px var(--danger); } }
 
         .btn-mini-edit { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 5px; transition: 0.2s;}
         .btn-mini-edit:hover { opacity: 0.8; transform: translateY(-2px); }
@@ -196,10 +197,8 @@
             <h3 id="detalhes-gerais-titulo" style="margin:0; font-size: 1.5em; display:flex; align-items:center; gap:10px;">Detalhes</h3>
             <div class="close-modal" onclick="fecharModal('modal-detalhes-gerais')"><i class="fas fa-times"></i></div> 
         </div>
-        <div class="modal-body" id="detalhes-gerais-body">
-            </div>
-        <div class="modal-footer" id="detalhes-gerais-footer">
-            </div>
+        <div class="modal-body" id="detalhes-gerais-body"></div>
+        <div class="modal-footer" id="detalhes-gerais-footer"></div>
     </div>
 </div>
 
@@ -336,11 +335,10 @@
     let minhaLojaId = null; let lojaNome = ""; let nomeOperadorAtual = "";
     let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
     
-    let canalNotificacoesCozinha = null; 
-    let pedidoEditando = null; 
     let timerAtualizacao = null; 
     let acaoSegurancaPendente = null; 
     let intervalCronometros = null;
+    let canalSala = null;
     
     // Globais para gerir o Modal e os Dados Vivos
     window.pedidosGlobais = [];
@@ -353,7 +351,6 @@
         const empId = sessionStorage.getItem('pv_sala_operador_id') || '0';
         const empNome = sessionStorage.getItem('pv_sala_operador') || 'Desconhecido';
         try {
-            // Requer a existência da tabela `auditoria_logs` na DB
             await _sb.from('auditoria_logs').insert([{
                 loja_id: minhaLojaId,
                 empregado_id: empId,
@@ -361,11 +358,10 @@
                 acao: acaoDetalhe
             }]);
         } catch(e) {
-            console.error("Auditoria silenciosa falhou (A tabela auditoria_logs existe?)", e);
+            console.error("Auditoria silenciosa falhou.", e);
         }
     }
 
-    // --- NOVA LÓGICA DE DESCONTO E RESTAURO DE STOCK (PONTO 8) ---
     async function descontarStockPermanente(itens) {
         if (!itens || !Array.isArray(itens)) return;
         for (const item of itens) {
@@ -374,7 +370,7 @@
                 if (p && p.stock !== null) {
                     await _sb.from('produtos').update({ stock: p.stock - item.qtde }).eq('id', item.id);
                 }
-            } catch(e) { console.error("Erro ao descontar stock de " + item.id, e); }
+            } catch(e) {}
         }
     }
 
@@ -386,11 +382,10 @@
                 if (p && p.stock !== null) {
                     await _sb.from('produtos').update({ stock: p.stock + item.qtde }).eq('id', item.id);
                 }
-            } catch(e) { console.error("Erro ao restaurar stock de " + item.id, e); }
+            } catch(e) {}
         }
     }
 
-    // --- CRONÓMETROS JIT ---
     function formatarCronometro(inicioMs) {
         const diff = Date.now() - inicioMs;
         const min = Math.floor(diff / 60000);
@@ -407,10 +402,9 @@
                 const inicio = parseInt(el.getAttribute('data-inicio'));
                 if (inicio) el.innerText = formatarCronometro(inicio);
             });
-        }, 60000); // Atualiza de minuto a minuto
+        }, 60000); 
     }
 
-    // --- SISTEMA DE EXPANSÃO DE COLUNAS ---
     function toggleExpandirColuna(colId) {
         const grid = document.getElementById('main-grid');
         const coluna = document.getElementById(colId);
@@ -425,13 +419,10 @@
         }
     }
 
-    // --- CIRURGIA NOVO PEDIDO MANUAL (POS) ---
     function abrirPOS() {
-        posCarrinho = [];
-        posTotal = 0;
+        posCarrinho = []; posTotal = 0;
         document.getElementById('pos-mesa').value = '';
-        renderizarPOS();
-        atualizarCarrinhoPOS();
+        renderizarPOS(); atualizarCarrinhoPOS();
         document.getElementById('modal-pos').style.display = 'flex';
     }
 
@@ -456,19 +447,13 @@
 
     function adicionarAoPOS(id, nome, preco) {
         const existente = posCarrinho.find(i => i.id === id);
-        if (existente) {
-            existente.qtde += 1;
-        } else {
-            posCarrinho.push({ id, nome, preco, qtde: 1 });
-        }
+        if (existente) existente.qtde += 1; else posCarrinho.push({ id, nome, preco, qtde: 1 });
         atualizarCarrinhoPOS();
     }
 
     function alterarQtdePOS(index, delta) {
         posCarrinho[index].qtde += delta;
-        if (posCarrinho[index].qtde <= 0) {
-            posCarrinho.splice(index, 1);
-        }
+        if (posCarrinho[index].qtde <= 0) posCarrinho.splice(index, 1);
         atualizarCarrinhoPOS();
     }
 
@@ -514,7 +499,6 @@
         const tipoPedido = isMesa ? 'mesa' : 'levantamento';
 
         try {
-            // 1. Desconto Imediato do POS
             await descontarStockPermanente(posCarrinho);
 
             const { error } = await _sb.from('pedidos').insert([{
@@ -531,26 +515,20 @@
             
             if (error) throw error;
             
-            // Regista a Ação (Auditoria)
             registarAuditoria(`Enviou Pedido Direto (POS) para a ${isMesa ? 'Mesa' : 'Takeaway'} ${mesaInput} no valor de ${posTotal.toFixed(2)}€`);
 
             if (isMesa && !localStorage.getItem('mesa_ocupacao_' + mesaInput)) {
                 localStorage.setItem('mesa_ocupacao_' + mesaInput, Date.now());
             }
 
-            fecharModal('modal-pos');
-            posCarrinho = [];
-            carregarDados();
+            fecharModal('modal-pos'); posCarrinho = []; carregarDados();
         } catch (error) {
             alert("Erro ao enviar pedido para a cozinha: " + error.message);
         } finally {
-            btn.innerHTML = '<i class="fas fa-fire"></i> Enviar Direto para a Cozinha';
-            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-fire"></i> Enviar Direto para a Cozinha'; btn.disabled = false;
         }
     }
 
-
-    // --- CIRURGIA 2: SEGURANÇA (PIN) ---
     function pedirPin(acaoCallback) {
         acaoSegurancaPendente = acaoCallback;
         document.getElementById('input-pin-seguranca').value = '';
@@ -594,8 +572,7 @@
 
         if(inputSlug.length < 3) {
             selectEmp.style.display = 'none'; labelEmp.style.display = 'none';
-            inputPin.style.display = 'none'; labelPin.style.display = 'none';
-            btnLogin.style.display = 'none'; 
+            inputPin.style.display = 'none'; labelPin.style.display = 'none'; btnLogin.style.display = 'none'; 
             return;
         }
 
@@ -617,8 +594,7 @@
             }
         } else {
             selectEmp.style.display = 'none'; labelEmp.style.display = 'none';
-            inputPin.style.display = 'none'; labelPin.style.display = 'none';
-            btnLogin.style.display = 'none';
+            inputPin.style.display = 'none'; labelPin.style.display = 'none'; btnLogin.style.display = 'none';
         }
     }
 
@@ -639,29 +615,22 @@
         if (!empId || !pinDigitado) return alert("Selecione o seu nome e insira o PIN.");
 
         const btn = document.getElementById('btn-login-text');
-        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; 
-        btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; btn.disabled = true;
 
-        try {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => console.log(err));
-            }
-        } catch (e) {}
+        try { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => console.log(err)); } } catch (e) {}
 
         const { data: empregado } = await _sb.from('empregados').select('id, nome').eq('id', empId).eq('pin_acesso', pinDigitado).maybeSingle();
 
         if (empregado) {
             nomeOperadorAtual = empregado.nome;
             sessionStorage.setItem('pv_sala_loja_id', minhaLojaId);
-            sessionStorage.setItem('pv_sala_operador_id', empregado.id); // Guardar ID para Auditoria
+            sessionStorage.setItem('pv_sala_operador_id', empregado.id);
             sessionStorage.setItem('pv_sala_operador', nomeOperadorAtual);
             iniciarDashboard(minhaLojaId);
             registarAuditoria(`Iniciou o Turno`);
         } else {
-            alert("❌ PIN incorreto.");
-            document.getElementById('pin-empregado').value = "";
-            btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Iniciar Turno`; 
-            btn.disabled = false;
+            alert("❌ PIN incorreto."); document.getElementById('pin-empregado').value = "";
+            btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Iniciar Turno`; btn.disabled = false;
         }
     }
 
@@ -669,34 +638,84 @@
         const id = sessionStorage.getItem('pv_sala_loja_id');
         const op = sessionStorage.getItem('pv_sala_operador');
         if (id && op) {
-            minhaLojaId = id;
-            nomeOperadorAtual = op;
-            iniciarDashboard(id);
+            minhaLojaId = id; nomeOperadorAtual = op; iniciarDashboard(id);
         }
     }
 
     function logout() { 
         registarAuditoria(`Encerrou o Turno`);
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch(err => console.log(err));
-        }
-        sessionStorage.removeItem('pv_sala_loja_id');
-        sessionStorage.removeItem('pv_sala_operador_id');
-        sessionStorage.removeItem('pv_sala_operador');
+        if (document.fullscreenElement) { document.exitFullscreen().catch(err => console.log(err)); }
+        sessionStorage.removeItem('pv_sala_loja_id'); sessionStorage.removeItem('pv_sala_operador_id'); sessionStorage.removeItem('pv_sala_operador');
         
         if(timerAtualizacao) clearInterval(timerAtualizacao); 
         if(intervalCronometros) clearInterval(intervalCronometros);
+        if(canalSala) _sb.removeChannel(canalSala);
         
-        document.getElementById('select-empregado').value = "";
-        document.getElementById('pin-empregado').value = "";
-        document.getElementById('pin-empregado').style.display = 'none';
-        document.getElementById('label-pin').style.display = 'none';
-        document.getElementById('btn-login-text').style.display = 'none';
-
-        document.getElementById('dashboard-screen').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('select-empregado').value = ""; document.getElementById('pin-empregado').value = "";
+        document.getElementById('pin-empregado').style.display = 'none'; document.getElementById('label-pin').style.display = 'none'; document.getElementById('btn-login-text').style.display = 'none';
+        document.getElementById('dashboard-screen').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex';
     }
 
+    // --- SONS DE NOTIFICAÇÃO DA SALA ---
+    function tocarSinoCozinhaPronta() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = "sine"; 
+            osc.frequency.setValueAtTime(600, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.1); 
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.6);
+        } catch(e) {}
+    }
+
+    function tocarSinoClienteChama() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = "triangle"; 
+            osc.frequency.setValueAtTime(1000, ctx.currentTime);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1); 
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+        } catch(e) {}
+    }
+
+    function dispararToast(titulo, mensagem, tipo) {
+        const toast = document.createElement('div');
+        let icone = tipo === 'cozinha' ? 'fa-bell-concierge' : 'fa-hand-sparkles';
+        let classeCor = tipo === 'cozinha' ? 'alerta-cozinha' : 'alerta-cliente';
+        
+        toast.className = `notificacao-toast no-print ${classeCor}`;
+        toast.innerHTML = `
+            <i class="fas ${icone} notificacao-icon"></i>
+            <div style="flex: 1;">
+                <b style="display:block; font-size:15px; margin-bottom:4px;">${titulo}</b>
+                <span style="font-size:13px; line-height:1.4;">${mensagem}</span>
+            </div>
+            <button onclick="this.parentElement.classList.remove('mostrar'); setTimeout(() => this.parentElement.remove(), 500);" style="background:transparent; color:white; border:none; width:auto; padding:5px; font-size:18px; cursor:pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('mostrar'), 100);
+
+        setTimeout(() => {
+            if(document.body.contains(toast)) {
+                toast.classList.remove('mostrar');
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 8000);
+    }
+
+    // --- ESCUTAS SELECTIVAS PARA A SALA ---
     async function iniciarDashboard(idLoja) {
         document.getElementById('login-screen').style.display = 'none'; document.getElementById('dashboard-screen').style.display = 'flex';
         const { data: loja } = await _sb.from('lojas').select('nome').eq('id', idLoja).single();
@@ -714,50 +733,26 @@
         if(timerAtualizacao) clearInterval(timerAtualizacao);
         timerAtualizacao = setInterval(carregarDados, 30000); 
         
-        _sb.channel('sala-updates')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, () => { carregarDados(); })
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, () => { carregarDados(); }) 
+        if(canalSala) _sb.removeChannel(canalSala);
+        canalSala = _sb.channel('sala-updates')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chamadas_sala', filter: `loja_id=eq.${minhaLojaId}` }, payload => { 
+              if (payload.new.estado === 'pendente') {
+                  const numMesa = payload.new.mesa;
+                  const accaoStr = payload.new.tipo_chamada === 'conta' ? 'pediu a Conta.' : 'chamou Empregado.';
+                  tocarSinoClienteChama();
+                  dispararToast('Atenção à Sala', `A Mesa ${numMesa} ${accaoStr}`, 'cliente');
+              }
+              carregarDados(); 
+          })
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => { 
+              if (payload.old.estado === 'preparacao' && payload.new.estado === 'pronto') {
+                  const tagLocal = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : `Takeaway (${payload.new.nome_cliente || 'Anónimo'})`;
+                  tocarSinoCozinhaPronta();
+                  dispararToast('Prato Pronto!', `O pedido da ${tagLocal} está pronto a levantar na bancada.`, 'cozinha');
+              }
+              carregarDados(); 
+          }) 
           .subscribe();
-
-        iniciarEscutaNotificacoes();
-    }
-
-    function iniciarEscutaNotificacoes() {
-        if (canalNotificacoesCozinha) _sb.removeChannel(canalNotificacoesCozinha);
-        canalNotificacoesCozinha = _sb.channel('alertas-cozinha')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: 'loja_id=eq.' + minhaLojaId }, 
-                (payload) => {
-                    dispararAlertaCozinha(payload.new.mensagem);
-                    carregarDados();
-                }
-            ).subscribe();
-    }
-
-    function dispararAlertaCozinha(mensagem) {
-        document.body.classList.add('piscar-ecra');
-        setTimeout(() => document.body.classList.remove('piscar-ecra'), 8000);
-
-        const toast = document.createElement('div');
-        toast.className = 'notificacao-toast no-print';
-        toast.innerHTML = `
-            <i class="fas fa-bell notificacao-icon"></i>
-            <div style="flex: 1;">
-                <b style="display:block; font-size:14px; margin-bottom:4px;">Notificação da Cozinha:</b>
-                <span style="font-size:13px; line-height:1.4;">${mensagem}</span>
-            </div>
-            <button onclick="this.parentElement.classList.remove('mostrar'); setTimeout(() => this.parentElement.remove(), 500); document.body.classList.remove('piscar-ecra');" style="background:transparent; color:white; border:none; width:auto; padding:5px; font-size:18px; cursor:pointer;">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.classList.add('mostrar'), 100);
-
-        setTimeout(() => {
-            if(document.body.contains(toast)) {
-                toast.classList.remove('mostrar');
-                setTimeout(() => toast.remove(), 500);
-            }
-        }, 8000);
     }
 
     async function forcarAtualizacaoManual() {
@@ -848,7 +843,6 @@
                     estHtml = `<span class="badge">Em Consumo</span>`;
                 }
 
-                // Inject Cronometro Logic JIT
                 let timestampInicio = localStorage.getItem('mesa_ocupacao_' + m.mesa);
                 if (!timestampInicio) {
                     timestampInicio = new Date(m.hora).getTime();
@@ -1067,8 +1061,6 @@
         document.getElementById('modal-detalhes-gerais').style.display = 'flex';
     }
 
-
-    // --- FUNÇÕES GLOBAIS DE ACÇÃO ---
     async function resolverChamada(id) { await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id); carregarDados(); }
     
     async function avancarPedido(id, est) { 
@@ -1079,10 +1071,7 @@
     
     async function aceitarReserva(id) { 
         const p = window.pedidosGlobais.find(x => x.id === id);
-        if(p && p.itens) {
-            // DESCONTO DE STOCK IMEDIATO (PONTO 8) NA RESERVA
-            await descontarStockPermanente(p.itens);
-        }
+        if(p && p.itens) { await descontarStockPermanente(p.itens); }
         await _sb.from('pedidos').update({ estado: 'reserva_confirmada' }).eq('id', id); 
         registarAuditoria(`Aceitou a Reserva #${id}`);
         carregarDados(); 
@@ -1097,13 +1086,11 @@
         await _sb.from('pedidos').update({ 
             mesa: mesa, 
             tipo_pedido: 'mesa', 
-            estado: 'preparacao', // GATILHO DA COZINHA PONTO (Antes era pendente)
+            estado: 'preparacao',
             status_presenca: 'sentado'
         }).eq('id', id); 
         
-        // CRONÓMETRO JIT PONTO - Grava a hora exata a que a mesa começou a ocupação
         localStorage.setItem('mesa_ocupacao_' + mesa, Date.now());
-        
         registarAuditoria(`Sentou o cliente da Reserva #${id} na Mesa ${mesa} e disparou para a cozinha`);
 
         fecharModal('modal-mesa-reserva');
@@ -1230,7 +1217,6 @@
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             
-            // Remove a ocupação da mesa
             const numMesa = document.getElementById('pagar-mesa-num').innerText;
             if(!numMesa.includes('Takeaway') && !numMesa.includes('Reserva')) {
                 localStorage.removeItem('mesa_ocupacao_' + numMesa);
