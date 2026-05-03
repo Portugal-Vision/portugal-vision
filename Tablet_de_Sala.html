@@ -59,6 +59,7 @@
 
         .mesa-tag { font-size: 1.3em; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text); }
         .time-tag { color: #64748b; font-size: 0.9em; font-weight: bold; }
+        .cronometro-vivo { color: var(--primary); font-family: monospace; font-size: 1.1em; }
         
         /* ELEMENTOS DO NOVO MODAL DE DETALHE */
         .itens-lista { list-style: none; padding: 0; margin: 0; font-size: 1.1em; color: #475569; } .itens-lista li { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
@@ -330,7 +331,6 @@
         </div>
     </div>
 </div>
-
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     let minhaLojaId = null; let lojaNome = ""; let nomeOperadorAtual = "";
@@ -340,24 +340,85 @@
     let pedidoEditando = null; 
     let timerAtualizacao = null; 
     let acaoSegurancaPendente = null; 
+    let intervalCronometros = null;
     
     // Globais para gerir o Modal e os Dados Vivos
     window.pedidosGlobais = [];
     window.chamadasGlobais = [];
     window.mesasGlobais = {};
-    let modalDetalheAberto = { tipo: null, id: null }; // Ex: { tipo: 'mesa', id: '5' } ou { tipo: 'externo', id: 123 }
+    let modalDetalheAberto = { tipo: null, id: null }; 
 
-    // --- NOVA LÓGICA: EXPANSÃO DE COLUNAS ---
+    // --- NOVA LÓGICA DE AUDITORIA (FIREWALL PONTO 9) ---
+    async function registarAuditoria(acaoDetalhe) {
+        const empId = sessionStorage.getItem('pv_sala_operador_id') || '0';
+        const empNome = sessionStorage.getItem('pv_sala_operador') || 'Desconhecido';
+        try {
+            // Requer a existência da tabela `auditoria_logs` na DB
+            await _sb.from('auditoria_logs').insert([{
+                loja_id: minhaLojaId,
+                empregado_id: empId,
+                empregado_nome: empNome,
+                acao: acaoDetalhe
+            }]);
+        } catch(e) {
+            console.error("Auditoria silenciosa falhou (A tabela auditoria_logs existe?)", e);
+        }
+    }
+
+    // --- NOVA LÓGICA DE DESCONTO E RESTAURO DE STOCK (PONTO 8) ---
+    async function descontarStockPermanente(itens) {
+        if (!itens || !Array.isArray(itens)) return;
+        for (const item of itens) {
+            try {
+                const { data: p } = await _sb.from('produtos').select('stock').eq('id', item.id).single();
+                if (p && p.stock !== null) {
+                    await _sb.from('produtos').update({ stock: p.stock - item.qtde }).eq('id', item.id);
+                }
+            } catch(e) { console.error("Erro ao descontar stock de " + item.id, e); }
+        }
+    }
+
+    async function restaurarStockPermanente(itens) {
+        if (!itens || !Array.isArray(itens)) return;
+        for (const item of itens) {
+            try {
+                const { data: p } = await _sb.from('produtos').select('stock').eq('id', item.id).single();
+                if (p && p.stock !== null) {
+                    await _sb.from('produtos').update({ stock: p.stock + item.qtde }).eq('id', item.id);
+                }
+            } catch(e) { console.error("Erro ao restaurar stock de " + item.id, e); }
+        }
+    }
+
+    // --- CRONÓMETROS JIT ---
+    function formatarCronometro(inicioMs) {
+        const diff = Date.now() - inicioMs;
+        const min = Math.floor(diff / 60000);
+        const h = Math.floor(min / 60);
+        const m = min % 60;
+        if (h > 0) return `${h}h ${m}m`;
+        return `${m}m`;
+    }
+
+    function iniciarCicloCronometros() {
+        if(intervalCronometros) clearInterval(intervalCronometros);
+        intervalCronometros = setInterval(() => {
+            document.querySelectorAll('.cronometro-vivo').forEach(el => {
+                const inicio = parseInt(el.getAttribute('data-inicio'));
+                if (inicio) el.innerText = formatarCronometro(inicio);
+            });
+        }, 60000); // Atualiza de minuto a minuto
+    }
+
+    // --- SISTEMA DE EXPANSÃO DE COLUNAS ---
     function toggleExpandirColuna(colId) {
         const grid = document.getElementById('main-grid');
         const coluna = document.getElementById(colId);
         
         if (coluna.classList.contains('is-expanded')) {
-            // Se já está expandida, volta ao normal
             coluna.classList.remove('is-expanded');
             grid.classList.remove('col-expanded');
         } else {
-            // Expande
             document.querySelectorAll('.coluna').forEach(c => c.classList.remove('is-expanded'));
             coluna.classList.add('is-expanded');
             grid.classList.add('col-expanded');
@@ -453,6 +514,9 @@
         const tipoPedido = isMesa ? 'mesa' : 'levantamento';
 
         try {
+            // 1. Desconto Imediato do POS
+            await descontarStockPermanente(posCarrinho);
+
             const { error } = await _sb.from('pedidos').insert([{
                 loja_id: minhaLojaId,
                 tipo_pedido: tipoPedido,
@@ -467,6 +531,13 @@
             
             if (error) throw error;
             
+            // Regista a Ação (Auditoria)
+            registarAuditoria(`Enviou Pedido Direto (POS) para a ${isMesa ? 'Mesa' : 'Takeaway'} ${mesaInput} no valor de ${posTotal.toFixed(2)}€`);
+
+            if (isMesa && !localStorage.getItem('mesa_ocupacao_' + mesaInput)) {
+                localStorage.setItem('mesa_ocupacao_' + mesaInput, Date.now());
+            }
+
             fecharModal('modal-pos');
             posCarrinho = [];
             carregarDados();
@@ -577,13 +648,15 @@
             }
         } catch (e) {}
 
-        const { data: empregado } = await _sb.from('empregados').select('nome').eq('id', empId).eq('pin_acesso', pinDigitado).maybeSingle();
+        const { data: empregado } = await _sb.from('empregados').select('id, nome').eq('id', empId).eq('pin_acesso', pinDigitado).maybeSingle();
 
         if (empregado) {
             nomeOperadorAtual = empregado.nome;
             sessionStorage.setItem('pv_sala_loja_id', minhaLojaId);
+            sessionStorage.setItem('pv_sala_operador_id', empregado.id); // Guardar ID para Auditoria
             sessionStorage.setItem('pv_sala_operador', nomeOperadorAtual);
             iniciarDashboard(minhaLojaId);
+            registarAuditoria(`Iniciou o Turno`);
         } else {
             alert("❌ PIN incorreto.");
             document.getElementById('pin-empregado').value = "";
@@ -603,14 +676,16 @@
     }
 
     function logout() { 
+        registarAuditoria(`Encerrou o Turno`);
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(err => console.log(err));
         }
-
         sessionStorage.removeItem('pv_sala_loja_id');
+        sessionStorage.removeItem('pv_sala_operador_id');
         sessionStorage.removeItem('pv_sala_operador');
         
         if(timerAtualizacao) clearInterval(timerAtualizacao); 
+        if(intervalCronometros) clearInterval(intervalCronometros);
         
         document.getElementById('select-empregado').value = "";
         document.getElementById('pin-empregado').value = "";
@@ -634,6 +709,7 @@
         if(prods) produtosCatalogo = prods;
 
         carregarDados();
+        iniciarCicloCronometros();
         
         if(timerAtualizacao) clearInterval(timerAtualizacao);
         timerAtualizacao = setInterval(carregarDados, 30000); 
@@ -700,7 +776,6 @@
         
         renderizarInterface(window.pedidosGlobais, window.chamadasGlobais);
         
-        // Se o modal estiver aberto, atualiza a vista interna dele com os novos dados em tempo real
         if (modalDetalheAberto.tipo === 'mesa' && modalDetalheAberto.id) {
             abrirDetalhesMesa(modalDetalheAberto.id);
         } else if (modalDetalheAberto.tipo === 'externo' && modalDetalheAberto.id) {
@@ -773,6 +848,13 @@
                     estHtml = `<span class="badge">Em Consumo</span>`;
                 }
 
+                // Inject Cronometro Logic JIT
+                let timestampInicio = localStorage.getItem('mesa_ocupacao_' + m.mesa);
+                if (!timestampInicio) {
+                    timestampInicio = new Date(m.hora).getTime();
+                    localStorage.setItem('mesa_ocupacao_' + m.mesa, timestampInicio);
+                }
+
                 htmlSala += `
                 <div class="card ${cl} card-resumo" onclick="abrirDetalhesMesa('${m.mesa}')">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -780,7 +862,7 @@
                         ${estHtml}
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                        <div class="time-tag">${formatarHora(m.hora)}</div>
+                        <div class="time-tag cronometro-vivo" data-inicio="${timestampInicio}">${formatarCronometro(timestampInicio)}</div>
                         <div style="font-weight:bold; font-size:1.1em; color:var(--text);">${m.totalAcumulado.toFixed(2)}€</div>
                     </div>
                 </div>`;
@@ -789,7 +871,6 @@
         document.getElementById('lista-sala').innerHTML = htmlSala;
     }
 
-    // GERA APENAS O CARTÃO RESUMO NA VISTA GERAL
     function gerarCartaoResumo(p, tipo) {
         let icon = tipo === 'levantamento' ? '<i class="fas fa-shopping-bag"></i>' : '<i class="far fa-calendar-check"></i>';
         let cClass = tipo === 'levantamento' ? 'pedido-takeaway' : 'pedido-reserva';
@@ -824,9 +905,6 @@
         </div>`;
     }
 
-    // --- CIRURGIA 3: ABRIR O NOVO MODAL DE DETALHES ---
-    
-    // Para Mesas (Sala)
     function abrirDetalhesMesa(mesaNum) {
         modalDetalheAberto = { tipo: 'mesa', id: mesaNum };
         
@@ -902,7 +980,6 @@
         document.getElementById('modal-detalhes-gerais').style.display = 'flex';
     }
 
-    // Para Takeaways ou Reservas
     function abrirDetalhesExterno(id) {
         modalDetalheAberto = { tipo: 'externo', id: id };
         
@@ -993,8 +1070,23 @@
 
     // --- FUNÇÕES GLOBAIS DE ACÇÃO ---
     async function resolverChamada(id) { await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id); carregarDados(); }
-    async function avancarPedido(id, est) { await _sb.from('pedidos').update({ estado: est }).eq('id', id); carregarDados(); }
-    async function aceitarReserva(id) { await _sb.from('pedidos').update({ estado: 'reserva_confirmada' }).eq('id', id); carregarDados(); }
+    
+    async function avancarPedido(id, est) { 
+        await _sb.from('pedidos').update({ estado: est }).eq('id', id); 
+        registarAuditoria(`Avançou o Pedido #${id} para o estado ${est}`);
+        carregarDados(); 
+    }
+    
+    async function aceitarReserva(id) { 
+        const p = window.pedidosGlobais.find(x => x.id === id);
+        if(p && p.itens) {
+            // DESCONTO DE STOCK IMEDIATO (PONTO 8) NA RESERVA
+            await descontarStockPermanente(p.itens);
+        }
+        await _sb.from('pedidos').update({ estado: 'reserva_confirmada' }).eq('id', id); 
+        registarAuditoria(`Aceitou a Reserva #${id}`);
+        carregarDados(); 
+    }
 
     function abrirModalAceitarReserva(id) { document.getElementById('reserva-id-escondido').value = id; document.getElementById('input-mesa-reserva').value = ''; document.getElementById('modal-mesa-reserva').style.display = 'flex'; }
     
@@ -1005,10 +1097,15 @@
         await _sb.from('pedidos').update({ 
             mesa: mesa, 
             tipo_pedido: 'mesa', 
-            estado: 'pendente',
+            estado: 'preparacao', // GATILHO DA COZINHA PONTO (Antes era pendente)
             status_presenca: 'sentado'
         }).eq('id', id); 
         
+        // CRONÓMETRO JIT PONTO - Grava a hora exata a que a mesa começou a ocupação
+        localStorage.setItem('mesa_ocupacao_' + mesa, Date.now());
+        
+        registarAuditoria(`Sentou o cliente da Reserva #${id} na Mesa ${mesa} e disparou para a cozinha`);
+
         fecharModal('modal-mesa-reserva');
         fecharModal('modal-detalhes-gerais');
         carregarDados();
@@ -1017,7 +1114,15 @@
     function apagarPedidoSeguro(id) { pedirPin(() => efetuarCancelamentoLogico(id)); }
     async function efetuarCancelamentoLogico(id) {
         if(confirm("Tem a certeza que deseja CANCELAR este pedido? (Ele será movido para o Histórico).")) { 
+            
+            const p = window.pedidosGlobais.find(x => x.id === id);
+            if(p && p.itens) await restaurarStockPermanente(p.itens);
+
             await _sb.from('pedidos').update({ estado: 'cancelado' }).eq('id', id); 
+            
+            if (p && p.mesa) localStorage.removeItem('mesa_ocupacao_' + p.mesa);
+
+            registarAuditoria(`Cancelou o pedido #${id}`);
             fecharModal('modal-detalhes-gerais');
             carregarDados(); 
         } 
@@ -1072,16 +1177,25 @@
         try { 
             const { error } = await _sb.from('pedidos').update({ nome_cliente: novoNome || null, nif_cliente: novoNif || null, quer_nif: !!novoNif, mesa: novaMesa || null, itens: pedidoEditando.itens, total: pedidoEditando.total }).eq('id', pedidoEditando.id); 
             if (error) throw error; 
+            
+            registarAuditoria(`Editou o pedido #${pedidoEditando.id}`);
+
             fecharModal('modal-edicao'); 
             carregarDados(); 
         } catch (e) { alert("Erro ao atualizar a base de dados: " + e.message); } 
         finally { btn.innerHTML = `<i class="fas fa-save"></i> Guardar Alterações`; btn.disabled = false; }
     }
 
-    async function confirmarTakeaway(id) { if(confirm("O pagamento MBWay já foi validado e a fatura emitida?")) { await _sb.from('pedidos').update({ estado: 'pendente' }).eq('id', id); carregarDados();} }
+    async function confirmarTakeaway(id) { 
+        if(confirm("O pagamento MBWay já foi validado e a fatura emitida?")) { 
+            await _sb.from('pedidos').update({ estado: 'pendente' }).eq('id', id); 
+            registarAuditoria(`Validou o pagamento MBWay do Takeaway #${id}`);
+            carregarDados();
+        } 
+    }
     
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
-        fecharModal('modal-detalhes-gerais'); // Fecha o modal de detalhes para focar no pagamento
+        fecharModal('modal-detalhes-gerais'); 
         
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.getElementById('pagar-mesa-num').innerText = mesa;
@@ -1115,8 +1229,16 @@
             for(let id of ids) {
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
-            fecharModal('modal-pagar-mesa');
             
+            // Remove a ocupação da mesa
+            const numMesa = document.getElementById('pagar-mesa-num').innerText;
+            if(!numMesa.includes('Takeaway') && !numMesa.includes('Reserva')) {
+                localStorage.removeItem('mesa_ocupacao_' + numMesa);
+            }
+
+            registarAuditoria(`Fechou a conta (Pagamento por ${metodo}) das encomendas: ${idsStr}`);
+
+            fecharModal('modal-pagar-mesa');
             await carregarDados();
             
         } catch(e) {
@@ -1166,6 +1288,7 @@
     async function efetuarReabertura(id) {
         if(confirm("Deseja reabrir este pedido? Ele voltará para a Sala (estado PRONTO) e o pagamento será anulado.")) {
             await _sb.from('pedidos').update({ estado: 'pronto', metodo_pagamento: null }).eq('id', id);
+            registarAuditoria(`Reabriu (Estorno) o Pedido #${id}`);
             fecharModal('modal-historico'); 
             carregarDados();
         }
