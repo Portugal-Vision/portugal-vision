@@ -480,7 +480,7 @@
             your_order: "O seu Pedido", total: "Total:", how_to_order: "1. Como deseja encomendar?", takeaway: "Levantamento", reservation: "Reserva",
             date: "Data:", time: "Hora (Intervalos de 30 min):", people_count: "Nº Pessoas (Só para Reserva)",
             need_nif: "Deseja NIF na Fatura? (Obrigatório escolher)", yes: "Sim", no: "Não", nif_placeholder: "O seu número de contribuinte (NIF)", nif_warning: "Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.",
-            payment_method: "2. Método de Pagamento", exclusive_mbway: "Pagamento Exclusivo via MBWay", mbway_instructions: "O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº",
+            payment_method: "2. Método de Paymento", exclusive_mbway: "Pagamento Exclusivo via MBWay", mbway_instructions: "O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº",
             confirm_order: "Confirmar e Enviar Pedido", ask_bill: "Pedir a Conta", payment_method_simple: "Método de Pagamento", cash: "💵 Dinheiro", card: "💳 Multibanco", meal_ticket: "🎫 Ticket Refeição",
             need_nif_bill: "Deseja fatura com NIF?", send_request: "Enviar Pedido", search_menu: "Pesquisar no menu...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Livro de Reclamações", rights_reserved: "Todos os direitos reservados.",
@@ -554,9 +554,7 @@
             userLang = 'en'; 
         }
 
-        // ---> INJEÇÃO DE ELITE: Atualiza a tag HTML dinamicamente <---
         document.documentElement.lang = userLang;
-        // ------------------------------------------------------------
 
         const trans = dictIdiomas[userLang];
         
@@ -569,6 +567,13 @@
             const key = el.getAttribute('data-i18n-ph');
             if (trans[key]) el.placeholder = trans[key];
         });
+    }
+
+    // A FUNÇÃO QUE ESTAVA EM FALTA
+    function calcularPrecoFinal(preco, desconto) {
+        const p = parseFloat(preco) || 0;
+        const d = parseInt(desconto) || 0;
+        return d > 0 ? (p * (1 - d / 100)) : p;
     }
 
     const legalTexts = {
@@ -1129,7 +1134,6 @@
         const slug = urlParams.get('loja');
         let paramMesa = urlParams.get('mesa'); 
 
-        // 1ª CORREÇÃO (BLOQUEIO SILENCIOSO DE URL)
         if (!slug && !paramMesa) {
             document.getElementById('motivo-fecho').innerText = "Falta o identificador da loja no link (ex: ?loja=demo).";
             document.getElementById('block-screen').style.display = 'flex';
@@ -1245,7 +1249,6 @@
 
         registarVisita(loja.id, loja.views_total || 0);
 
-        // 2ª e 3ª CORREÇÃO (COLISÃO DO IVA E EXIBIÇÃO DE ERROS)
         const { data: produtos, error: errProd } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
         
         if (errProd) {
