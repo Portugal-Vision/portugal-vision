@@ -24,20 +24,30 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
-        /* VARIÁVEIS DE TEMA: Serão injetadas/sobrepostas via JS se o lojista alterar */
+        /* VARIÁVEIS DE TEMA DINÂMICAS */
         :root { 
             --p: #2c3e50; 
             --s: #a89f91; 
             --ok: #27ae60; 
             --accent: #c0392b;
             --bg: #fdfbf7; 
+            --bg-image: none;
             --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
             --card-bg: white;
             --btn-bg: white;
+            --text-color: #334155;
         }
         
         body { 
-            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); margin: 0; padding-bottom: 90px; 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: var(--text-color); 
+            margin: 0; 
+            padding-bottom: 90px; 
             transition: background 0.5s ease, color 0.5s ease;
             overflow-x: hidden; 
             -webkit-tap-highlight-color: transparent; 
@@ -49,15 +59,14 @@
         .logo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 20px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.1);}
         
-        /* NOVO: BOAS VINDAS */
         #boas-vindas-cliente { font-size: 1.1em; color: var(--s); font-weight: 600; margin-top: 10px; display: none; animation: fadeIn 1s; }
 
         .categories-container { padding: 10px 20px 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 2;}
-        .cat-btn { background: var(--btn-bg); border: 1px solid #eee; color: #777; padding: 10px 22px; border-radius: 30px; cursor: pointer; transition: 0.3s; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
+        .cat-btn { background: var(--btn-bg); border: 1px solid rgba(0,0,0,0.1); color: var(--text-color); padding: 10px 22px; border-radius: 30px; cursor: pointer; transition: 0.3s; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
         .cat-btn.active { background: var(--p); color: white; border-color: var(--p); }
 
         .search-container { padding: 0 20px 30px; max-width: 600px; margin: auto; position: relative; z-index: 2;}
-        #search-input { width: 100%; padding: 16px 25px; border-radius: 50px; border: 1px solid rgba(0,0,0,0.1); background: var(--btn-bg); font-size: 16px; outline: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.3s;}
+        #search-input { width: 100%; padding: 16px 25px; border-radius: 50px; border: 1px solid rgba(0,0,0,0.1); background: var(--btn-bg); font-size: 16px; outline: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: var(--text-color); transition: 0.3s;}
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding: 20px; max-width: 1200px; margin: auto; position: relative; z-index: 2; }
         
@@ -66,7 +75,7 @@
         .card-container:hover .card-inner { box-shadow: 0 15px 35px rgba(0,0,0,0.2); transform: translateY(-5px); }
         .card-container.flipped .card-inner { transform: rotateY(180deg); }
 
-        .card-front, .card-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 24px; background: var(--card-bg); border: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden; transition: 0.5s; }
+        .card-front, .card-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 24px; background: var(--card-bg); border: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden; transition: 0.5s; color: var(--text-color); }
         
         .img-container { width: 100%; height: 210px; overflow: hidden; flex-shrink: 0; position: relative;}
         .card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px 24px 0 0; }
@@ -76,12 +85,12 @@
         .price-box { display: flex; align-items: baseline; justify-content: center; gap: 5px; }
         .price { font-size: 1.4em; font-weight: 800; color: var(--ok); }
         .old-price { color: #b2bec3; text-decoration: line-through; font-size: 0.9em; }
-        .btn-flip { background: #f1f5f9; color: #475569; padding: 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; margin-top: 15px; transition: 0.3s;}
+        .btn-flip { background: rgba(0,0,0,0.05); color: var(--text-color); padding: 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; margin-top: 15px; transition: 0.3s;}
 
-        .card-back { transform: rotateY(180deg); padding: 25px; background: #f8fafc; text-align: left; overflow-y: auto; }
+        .card-back { transform: rotateY(180deg); padding: 25px; background: var(--card-bg); text-align: left; overflow-y: auto; }
         .card-back h4 { margin: 0 0 10px 0; color: var(--p); font-family: 'Playfair Display'; font-size: 1.3em;}
-        .card-desc { font-size: 0.95em; color: #475569; line-height: 1.5; margin-bottom: 15px; flex-grow: 1;}
-        .alergenios-badge { background: #fef3c7; color: #b45309; padding: 6px 10px; border-radius: 8px; font-size: 0.8em; font-weight: 600; margin-bottom: 15px; display: inline-block;}
+        .card-desc { font-size: 0.95em; line-height: 1.5; margin-bottom: 15px; flex-grow: 1;}
+        .alergenios-badge { background: rgba(180, 83, 9, 0.1); color: #b45309; padding: 6px 10px; border-radius: 8px; font-size: 0.8em; font-weight: 600; margin-bottom: 15px; display: inline-block;}
 
         .btn-add-cart { background: var(--ok); color: white; padding: 14px; border-radius: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; width: 100%; cursor: pointer; transition: 0.3s; margin-top: auto;}
         .btn-add-cart:hover { opacity: 0.9; transform: scale(0.98); }
@@ -98,8 +107,8 @@
         .cart-floater.visible { display: flex; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .cart-badge { background: white; color: var(--ok); border-radius: 50%; padding: 4px 10px; font-size: 14px; }
 
-        .btn-mesa-action { background: #2c3e50; color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: none; transition: 0.3s;}
-        .btn-mesa-action:hover { transform: translateY(-5px); background: #34495e;}
+        .btn-mesa-action { background: var(--p); color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: none; transition: 0.3s;}
+        .btn-mesa-action:hover { transform: translateY(-5px); opacity: 0.9;}
         
         .btn-user { background: #8b5cf6; display: flex; }
         .btn-user:hover { background: #7c3aed; }
@@ -112,39 +121,33 @@
         /* Estilos do Modal */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 15px;}
         .modal-content { 
-            background: white; margin: 2vh auto; padding: 25px; border-radius: 20px; width: 100%; max-width: 500px; 
-            max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); color: #333;
+            background: var(--card-bg); margin: 2vh auto; padding: 25px; border-radius: 20px; width: 100%; max-width: 500px; 
+            max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); color: var(--text-color);
             display: flex; flex-direction: column; overscroll-behavior: contain;
         }
         .modal-body { padding-bottom: 20px; }
         .close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #999; transition: 0.2s; z-index: 10;}
         .close-modal:hover { color: var(--accent); }
-        .modal-content h3 { font-family: 'Playfair Display'; color: #2c3e50; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.5em; padding-right: 30px; flex-shrink: 0;}
+        .modal-content h3 { font-family: 'Playfair Display'; color: var(--p); margin-top: 0; border-bottom: 2px solid rgba(0,0,0,0.05); padding-bottom: 15px; font-size: 1.5em; padding-right: 30px; flex-shrink: 0;}
         
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .cart-item-info { flex-grow: 1; padding-right: 15px;}
-        .cart-item-title { font-weight: 500; font-size: 0.95em; color: #334155; margin-bottom: 3px; }
+        .cart-item-title { font-weight: 500; font-size: 0.95em; margin-bottom: 3px; }
         .cart-item-price { color: var(--ok); font-weight: 700; font-size: 0.9em; }
         
         .cart-item-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0;}
-        .btn-qty { background: #e2e8f0; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
-        .btn-qty:hover { background: #cbd5e1; }
+        .btn-qty { background: rgba(0,0,0,0.05); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold; color: var(--text-color); display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+        .btn-qty:hover { background: rgba(0,0,0,0.1); }
 
-        .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: #2c3e50; }
+        .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: var(--p); }
         
-        .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 14px; background: #f8fafc; transition: 0.3s; margin-bottom: 5px; }
-        .input-form:focus { outline: none; border-color: var(--ok); background: white; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
-        select.input-form { appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23475569%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 14px top 50%; background-size: 12px auto; padding-right: 40px; }
+        .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-family: inherit; font-size: 14px; background: rgba(0,0,0,0.02); color: var(--text-color); transition: 0.3s; margin-bottom: 5px; }
+        .input-form:focus { outline: none; border-color: var(--ok); background: transparent; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
         
-        .order-type-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .order-type-box label { background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; font-weight: 600; font-size: 0.85em; transition: 0.2s; white-space: nowrap;}
-        .order-type-box label:hover { background: #f1f5f9; }
-        .order-type-box input[type="radio"] { accent-color: var(--ok); transform: scale(1.1); margin:0;}
-
-        .payment-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .payment-box label { background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; font-weight: 600; font-size: 0.85em; transition: 0.2s; white-space: nowrap;}
-        .payment-box label:hover { background: #f1f5f9; }
-        .payment-box input[type="radio"] { accent-color: var(--ok); transform: scale(1.1); margin:0;}
+        .order-type-box, .payment-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .order-type-box label, .payment-box label { background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.1); padding: 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; font-weight: 600; font-size: 0.85em; transition: 0.2s; white-space: nowrap;}
+        .order-type-box label:hover, .payment-box label:hover { background: rgba(0,0,0,0.05); }
+        .order-type-box input[type="radio"], .payment-box input[type="radio"] { accent-color: var(--ok); transform: scale(1.1); margin:0;}
 
         .mbway-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 0.9em; color: #166534; display: none; }
         .mbway-info strong { color: #15803d; }
@@ -155,53 +158,41 @@
 
         .footer { background: transparent; padding: 40px 20px; text-align: center; margin-top: 20px; position: relative; z-index: 2; transition: 0.5s; border: none;}
         .map-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; margin-bottom: 20px; }
-        .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; color: var(--p); background: rgba(255,255,255,0.9); box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s;}
+        .btn-map { padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 8px; color: #0f172a; background: rgba(255,255,255,0.9); box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s;}
         .btn-map:hover { transform: translateY(-2px); }
         .google-maps { color: #3c4043; }
         .waze { color: #007bb5; }
-        .legal-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .legal-footer { padding: 20px; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
         .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; list-style: none; padding: 0; margin: 0; }
         .legal-links a, .complaints-book a { color: inherit; opacity: 0.8; text-decoration: none; font-size: 0.85em; transition: 0.3s; cursor: pointer; font-weight: 600; }
         .legal-links a:hover, .complaints-book a:hover { opacity: 1; text-decoration: underline;}
 
-        .auth-tab { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+        .auth-tab { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.1); }
         .auth-tab div { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #94a3b8; }
         .auth-tab div.active { color: var(--ok); border-bottom: 3px solid var(--ok); }
         
-        .meu-pedido-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #f8fafc; }
+        .meu-pedido-card { border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.02); }
         .badge-estado { padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .bg-pendente { background: #fef3c7; color: #b45309; }
         .bg-pronto { background: #d1fae5; color: #065f46; }
         .bg-preparacao { background: #e0f2fe; color: #0369a1; }
         .bg-danger { background: #fee2e2; color: #991b1b; }
         
-        /* ALERTA CLIENTE REALTIME CORRIGIDO E MELHORADO */
         #cliente-alert { 
-            position: fixed; 
-            bottom: -150px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: #1e293b; 
-            color: white; 
-            padding: 16px 25px; 
-            border-radius: 50px; 
-            font-weight: bold; 
-            z-index: 2147483647; 
-            box-shadow: 0 15px 35px rgba(0,0,0, 0.4); 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            width: 90%;
-            max-width: 350px;
-            justify-content: center;
-            text-align: center;
+            position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%); 
+            background: #1e293b; color: white; padding: 16px 25px; border-radius: 50px; font-weight: bold; z-index: 2147483647; 
+            box-shadow: 0 15px 35px rgba(0,0,0, 0.4); display: flex; align-items: center; gap: 12px; transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 90%; max-width: 350px; justify-content: center; text-align: center;
         }
         #cliente-alert.show { bottom: 100px; }
         
-        /* NOVO: BOTÕES PONTO DA CARNE */
-        .ponto-btn { border: 1px solid #cbd5e1; background: white; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; color: #334155; display: block; width: 100%; text-align: center; margin-bottom: 8px;}
-        .ponto-btn:hover { background: #f1f5f9; border-color: var(--p); }
+        .ponto-btn { border: 1px solid rgba(0,0,0,0.1); background: transparent; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; color: var(--text-color); display: block; width: 100%; text-align: center; margin-bottom: 8px;}
+        .ponto-btn:hover { background: rgba(0,0,0,0.05); border-color: var(--p); }
+        
+        /* Links de recuperação */
+        .recovery-links { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 15px; padding: 0 5px; }
+        .recovery-links a { color: var(--s); cursor: pointer; font-weight: 600; text-decoration: none; }
+        .recovery-links a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -210,8 +201,8 @@
 
 <div id="block-screen">
     <i class="fas fa-lock" style="font-size: 3rem; color: #ef4444; margin-bottom: 20px;"></i>
-    <h1 style="font-family: 'Playfair Display'; margin-bottom: 10px;">Acesso Indisponível</h1>
-    <p id="motivo-fecho">Este website não se encontra ativo no momento.</p>
+    <h1 style="font-family: 'Playfair Display'; margin-bottom: 10px;" data-i18n="access_denied">Acesso Indisponível</h1>
+    <p id="motivo-fecho" data-i18n="website_offline">Este website não se encontra ativo no momento.</p>
 </div>
 
 <div id="legalModal" class="modal" style="z-index: 10000;">
@@ -223,45 +214,69 @@
 
 <div id="modal-ponto-carne" class="modal">
     <div class="modal-content" style="max-width: 350px;">
-        <h3 style="margin-bottom: 5px; font-size: 1.3em;">Ponto da Carne</h3>
-        <p style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;">Como prefere que preparemos este prato?</p>
-        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Mal Passada')">🥩 Mal Passada</button>
-        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Médio Mal')">🥩 Médio Mal</button>
-        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Médio')">🥩 Ponto Médio</button>
-        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Bem Passada')">🥩 Bem Passada</button>
-        <button class="btn-checkout" style="background: #94a3b8; margin-top: 10px; padding: 12px;" onclick="fecharModal('modal-ponto-carne')">Cancelar</button>
+        <h3 style="margin-bottom: 5px; font-size: 1.3em;" data-i18n="meat_doneness">Ponto da Carne</h3>
+        <p style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;" data-i18n="how_to_prepare">Como prefere que preparemos este prato?</p>
+        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Mal Passada')" data-i18n="rare">🥩 Mal Passada</button>
+        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Médio Mal')" data-i18n="medium_rare">🥩 Médio Mal</button>
+        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Médio')" data-i18n="medium">🥩 Ponto Médio</button>
+        <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Bem Passada')" data-i18n="well_done">🥩 Bem Passada</button>
+        <button class="btn-checkout" style="background: #94a3b8; margin-top: 10px; padding: 12px;" onclick="fecharModal('modal-ponto-carne')" data-i18n="cancel">Cancelar</button>
     </div>
 </div>
 
+<!-- MODAL DE AUTENTICAÇÃO E RECUPERAÇÃO -->
 <div id="authModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="document.getElementById('authModal').style.display='none'">×</span>
-        <h3>Identificação</h3>
-        <p style="font-size: 13px; color: #64748b; margin-top:-10px;">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
+        <h3 data-i18n="auth_title">Identificação</h3>
+        <p style="font-size: 13px; color: #64748b; margin-top:-10px;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
         
         <div class="auth-tab">
-            <div id="tab-login" class="active" onclick="switchAuth('login')">Entrar</div>
-            <div id="tab-reg" onclick="switchAuth('reg')">Registar</div>
+            <div id="tab-login" class="active" onclick="switchAuth('login')" data-i18n="login">Entrar</div>
+            <div id="tab-reg" onclick="switchAuth('reg')" data-i18n="register">Registar</div>
         </div>
 
         <div id="form-login">
-            <input type="email" id="auth-email-log" class="input-form" placeholder="O seu E-mail">
-            <input type="password" id="auth-pass-log" class="input-form" placeholder="Password">
-            <button class="btn-checkout" onclick="clienteLogin()">Entrar</button>
+            <input type="email" id="auth-email-log" class="input-form" placeholder="O seu E-mail" data-i18n-ph="email">
+            <input type="password" id="auth-pass-log" class="input-form" placeholder="Password" data-i18n-ph="password">
+            
+            <div class="recovery-links">
+                <a onclick="switchAuth('reset-email')" data-i18n="forgot_email">Esqueceu-se do E-mail?</a>
+                <a onclick="switchAuth('reset-pass')" data-i18n="forgot_password">Esqueceu-se da Password?</a>
+            </div>
+
+            <button class="btn-checkout" onclick="clienteLogin()" data-i18n="login_btn">Entrar</button>
         </div>
 
         <div id="form-reg" style="display:none;">
-            <input type="text" id="auth-nome-reg" class="input-form" placeholder="O seu Nome">
-            <input type="tel" id="auth-tel-reg" class="input-form" placeholder="Telemóvel">
-            <input type="email" id="auth-email-reg" class="input-form" placeholder="E-mail">
-            <input type="password" id="auth-pass-reg" class="input-form" placeholder="Password Segura">
+            <input type="text" id="auth-nome-reg" class="input-form" placeholder="O seu Nome" data-i18n-ph="your_name">
+            <input type="tel" id="auth-tel-reg" class="input-form" placeholder="Telemóvel" data-i18n-ph="phone">
+            <input type="email" id="auth-email-reg" class="input-form" placeholder="E-mail" data-i18n-ph="email">
+            <input type="password" id="auth-pass-reg" class="input-form" placeholder="Password Segura" data-i18n-ph="secure_password">
             
             <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #64748b; margin-top: 10px; cursor: pointer; line-height: 1.4;">
                 <input type="checkbox" id="auth-termos-reg" style="margin:0; width: 16px; height: 16px; flex-shrink: 0;">
-                <span>Li e aceito os <a onclick="showLegal('termos'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;">Termos e Condições</a> e a <a onclick="showLegal('privacidade'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;">Política de Privacidade</a> deste serviço.</span>
+                <span><span data-i18n="read_accept">Li e aceito os</span> <a onclick="showLegal('termos'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;" data-i18n="terms">Termos e Condições</a> e a <a onclick="showLegal('privacidade'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;" data-i18n="privacy">Política de Privacidade</a>.</span>
             </label>
 
-            <button class="btn-checkout" onclick="clienteRegisto()">Criar Conta</button>
+            <button class="btn-checkout" onclick="clienteRegisto()" data-i18n="create_account">Criar Conta</button>
+        </div>
+
+        <!-- FORM RECUPERAR PASSWORD -->
+        <div id="form-reset-pass" style="display:none;">
+            <p style="font-size:13px; margin-top:0;" data-i18n="recover_pass_desc">Insira o e-mail da sua conta para receber um link de redefinição.</p>
+            <input type="email" id="reset-pass-email" class="input-form" placeholder="E-mail da Conta" data-i18n-ph="email">
+            <button class="btn-checkout" onclick="clienteRecuperarPass()" data-i18n="send_link">Enviar Link</button>
+            <a onclick="switchAuth('login')" style="display:block; text-align:center; margin-top:15px; color:var(--s); cursor:pointer; font-weight:600; font-size:13px;" data-i18n="back_to_login">Voltar ao Login</a>
+        </div>
+
+        <!-- FORM RECUPERAR E-MAIL VIA TELEFONE -->
+        <div id="form-reset-email" style="display:none;">
+            <p style="font-size:13px; margin-top:0;" data-i18n="recover_email_desc">Insira o número de telemóvel associado à sua conta para verificarmos o seu e-mail.</p>
+            <input type="tel" id="reset-email-phone" class="input-form" placeholder="Número de Telemóvel" data-i18n-ph="phone">
+            <button class="btn-checkout" onclick="clienteRecuperarEmail()" data-i18n="find_email">Procurar E-mail</button>
+            <div id="rec-cliente-email-result" style="margin-top:15px; font-size:14px; font-weight:bold; text-align:center; color:var(--p);"></div>
+            <a onclick="switchAuth('login')" style="display:block; text-align:center; margin-top:15px; color:var(--s); cursor:pointer; font-weight:600; font-size:13px;" data-i18n="back_to_login">Voltar ao Login</a>
         </div>
     </div>
 </div>
@@ -269,75 +284,79 @@
 <div id="contaModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="document.getElementById('contaModal').style.display='none'">×</span>
-        <h3>Os Meus Pedidos</h3>
+        <h3 data-i18n="my_orders">Os Meus Pedidos</h3>
         <div class="modal-body" id="lista-meus-pedidos">
-            <p style="text-align:center; color:#94a3b8;">A carregar pedidos...</p>
+            <p style="text-align:center; opacity: 0.7;" data-i18n="loading_orders">A carregar pedidos...</p>
         </div>
-        <button class="input-form" style="border-color:var(--err); color:var(--err); background:transparent; margin-top:20px; font-weight:bold;" onclick="clienteLogout()">Encerrar Sessão</button>
+        <button class="input-form" style="border-color:var(--err); color:var(--err); background:transparent; margin-top:20px; font-weight:bold;" onclick="clienteLogout()" data-i18n="logout">Encerrar Sessão</button>
     </div>
 </div>
 
 <div id="cartModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="fecharCarrinho()">×</span>
-        <h3>O seu Pedido</h3>
+        <h3 data-i18n="your_order">O seu Pedido</h3>
         
         <div class="modal-body">
             <div id="cart-items-container"></div>
 
             <div class="cart-total-zone">
-                <span>Total:</span>
+                <span data-i18n="total">Total:</span>
                 <span id="cart-total-price">0.00€</span>
+            </div>
+            
+            <div id="cart-timer-warning" style="display:none; font-size: 12px; color: var(--accent); background: rgba(192, 57, 43, 0.1); padding: 8px; border-radius: 8px; margin-top: 10px; text-align: center; font-weight: bold;">
+                <i class="fas fa-stopwatch"></i> <span data-i18n="stock_reserved">Stock reservado por 15 minutos.</span> (<span id="cart-timer-countdown">15:00</span>)
             </div>
 
             <div id="checkout-options-wrapper">
-                <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
-                    <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">1. Como deseja encomendar?</h4>
+                <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1);">
+                    <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="how_to_order">1. Como deseja encomendar?</h4>
                     <div class="order-type-box">
-                        <label id="lbl-levantamento"><input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()"> <i class="fas fa-shopping-bag" style="margin-right:5px;"></i> Levantamento</label>
-                        <label id="lbl-reserva"><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> <i class="fas fa-chair" style="margin-right:5px;"></i> Reserva</label>
+                        <label id="lbl-levantamento"><input type="radio" name="tipo_pedido" value="levantamento" checked onchange="toggleOrderFields()"> <i class="fas fa-shopping-bag" style="margin-right:5px;"></i> <span data-i18n="takeaway">Levantamento</span></label>
+                        <label id="lbl-reserva"><input type="radio" name="tipo_pedido" value="reserva" onchange="toggleOrderFields()"> <i class="fas fa-chair" style="margin-right:5px;"></i> <span data-i18n="reservation">Reserva</span></label>
                     </div>
                     
                     <div id="fields-gerais" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Data:</span>
+                            <span style="font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 4px;" data-i18n="date">Data:</span>
                             <input type="date" id="cli-data" class="input-form" style="margin: 0;" onchange="atualizarHorariosDisponiveis()">
                         </div>
                         <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hora (Intervalos de 30 min):</span>
+                            <span style="font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 4px;" data-i18n="time">Hora (Intervalos de 30 min):</span>
                             <select id="cli-hora" class="input-form" style="margin: 0;"></select>
                         </div>
-                        <input type="number" id="cli-pessoas" placeholder="Nº Pessoas (Só para Reserva)" class="input-form" style="grid-column: span 2; display: none;" min="1">
+                        <input type="number" id="cli-pessoas" placeholder="Nº Pessoas (Só para Reserva)" class="input-form" style="grid-column: span 2; display: none;" min="1" data-i18n-ph="people_count">
 
-                        <div id="nif-section" style="grid-column: span 2; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
-                            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px; display: block;">Deseja NIF na Fatura? (Obrigatório escolher)</span>
+                        <div id="nif-section" style="grid-column: span 2; margin-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 15px;">
+                            <span style="font-size: 12px; font-weight: 600; opacity: 0.8; margin-bottom: 8px; display: block;" data-i18n="need_nif">Deseja NIF na Fatura? (Obrigatório escolher)</span>
                             <div class="order-type-box" style="margin-bottom: 10px;">
-                                <label><input type="radio" name="opcao_nif" value="sim" onchange="toggleNifField()"> Sim</label>
-                                <label><input type="radio" name="opcao_nif" value="nao" checked onchange="toggleNifField()"> Não</label>
+                                <label><input type="radio" name="opcao_nif" value="sim" onchange="toggleNifField()"> <span data-i18n="yes">Sim</span></label>
+                                <label><input type="radio" name="opcao_nif" value="nao" checked onchange="toggleNifField()"> <span data-i18n="no">Não</span></label>
                             </div>
-                            <input type="text" id="cli-nif" class="input-form" placeholder="O seu número de contribuinte (NIF)" style="display: none; margin-bottom: 0;">
-                            <div id="nif-aviso" style="font-size: 11px; color: var(--accent); background: #fef2f2; padding: 8px; border-radius: 8px; margin-top: 5px;">
-                                <i class="fas fa-exclamation-triangle"></i> Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.
+                            <input type="text" id="cli-nif" class="input-form" placeholder="O seu número de contribuinte (NIF)" style="display: none; margin-bottom: 0;" data-i18n-ph="nif_placeholder">
+                            <div id="nif-aviso" style="font-size: 11px; color: var(--accent); background: rgba(192, 57, 43, 0.1); padding: 8px; border-radius: 8px; margin-top: 5px;">
+                                <i class="fas fa-exclamation-triangle"></i> <span data-i18n="nif_warning">Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.</span>
                             </div>
                         </div>
 
                     </div>
                 </div>
 
-                <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
-                    <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';">2. Método de Pagamento</h4>
+                <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1);">
+                    <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="payment_method">2. Método de Pagamento</h4>
                     <div class="payment-box">
                         <label id="label-mbway" style="display:flex;"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" checked> <i class="fas fa-mobile-screen-button" style="margin-right:5px;"></i> MBWay</label>
                     </div>
                     <div id="mbway-zone" class="mbway-info" style="display:block;">
-                        <i class="fas fa-info-circle"></i> <strong>Pagamento Exclusivo via MBWay</strong><br>
-                        O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº <strong id="mbway-phone"></strong>.
+                        <i class="fas fa-info-circle"></i> <strong data-i18n="exclusive_mbway">Pagamento Exclusivo via MBWay</strong><br>
+                        <span data-i18n="mbway_instructions">O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº</span> <strong id="mbway-phone"></strong>.
                     </div>
                 </div>
             </div>
 
             <button id="btn-checkout-final" class="btn-checkout" onclick="validarEEnviarPedido()">
-                <i class="fas fa-check"></i> Confirmar e Enviar Pedido
+                <i class="fas fa-check"></i> <span data-i18n="confirm_order">Confirmar e Enviar Pedido</span>
             </button>
         </div>
     </div>
@@ -346,36 +365,36 @@
 <div id="pedirContaModal" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <span class="close-modal" onclick="fecharModal('pedirContaModal')">×</span>
-        <h3><i class="fas fa-file-invoice-dollar"></i> Pedir a Conta</h3>
+        <h3><i class="fas fa-file-invoice-dollar"></i> <span data-i18n="ask_bill">Pedir a Conta</span></h3>
         
         <div style="text-align: left; margin-bottom: 15px;">
-            <label style="font-size: 12px; font-weight: bold; color: #64748b;">Método de Pagamento</label>
+            <label style="font-size: 12px; font-weight: bold; opacity: 0.8;" data-i18n="payment_method_simple">Método de Pagamento</label>
             <select id="input-metodo-pagamento-conta" class="input-form" style="margin-top: 5px;">
-                <option value="Dinheiro">💵 Dinheiro</option>
-                <option value="Multibanco">💳 Multibanco</option>
+                <option value="Dinheiro" data-i18n="cash">💵 Dinheiro</option>
+                <option value="Multibanco" data-i18n="card">💳 Multibanco</option>
                 <option value="MBWay">📱 MBWay</option>
-                <option value="Ticket Refeição">🎫 Ticket Refeição</option>
+                <option value="Ticket Refeição" data-i18n="meal_ticket">🎫 Ticket Refeição</option>
             </select>
         </div>
 
         <div style="text-align: left; margin-bottom: 15px;">
-            <label style="font-size: 12px; font-weight: bold; color: #64748b;">Deseja fatura com NIF?</label>
+            <label style="font-size: 12px; font-weight: bold; opacity: 0.8;" data-i18n="need_nif_bill">Deseja fatura com NIF?</label>
             <div class="order-type-box" style="margin-top: 5px;">
-                <label><input type="radio" name="conta_nif" value="sim" onchange="document.getElementById('input-conta-nif').style.display='block'"> Sim</label>
-                <label><input type="radio" name="conta_nif" value="nao" checked onchange="document.getElementById('input-conta-nif').style.display='none'"> Não</label>
+                <label><input type="radio" name="conta_nif" value="sim" onchange="document.getElementById('input-conta-nif').style.display='block'"> <span data-i18n="yes">Sim</span></label>
+                <label><input type="radio" name="conta_nif" value="nao" checked onchange="document.getElementById('input-conta-nif').style.display='none'"> <span data-i18n="no">Não</span></label>
             </div>
-            <input type="text" id="input-conta-nif" class="input-form" placeholder="O seu NIF" style="display: none; margin-top: 10px;">
+            <input type="text" id="input-conta-nif" class="input-form" placeholder="O seu NIF" style="display: none; margin-top: 10px;" data-i18n-ph="nif_placeholder">
         </div>
         
         <button class="btn-checkout" onclick="confirmarPedidoConta()" style="width: 100%; margin-top: 10px;">
-            <i class="fas fa-paper-plane"></i> Enviar Pedido
+            <i class="fas fa-paper-plane"></i> <span data-i18n="send_request">Enviar Pedido</span>
         </button>
     </div>
 </div>
 
 <div class="header">
     <img id="v-logo" class="logo" src="" style="display:none;">
-    <h2 id="v-nome">A carregar...</h2>
+    <h2 id="v-nome" data-i18n="loading">A carregar...</h2>
     <div id="boas-vindas-cliente"></div>
     <div id="mesa-badge" style="display:none; background: var(--ok); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 10px; display: inline-block;"></div>
 </div>
@@ -383,7 +402,7 @@
 <div class="categories-container" id="cat-list"></div>
 
 <div class="search-container">
-    <input type="text" id="search-input" placeholder="Pesquisar no menu...">
+    <input type="text" id="search-input" placeholder="Pesquisar no menu..." data-i18n-ph="search_menu">
 </div>
 
 <div id="lista-produtos" class="grid"></div>
@@ -397,7 +416,7 @@
     </button>
     
     <button id="cart-floater" class="cart-floater" onclick="abrirCarrinho()">
-        <i class="fas fa-shopping-basket"></i> <span id="cart-text-btn">Ver Pedido</span> <span id="cart-count" class="cart-badge">0</span>
+        <i class="fas fa-shopping-basket"></i> <span id="cart-text-btn" data-i18n="view_order">Ver Pedido</span> <span id="cart-count" class="cart-badge">0</span>
     </button>
 
     <button id="btn-pedir-conta" class="btn-mesa-action" onclick="chamarMesa('conta')" title="Pedir a Conta">
@@ -414,14 +433,14 @@
 
     <div class="legal-footer">
         <ul class="legal-links">
-            <li><a onclick="showLegal('termos')">Termos e Condições</a></li>
-            <li><a onclick="showLegal('privacidade')">Privacidade</a></li>
-            <li><a onclick="showLegal('cookies')">Cookies</a></li>
+            <li><a onclick="showLegal('termos')" data-i18n="terms">Termos e Condições</a></li>
+            <li><a onclick="showLegal('privacidade')" data-i18n="privacy">Privacidade</a></li>
+            <li><a onclick="showLegal('cookies')" data-i18n="cookies">Cookies</a></li>
         </ul>
         <div class="complaints-book" style="margin-top: 10px;">
-            <a href="https://www.livroreclamacoes.pt/Inicio/" target="_blank">Livro de Reclamações</a>
+            <a href="https://www.livroreclamacoes.pt/Inicio/" target="_blank" data-i18n="complaints_book">Livro de Reclamações</a>
         </div>
-        <p style="font-size: 0.75em; opacity: 0.6; margin-top: 20px;">© 2026 Portugal Vision. Todos os direitos reservados.</p>
+        <p style="font-size: 0.75em; opacity: 0.6; margin-top: 20px;">© 2026 Portugal Vision. <span data-i18n="rights_reserved">Todos os direitos reservados.</span></p>
     </div>
 </div>
 
@@ -441,12 +460,118 @@
     let tempCarnePreco = null;
     let tempCarneDesconto = null;
 
+    // VARIÁVEIS DE STOCK CATIVO (Soft Reserve)
+    let temporizadorCarrinho = null;
+    let minutosCativos = 15;
+    let tempoFinalExpiracao = null;
+
     const nomeDiasInt = {1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado", 0: "Domingo"};
 
+    // DICIONÁRIO DE TRADUÇÃO (i18n)
+    const dictIdiomas = {
+        pt: {
+            loading: "A carregar...", access_denied: "Acesso Indisponível", website_offline: "Este website não se encontra ativo no momento.",
+            meat_doneness: "Ponto da Carne", how_to_prepare: "Como prefere que preparemos este prato?", rare: "🥩 Mal Passada", medium_rare: "🥩 Médio Mal", medium: "🥩 Ponto Médio", well_done: "🥩 Bem Passada", cancel: "Cancelar",
+            auth_title: "Identificação", auth_subtitle: "Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.", login: "Entrar", register: "Registar",
+            email: "O seu E-mail", password: "Password", forgot_email: "Esqueceu-se do E-mail?", forgot_password: "Esqueceu-se da Password?", login_btn: "Entrar",
+            your_name: "O seu Nome", phone: "Telemóvel", secure_password: "Password Segura", read_accept: "Li e aceito os", terms: "Termos e Condições", privacy: "Política de Privacidade", create_account: "Criar Conta",
+            recover_pass_desc: "Insira o e-mail da sua conta para receber um link de redefinição.", send_link: "Enviar Link", back_to_login: "Voltar ao Login",
+            recover_email_desc: "Insira o número de telemóvel associado à sua conta para verificarmos o seu e-mail.", find_email: "Procurar E-mail",
+            my_orders: "Os Meus Pedidos", loading_orders: "A carregar pedidos...", logout: "Encerrar Sessão",
+            your_order: "O seu Pedido", total: "Total:", how_to_order: "1. Como deseja encomendar?", takeaway: "Levantamento", reservation: "Reserva",
+            date: "Data:", time: "Hora (Intervalos de 30 min):", people_count: "Nº Pessoas (Só para Reserva)",
+            need_nif: "Deseja NIF na Fatura? (Obrigatório escolher)", yes: "Sim", no: "Não", nif_placeholder: "O seu número de contribuinte (NIF)", nif_warning: "Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.",
+            payment_method: "2. Método de Pagamento", exclusive_mbway: "Pagamento Exclusivo via MBWay", mbway_instructions: "O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº",
+            confirm_order: "Confirmar e Enviar Pedido", ask_bill: "Pedir a Conta", payment_method_simple: "Método de Pagamento", cash: "💵 Dinheiro", card: "💳 Multibanco", meal_ticket: "🎫 Ticket Refeição",
+            need_nif_bill: "Deseja fatura com NIF?", send_request: "Enviar Pedido", search_menu: "Pesquisar no menu...", view_order: "Ver Pedido",
+            cookies: "Cookies", complaints_book: "Livro de Reclamações", rights_reserved: "Todos os direitos reservados.",
+            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Adicionar", out_of_stock: "Esgotado", product_out_stock: "Produto Esgotado", included_tax: "IVA incluído", contains: "Contém:", see_info: "Ver Info", back: "Voltar"
+        },
+        en: {
+            loading: "Loading...", access_denied: "Access Denied", website_offline: "This website is currently offline.",
+            meat_doneness: "Meat Doneness", how_to_prepare: "How would you like this dish prepared?", rare: "🥩 Rare", medium_rare: "🥩 Medium Rare", medium: "🥩 Medium", well_done: "🥩 Well Done", cancel: "Cancel",
+            auth_title: "Identification", auth_subtitle: "To guarantee your reservation/takeaway and receive alerts, we need to identify you.", login: "Login", register: "Register",
+            email: "Your E-mail", password: "Password", forgot_email: "Forgot E-mail?", forgot_password: "Forgot Password?", login_btn: "Login",
+            your_name: "Your Name", phone: "Phone Number", secure_password: "Secure Password", read_accept: "I have read and accept the", terms: "Terms & Conditions", privacy: "Privacy Policy", create_account: "Create Account",
+            recover_pass_desc: "Enter your account email to receive a reset link.", send_link: "Send Link", back_to_login: "Back to Login",
+            recover_email_desc: "Enter the phone number associated with your account to verify your email.", find_email: "Find E-mail",
+            my_orders: "My Orders", loading_orders: "Loading orders...", logout: "Logout",
+            your_order: "Your Order", total: "Total:", how_to_order: "1. How would you like to order?", takeaway: "Takeaway", reservation: "Reservation",
+            date: "Date:", time: "Time (30 min intervals):", people_count: "No. of People (Reservation only)",
+            need_nif: "Do you need a Tax ID (NIF) on the invoice?", yes: "Yes", no: "No", nif_placeholder: "Your Tax ID (NIF)", nif_warning: "After finalizing, it won't be possible to add a NIF, as the invoice is issued upon payment.",
+            payment_method: "2. Payment Method", exclusive_mbway: "Exclusive MBWay Payment", mbway_instructions: "Your order will only proceed to the kitchen after sending the transfer receipt to",
+            confirm_order: "Confirm and Send Order", ask_bill: "Ask for the Bill", payment_method_simple: "Payment Method", cash: "💵 Cash", card: "💳 Credit Card", meal_ticket: "🎫 Meal Ticket",
+            need_nif_bill: "Do you need an invoice with Tax ID?", send_request: "Send Request", search_menu: "Search menu...", view_order: "View Order",
+            cookies: "Cookies", complaints_book: "Complaints Book", rights_reserved: "All rights reserved.",
+            stock_reserved: "Stock reserved for 15 minutes.", add_cart: "Add to cart", out_of_stock: "Sold Out", product_out_stock: "Out of Stock", included_tax: "Tax included", contains: "Contains:", see_info: "See Info", back: "Back"
+        },
+        es: {
+            loading: "Cargando...", access_denied: "Acceso Denegado", website_offline: "Este sitio web está inactivo en este momento.",
+            meat_doneness: "Punto de la Carne", how_to_prepare: "¿Cómo prefiere que preparemos este plato?", rare: "🥩 Poco Hecha", medium_rare: "🥩 Medio Poco Hecha", medium: "🥩 Al Punto", well_done: "🥩 Muy Hecha", cancel: "Cancelar",
+            auth_title: "Identificación", auth_subtitle: "Para garantizar su reserva/takeaway y recibir alertas, necesitamos identificarlo.", login: "Entrar", register: "Registrar",
+            email: "Su E-mail", password: "Contraseña", forgot_email: "¿Olvidó su E-mail?", forgot_password: "¿Olvidó su Contraseña?", login_btn: "Entrar",
+            your_name: "Su Nombre", phone: "Teléfono", secure_password: "Contraseña Segura", read_accept: "He leído y acepto los", terms: "Términos y Condiciones", privacy: "Política de Privacidad", create_account: "Crear Cuenta",
+            recover_pass_desc: "Introduzca el correo electrónico de su cuenta para recibir un enlace de restablecimiento.", send_link: "Enviar Enlace", back_to_login: "Volver al Login",
+            recover_email_desc: "Introduzca el número de teléfono asociado a su cuenta para verificar su correo electrónico.", find_email: "Buscar E-mail",
+            my_orders: "Mis Pedidos", loading_orders: "Cargando pedidos...", logout: "Cerrar Sesión",
+            your_order: "Su Pedido", total: "Total:", how_to_order: "1. ¿Cómo desea pedir?", takeaway: "Para Llevar", reservation: "Reserva",
+            date: "Fecha:", time: "Hora (Intervalos de 30 min):", people_count: "Nº de Personas (Solo para Reserva)",
+            need_nif: "¿Desea NIF en la factura?", yes: "Sí", no: "No", nif_placeholder: "Su número de identificación fiscal (NIF)", nif_warning: "Tras finalizar, no será posible añadir el NIF, ya que la factura se emite en el momento del pago.",
+            payment_method: "2. Método de Pago", exclusive_mbway: "Pago Exclusivo por MBWay", mbway_instructions: "Su pedido solo pasará a la cocina tras enviar el comprobante de transferencia al nº",
+            confirm_order: "Confirmar y Enviar Pedido", ask_bill: "Pedir la Cuenta", payment_method_simple: "Método de Pago", cash: "💵 Efectivo", card: "💳 Tarjeta", meal_ticket: "🎫 Ticket Restaurante",
+            need_nif_bill: "¿Desea factura con NIF?", send_request: "Enviar Pedido", search_menu: "Buscar en el menú...", view_order: "Ver Pedido",
+            cookies: "Cookies", complaints_book: "Libro de Reclamaciones", rights_reserved: "Todos los derechos reservados.",
+            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Volver"
+        },
+        fr: {
+            loading: "Chargement...", access_denied: "Accès Refusé", website_offline: "Ce site est actuellement inactif.",
+            meat_doneness: "Cuisson de la Viande", how_to_prepare: "Comment préférez-vous que nous préparions ce plat?", rare: "🥩 Saignant", medium_rare: "🥩 À Point (Saignant)", medium: "🥩 À Point", well_done: "🥩 Bien Cuit", cancel: "Annuler",
+            auth_title: "Identification", auth_subtitle: "Pour garantir votre réservation/à emporter et recevoir des alertes, nous devons vous identifier.", login: "Connexion", register: "S'inscrire",
+            email: "Votre E-mail", password: "Mot de passe", forgot_email: "E-mail oublié?", forgot_password: "Mot de passe oublié?", login_btn: "Connexion",
+            your_name: "Votre Nom", phone: "Téléphone", secure_password: "Mot de passe sécurisé", read_accept: "J'ai lu et j'accepte les", terms: "Termes et Conditions", privacy: "Politique de Confidentialité", create_account: "Créer un Compte",
+            recover_pass_desc: "Entrez l'adresse e-mail de votre compte pour recevoir un lien de réinitialisation.", send_link: "Envoyer le Lien", back_to_login: "Retour à la Connexion",
+            recover_email_desc: "Entrez le numéro de téléphone associé à votre compte pour vérifier votre e-mail.", find_email: "Trouver E-mail",
+            my_orders: "Mes Commandes", loading_orders: "Chargement des commandes...", logout: "Déconnexion",
+            your_order: "Votre Commande", total: "Total:", how_to_order: "1. Comment souhaitez-vous commander?", takeaway: "À Emporter", reservation: "Réservation",
+            date: "Date:", time: "Heure (intervalles de 30 min):", people_count: "Nb de Personnes (Réservation uniquement)",
+            need_nif: "Avez-vous besoin du numéro de TVA (NIF) sur la facture?", yes: "Oui", no: "Non", nif_placeholder: "Votre numéro de TVA (NIF)", nif_warning: "Après finalisation, il ne sera plus possible d'ajouter un NIF, la facture étant émise au moment du paiement.",
+            payment_method: "2. Méthode de Paiement", exclusive_mbway: "Paiement Exclusif par MBWay", mbway_instructions: "Votre commande ne sera transmise à la cuisine qu'après l'envoi du reçu de transfert au nº",
+            confirm_order: "Confirmer et Envoyer la Commande", ask_bill: "Demander l'Addition", payment_method_simple: "Méthode de Paiement", cash: "💵 Espèces", card: "💳 Carte Bancaire", meal_ticket: "🎫 Ticket Restaurant",
+            need_nif_bill: "Souhaitez-vous une facture avec TVA?", send_request: "Envoyer la Demande", search_menu: "Rechercher dans le menu...", view_order: "Voir Commande",
+            cookies: "Cookies", complaints_book: "Livre de Réclamations", rights_reserved: "Tous droits réservés.",
+            stock_reserved: "Stock réservé pour 15 minutes.", add_cart: "Ajouter", out_of_stock: "Épuisé", product_out_stock: "Produit Épuisé", included_tax: "TTC", contains: "Contient:", see_info: "Voir Info", back: "Retour"
+        }
+    };
+
+    let userLang = 'pt';
+
+    function traduzirInterface() {
+        const browserLang = navigator.language || navigator.userLanguage;
+        const shortLang = browserLang.substring(0, 2).toLowerCase();
+        
+        if (dictIdiomas[shortLang]) {
+            userLang = shortLang;
+        } else {
+            userLang = 'en'; 
+        }
+
+        const trans = dictIdiomas[userLang];
+        
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (trans[key]) el.innerText = trans[key];
+        });
+
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+            const key = el.getAttribute('data-i18n-ph');
+            if (trans[key]) el.placeholder = trans[key];
+        });
+    }
+
     const legalTexts = {
-        termos: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Natureza do Serviço:</strong> O website digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p>`,
-        privacidade: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Privacidade e RGPD</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Navegação:</strong> A navegação neste website digital é livre. O registo é exigido apenas para validação de pedidos online (Takeaway/Reserva) e comunicação de estado.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Dados Analíticos:</strong> A Portugal Vision recolhe apenas dados estatísticos totalmente anónimos para garantir o bom funcionamento do sistema.</p>`,
-        cookies: `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Política de Cookies</h3><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade.</p><p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do navegador) apenas para gerir a sua Sessão de Login, a persistência de Sala e o "Carrinho de Compras".</p>`
+        termos: `<h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px;">Termos e Condições</h3><p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>1. Natureza do Serviço:</strong> O website digital da Portugal Vision atua exclusivamente como uma montra tecnológica e facilitadora de comunicação. Não somos a entidade vendedora dos produtos apresentados.</p><p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira e exclusiva responsabilidade do Lojista. Em caso de restrições ou alergias alimentares graves, o cliente deve sempre confirmar os ingredientes diretamente com o estabelecimento no momento do pedido.</p>`,
+        privacidade: `<h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px;">Privacidade e RGPD</h3><p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>1. Navegação:</strong> A navegação neste website digital é livre. O registo é exigido apenas para validação de pedidos online (Takeaway/Reserva) e comunicação de estado.</p><p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Dados Analíticos:</strong> A Portugal Vision recolhe apenas dados estatísticos totalmente anónimos para garantir o bom funcionamento do sistema.</p>`,
+        cookies: `<h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px;">Política de Cookies</h3><p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>1. A Nossa Abordagem:</strong> A nossa plataforma foi desenhada para ser limpa e segura. Não utilizamos cookies invasivos nem rastreadores de publicidade.</p><p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Cookies Estritamente Necessários:</strong> Utilizamos tecnologias locais (memória do navegador) apenas para gerir a sua Sessão de Login, a persistência de Sala e o "Carrinho de Compras".</p>`
     };
 
     function parseMarkdownToMenuHTML(text) {
@@ -462,7 +587,7 @@
             
             if(t.startsWith('###')) {
                 if(ingredientes.length > 0) {
-                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
+                    html += `<div style="margin-bottom:10px; font-style: italic; opacity: 0.8; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
                     ingredientes = [];
                 }
                 html += `<div style="font-weight:bold; font-size:1.05em; margin-top:15px; margin-bottom:4px; color:var(--p);">${t.replace(/^###\s*/, '')}</div>`;
@@ -472,7 +597,7 @@
             } 
             else {
                 if(ingredientes.length > 0) {
-                    html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
+                    html += `<div style="margin-bottom:10px; font-style: italic; opacity: 0.8; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
                     ingredientes = [];
                 }
                 html += `<div style="margin-bottom:6px;">${t}</div>`;
@@ -480,7 +605,7 @@
         });
         
         if(ingredientes.length > 0) {
-            html += `<div style="margin-bottom:10px; font-style: italic; color: #475569; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
+            html += `<div style="margin-bottom:10px; font-style: italic; opacity: 0.8; font-size: 0.9em; line-height: 1.5;">${ingredientes.join(' • ')}</div>`;
         }
         
         return html;
@@ -565,10 +690,20 @@
     }
 
     function switchAuth(mode) {
-        document.getElementById('tab-login').classList.toggle('active', mode === 'login');
-        document.getElementById('tab-reg').classList.toggle('active', mode === 'reg');
-        document.getElementById('form-login').style.display = mode === 'login' ? 'block' : 'none';
-        document.getElementById('form-reg').style.display = mode === 'reg' ? 'block' : 'none';
+        document.getElementById('tab-login').classList.remove('active');
+        document.getElementById('tab-reg').classList.remove('active');
+        
+        document.getElementById('form-login').style.display = 'none';
+        document.getElementById('form-reg').style.display = 'none';
+        document.getElementById('form-reset-pass').style.display = 'none';
+        document.getElementById('form-reset-email').style.display = 'none';
+
+        if(mode === 'login' || mode === 'reg') {
+            document.getElementById(`tab-${mode}`).classList.add('active');
+            document.getElementById(`form-${mode}`).style.display = 'block';
+        } else {
+            document.getElementById(`form-${mode}`).style.display = 'block';
+        }
     }
 
     async function clienteRegisto() {
@@ -586,14 +721,14 @@
 
         const { data, error } = await _sb.auth.signUp({ email: e, password: p });
         if(error) {
-            btn.innerText = "Criar Conta"; btn.disabled = false;
+            btn.innerText = dictIdiomas[userLang].create_account || "Criar Conta"; btn.disabled = false;
             return alert(error.message);
         }
         
         const { data: clienteData, error: dbError } = await _sb.from('clientes_app').insert([{ auth_id: data.user.id, nome: n, telefone: t, email: e }]).select().single();
         
         if (dbError) {
-             btn.innerText = "Criar Conta"; btn.disabled = false;
+             btn.innerText = dictIdiomas[userLang].create_account || "Criar Conta"; btn.disabled = false;
              return alert("Erro ao salvar dados do cliente: " + dbError.message);
         }
 
@@ -610,12 +745,50 @@
 
         const { data, error } = await _sb.auth.signInWithPassword({ email: e, password: p });
         if(error) {
-            btn.innerText = "Entrar"; btn.disabled = false;
+            btn.innerText = dictIdiomas[userLang].login_btn || "Entrar"; btn.disabled = false;
             return alert("Credenciais inválidas.");
         }
         
         window.location.reload(); 
     }
+    
+    async function clienteRecuperarPass() {
+        const e = document.getElementById('reset-pass-email').value;
+        if(!e) return alert("Insira o seu e-mail.");
+        
+        const btn = document.querySelector('#form-reset-pass button');
+        const originTxt = btn.innerText;
+        btn.innerText = "A processar..."; btn.disabled = true;
+
+        const { error } = await _sb.auth.resetPasswordForEmail(e);
+        if(error) {
+            alert("Erro: " + error.message);
+        } else {
+            alert("Se o e-mail estiver registado, receberá um link de recuperação.");
+            switchAuth('login');
+        }
+        btn.innerText = originTxt; btn.disabled = false;
+    }
+
+    async function clienteRecuperarEmail() {
+        const t = document.getElementById('reset-email-phone').value;
+        if(!t) return alert("Insira o telemóvel associado à conta.");
+        
+        const btn = document.querySelector('#form-reset-email button');
+        const originTxt = btn.innerText;
+        btn.innerText = "A procurar..."; btn.disabled = true;
+
+        const { data, error } = await _sb.from('clientes_app').select('email').eq('telefone', t).maybeSingle();
+        if(error || !data) {
+            alert("Nenhuma conta encontrada com esse número de telemóvel.");
+        } else {
+            const parts = data.email.split('@');
+            const masked = parts[0].substring(0, 3) + "***@" + parts[1];
+            document.getElementById('rec-cliente-email-result').innerHTML = `E-mail associado:<br><span style="font-size:16px;">${masked}</span>`;
+        }
+        btn.innerText = originTxt; btn.disabled = false;
+    }
+
     async function clienteLogout() { await _sb.auth.signOut(); window.location.reload(); }
 
     function ocultarMeuPedido(id) {
@@ -627,7 +800,6 @@
         abrirConta(); 
     }
 
-    // --- CORREÇÃO 1: TRANSPARÊNCIA NO HISTÓRICO (Os Meus Pedidos) ---
     async function abrirConta() {
         document.getElementById('contaModal').style.display = 'block';
         const container = document.getElementById('lista-meus-pedidos');
@@ -669,16 +841,16 @@
             }
 
             if(p.estado === 'finalizado' || p.estado === 'cancelado') {
-                btnAcoes += `<button onclick="ocultarMeuPedido(${p.id})" style="background:#e2e8f0; color:#475569; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;"><i class="fas fa-eye-slash"></i> Ocultar</button>`;
+                btnAcoes += `<button onclick="ocultarMeuPedido(${p.id})" style="background:rgba(0,0,0,0.1); color:inherit; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;"><i class="fas fa-eye-slash"></i> Ocultar</button>`;
             }
 
             let itensHtml = '';
             if (p.itens && Array.isArray(p.itens) && p.itens.length > 0) {
-                itensHtml = `<div style="margin: 10px 0; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85em;">`;
+                itensHtml = `<div style="margin: 10px 0; padding: 10px; background: var(--card-bg); border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.85em;">`;
                 p.itens.forEach(item => {
-                    itensHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #f1f5f9; padding-bottom: 4px;">
+                    itensHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed rgba(0,0,0,0.05); padding-bottom: 4px;">
                                     <span><b style="color: var(--p);">${item.qtde}x</b> ${item.nome}</span>
-                                    <span style="color: #64748b; font-weight: 600;">${(item.preco * item.qtde).toFixed(2)}€</span>
+                                    <span style="opacity: 0.8; font-weight: 600;">${(item.preco * item.qtde).toFixed(2)}€</span>
                                   </div>`;
                 });
                 itensHtml += `</div>`;
@@ -690,7 +862,7 @@
                         <strong>${p.tipo_pedido.toUpperCase()} #${p.id}</strong>
                         <span class="badge-estado ${corBadge}">${textoBadge}</span>
                     </div>
-                    <div style="font-size:12px; color:#64748b; margin-bottom:10px;">
+                    <div style="font-size:12px; opacity:0.8; margin-bottom:10px;">
                         Para: ${dataAgendada.toLocaleString('pt-PT')} <br>
                         Total: ${p.total.toFixed(2)}€
                     </div>
@@ -914,26 +1086,42 @@
         const root = document.documentElement;
         if (temaId === 'minimalista') {
             root.style.setProperty('--bg', '#ffffff');
+            root.style.setProperty('--bg-image', 'none');
             root.style.setProperty('--p', '#1e293b');
             root.style.setProperty('--s', '#64748b');
             root.style.setProperty('--card-bg', '#f8fafc');
             root.style.setProperty('--btn-bg', '#f1f5f9');
+            root.style.setProperty('--text-color', '#334155');
         } else if (temaId === 'elegante') {
-            root.style.setProperty('--bg', '#fafafa');
-            root.style.setProperty('--p', '#3f3f46');
-            root.style.setProperty('--s', '#a1a1aa');
-            root.style.setProperty('--card-bg', '#ffffff');
-            root.style.setProperty('--btn-bg', '#f4f4f5');
+            root.style.setProperty('--bg', '#1c1917');
+            root.style.setProperty('--bg-image', 'radial-gradient(circle at center, #292524 0%, #0c0a09 100%)');
+            root.style.setProperty('--p', '#d97706'); 
+            root.style.setProperty('--s', '#a8a29e');
+            root.style.setProperty('--card-bg', '#292524');
+            root.style.setProperty('--btn-bg', '#44403c');
+            root.style.setProperty('--text-color', '#fafaf9');
         } else if (temaId === 'bege') {
             root.style.setProperty('--bg', '#fdf8f5');
+            root.style.setProperty('--bg-image', 'linear-gradient(135deg, #fdf8f5 0%, #fef3c7 100%)');
             root.style.setProperty('--p', '#451a03');
             root.style.setProperty('--s', '#d97706');
             root.style.setProperty('--card-bg', '#ffffff');
             root.style.setProperty('--btn-bg', '#fef3c7');
+            root.style.setProperty('--text-color', '#78350f');
+        } else {
+            root.style.setProperty('--bg', '#fdfbf7');
+            root.style.setProperty('--bg-image', 'none');
+            root.style.setProperty('--p', '#2c3e50'); 
+            root.style.setProperty('--s', '#a89f91');
+            root.style.setProperty('--card-bg', '#ffffff');
+            root.style.setProperty('--btn-bg', '#ffffff');
+            root.style.setProperty('--text-color', '#334155');
         }
     }
 
     async function init() {
+        traduzirInterface();
+
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('loja');
         let paramMesa = urlParams.get('mesa'); 
@@ -964,7 +1152,7 @@
         
         const estadoLoja = verificarSeAberto(loja);
         if (!loja || loja.status !== 'ativa' || loja.status_catalogo === false || !estadoLoja.aberto) {
-            document.getElementById('motivo-fecho').innerText = !estadoLoja.aberto ? estadoLoja.motivo : "O website está temporariamente indisponível.";
+            document.getElementById('motivo-fecho').innerText = !estadoLoja.aberto ? estadoLoja.motivo : dictIdiomas[userLang].website_offline;
             document.getElementById('block-screen').style.display = 'flex';
             return;
         }
@@ -972,13 +1160,12 @@
         lojaAtual = loja;
         aplicarTemaVisual(loja.tema_sazonal);
 
-        // --- CORREÇÃO 4: ESCUDO JURÍDICO E TERMOS (DL 24/2014) ---
         const nomeLoja = lojaAtual.nome || "Estabelecimento";
         const nifLoja = lojaAtual.nif || "N/A";
-        legalTexts.termos = `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Termos e Condições</h3>
-        <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>1. Identificação da Entidade:</strong> O presente serviço digital é operado pelo estabelecimento <strong>${nomeLoja}</strong>, com o NIF <strong>${nifLoja}</strong>.</p>
-        <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>2. Direito de Livre Resolução (DL 24/2014):</strong> Ao abrigo do Artigo 17.º, alínea d) do Decreto-Lei n.º 24/2014, o consumidor não goza do direito de livre resolução nos contratos de fornecimento de bens que, por natureza, não possam ser devolvidos ou sejam suscetíveis de se deteriorarem rapidamente. <strong>Não são aceites cancelamentos ou devoluções após o início da confeção do pedido.</strong></p>
-        <p style="font-size: 0.9em; line-height: 1.6; color: #475569;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira responsabilidade do Lojista. Confirme as suas alergias no momento do pedido.</p>`;
+        legalTexts.termos = `<h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px;">Termos e Condições</h3>
+        <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>1. Identificação da Entidade:</strong> O presente serviço digital é operado pelo estabelecimento <strong>${nomeLoja}</strong>, com o NIF <strong>${nifLoja}</strong>.</p>
+        <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Direito de Livre Resolução (DL 24/2014):</strong> Ao abrigo do Artigo 17.º, alínea d) do Decreto-Lei n.º 24/2014, o consumidor não goza do direito de livre resolução nos contratos de fornecimento de bens que, por natureza, não possam ser devolvidos ou sejam suscetíveis de se deteriorarem rapidamente. <strong>Não são aceites cancelamentos ou devoluções após o início da confeção do pedido.</strong></p>
+        <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira responsabilidade do Lojista. Confirme as suas alergias no momento do pedido.</p>`;
 
         if (mesaAtual) {
             const { data: pedidosAtivos } = await _sb
@@ -1057,12 +1244,13 @@
             cats.map(c => `<button class="cat-btn" onclick="setCategoria('${c}', this)">${c}</button>`).join('');
 
         renderizar(todosProdutos);
-    }
-
-    function calcularPrecoFinal(preco, desconto) {
-        const p = parseFloat(preco) || 0;
-        const d = parseInt(desconto) || 0;
-        return d > 0 ? (p * (1 - d / 100)) : p;
+        
+        // Garante que o stock cativo é libertado se a aba for fechada
+        window.addEventListener('beforeunload', () => {
+            if(carrinho.length > 0) {
+                carrinho.forEach(item => libertarStockBaseDados(item.id, item.qtde));
+            }
+        });
     }
 
     function virarCartao(id) { document.getElementById(`card-${id}`).classList.toggle('flipped'); }
@@ -1080,11 +1268,9 @@
         const textoTudo = catLower + " " + nomeLower + " " + descLower;
 
         const palavrasAtivadoras = ['bife', 'picanha', 'maminha', 'hambúrguer', 'hamburguer', 'entrecôte', 'entrecote', 'grelhad', 'costeleta', 'vazia', 'lombinho', 'posta', 'prego', 'preguinho', 'bitoque'];
-        
         const palavrasIgnoradas = ['cozido', 'feijoada', 'estufad', 'rojões', 'rojoes', 'jardineira', 'ensopado', 'assado no forno'];
 
         let éCarne = catLower.includes('carne') || catLower.includes('grelhado') || catLower.includes('snack') || catLower.includes('sandes');
-        
         let precisaDePonto = false;
 
         let temAtivadorNoNome = palavrasAtivadoras.some(palavra => nomeLower.includes(palavra));
@@ -1108,21 +1294,75 @@
 
     function confirmarAdicionarComPonto(pontoEscolhido) {
         const nomeFinal = `${tempCarneNome} (Ponto: ${pontoEscolhido})`;
-        
         adicionarAoCarrinho(tempCarneId, nomeFinal, tempCarnePreco, tempCarneDesconto, pontoEscolhido, null);
-        
         fecharModal('modal-ponto-carne');
     }
 
-    function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, pontoOpicional, botaoDOM) {
+    async function cativarStockBaseDados(idProduto, qtde) {
+        try {
+            const { data: p } = await _sb.from('produtos').select('stock').eq('id', idProduto).single();
+            if (p && p.stock !== null) {
+                await _sb.from('produtos').update({ stock: p.stock - qtde }).eq('id', idProduto);
+            }
+        } catch(e) {}
+    }
+
+    async function libertarStockBaseDados(idProduto, qtde) {
+        try {
+            const { data: p } = await _sb.from('produtos').select('stock').eq('id', idProduto).single();
+            if (p && p.stock !== null) {
+                await _sb.from('produtos').update({ stock: p.stock + qtde }).eq('id', idProduto);
+            }
+        } catch(e) {}
+    }
+
+    function iniciarRelogioStock() {
+        if(temporizadorCarrinho) clearInterval(temporizadorCarrinho);
+        
+        tempoFinalExpiracao = new Date(new Date().getTime() + minutosCativos * 60000);
+        document.getElementById('cart-timer-warning').style.display = 'block';
+
+        temporizadorCarrinho = setInterval(() => {
+            const agora = new Date().getTime();
+            const distancia = tempoFinalExpiracao - agora;
+
+            if (distancia < 0) {
+                clearInterval(temporizadorCarrinho);
+                document.getElementById('cart-timer-warning').style.display = 'none';
+                
+                carrinho.forEach(item => libertarStockBaseDados(item.id, item.qtde));
+                carrinho = [];
+                atualizarFloater();
+                fecharCarrinho();
+                alert("O tempo limite de reserva do stock expirou e o carrinho foi esvaziado. Por favor, adicione os produtos novamente.");
+                window.location.reload();
+            } else {
+                const minutos = Math.floor((distancia % (1000 * 60 * 60)) / (1000 * 60));
+                const segundos = Math.floor((distancia % (1000 * 60)) / 1000);
+                document.getElementById('cart-timer-countdown').innerText = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    }
+
+    async function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, pontoOpicional, botaoDOM) {
         if (!mesaAtual && !clienteAtual) {
             document.getElementById('authModal').style.display = 'flex';
-            alert("Para fazer encomendas de Takeaway ou Reservas, por favor inicie sessão ou crie conta primeiro.");
+            alert(dictIdiomas[userLang].auth_subtitle || "Por favor inicie sessão ou crie conta primeiro.");
             return; 
         }
 
-        const precoFinal = calcularPrecoFinal(precoRaw, desconto);
+        const prodNaBase = todosProdutos.find(p => String(p.id) === String(idProduto));
         
+        if (prodNaBase && prodNaBase.stock !== null) {
+            if (prodNaBase.stock <= 0) {
+                alert("Lamentamos, mas este artigo acabou de esgotar.");
+                return;
+            }
+            prodNaBase.stock -= 1;
+            await cativarStockBaseDados(idProduto, 1);
+        }
+
+        const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         const idBaseString = String(idProduto);
         const idUnicoCarrinho = pontoOpicional ? `${idBaseString}-${pontoOpicional.replace(/\s+/g, '')}` : idBaseString;
         
@@ -1131,9 +1371,7 @@
         if (itemExistente) { 
             itemExistente.qtde += 1; 
         } else { 
-            const prodNaBase = todosProdutos.find(p => String(p.id) === idBaseString);
             const ivaProd = prodNaBase ? prodNaBase.taxa_iva : 0;
-
             carrinho.push({ 
                 idUnico: idUnicoCarrinho, 
                 id: idProduto, 
@@ -1144,11 +1382,12 @@
             }); 
         }
         
+        iniciarRelogioStock();
         atualizarFloater();
         
         if(botaoDOM) {
             const originalText = botaoDOM.innerHTML;
-            botaoDOM.innerHTML = `<i class="fas fa-check"></i> Adicionado!`;
+            botaoDOM.innerHTML = `<i class="fas fa-check"></i>`;
             botaoDOM.style.background = "#166534"; 
             setTimeout(() => { botaoDOM.innerHTML = originalText; botaoDOM.style.background = "var(--ok)"; }, 1500);
         } else {
@@ -1170,7 +1409,9 @@
             floater.classList.add('visible'); 
         } else { 
             floater.classList.remove('visible'); 
-            fecharCarrinho(); 
+            fecharCarrinho();
+            if(temporizadorCarrinho) clearInterval(temporizadorCarrinho);
+            document.getElementById('cart-timer-warning').style.display = 'none';
         }
     }
 
@@ -1237,37 +1478,35 @@
 
     function fecharCarrinho() { document.getElementById('cartModal').style.display = 'none'; }
 
-    function alterarQtde(idUnicoCarrinho, delta) {
+    async function alterarQtde(idUnicoCarrinho, delta) {
         const item = carrinho.find(i => String(i.idUnico) === String(idUnicoCarrinho));
         if (item) {
+            if(delta > 0) {
+                const prodNaBase = todosProdutos.find(p => String(p.id) === String(item.id));
+                if (prodNaBase && prodNaBase.stock !== null) {
+                    if (prodNaBase.stock <= 0) return alert("Sem stock disponível.");
+                    prodNaBase.stock -= 1;
+                    await cativarStockBaseDados(item.id, 1);
+                }
+            } else if (delta < 0) {
+                const prodNaBase = todosProdutos.find(p => String(p.id) === String(item.id));
+                if (prodNaBase && prodNaBase.stock !== null) {
+                    prodNaBase.stock += 1;
+                    await libertarStockBaseDados(item.id, 1);
+                }
+            }
+
             item.qtde += delta;
+            
+            // Renovar temporizador sempre que a pessoa interage ativamente com o carrinho
+            tempoFinalExpiracao = new Date(new Date().getTime() + minutosCativos * 60000);
+
             if (item.qtde <= 0) { carrinho = carrinho.filter(i => String(i.idUnico) !== String(idUnicoCarrinho)); }
             atualizarFloater();
             if (carrinho.length > 0) { abrirCarrinho(); }
         }
     }
 
-    // --- CORREÇÃO 2: VALIDAÇÃO NIF MATEMÁTICA ---
-    function validarNIF(nif) {
-        if (!nif || nif.length !== 9) return false;
-        const prefix1 = nif.substring(0, 1);
-        const prefix2 = nif.substring(0, 2);
-        const validos1 = ['1', '2', '3', '5', '6', '8', '9'];
-        const validos2 = ['45', '70', '71', '72', '77', '79', '90', '91', '98', '99'];
-        
-        if (!validos1.includes(prefix1) && !validos2.includes(prefix2)) return false;
-
-        let soma = 0;
-        for (let i = 0; i < 8; i++) {
-            soma += parseInt(nif.charAt(i)) * (9 - i);
-        }
-        let checkDigit = 11 - (soma % 11);
-        if (checkDigit >= 10) checkDigit = 0;
-        
-        return checkDigit === parseInt(nif.charAt(8));
-    }
-
-    // --- CORREÇÃO 3: ESTABILIDADE DE CHECKOUT E INTEGRAÇÃO DO NIF ---
     async function validarEEnviarPedido() {
         if(carrinho.length === 0) return;
         
@@ -1344,6 +1583,9 @@
                 alert("Pedido confirmado e enviado para o restaurante!\nPode acompanhar o estado na área 'Os Meus Pedidos'.");
             }
 
+            if(temporizadorCarrinho) clearInterval(temporizadorCarrinho);
+            document.getElementById('cart-timer-warning').style.display = 'none';
+
             carrinho = []; 
             atualizarFloater(); 
             fecharCarrinho();
@@ -1356,7 +1598,7 @@
             console.error("ERRO COMPLETO:", e);
             alert("ERRO: " + (e.message || "Falha ao ligar à base de dados.")); 
         } finally {
-            btnFinal.innerHTML = `<i class="fas fa-check"></i> Confirmar e Enviar Pedido`;
+            btnFinal.innerHTML = `<i class="fas fa-check"></i> ` + (dictIdiomas[userLang].confirm_order || "Confirmar e Enviar");
             btnFinal.disabled = false;
         }
     }
@@ -1364,7 +1606,7 @@
     function renderizar(lista) {
         const container = document.getElementById('lista-produtos');
         if(lista.length === 0) {
-            container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding:50px; opacity:0.7;">Nenhum produto encontrado.</p>';
+            container.innerHTML = `<p style="grid-column: 1/-1; text-align:center; padding:50px; opacity:0.7;">Nenhum produto encontrado.</p>`;
             return;
         }
 
@@ -1375,7 +1617,7 @@
             
             let alergeniosHtml = '';
             if(p.alergenios && p.alergenios.length > 0) {
-                alergeniosHtml = `<div class="alergenios-badge" onclick="showLegal('alergenios'); event.stopPropagation();" style="cursor:pointer;" title="Ver detalhes"><i class="fas fa-exclamation-circle"></i> Contém: ${p.alergenios.join(', ')} <i class="fas fa-info-circle"></i></div>`;
+                alergeniosHtml = `<div class="alergenios-badge" onclick="showLegal('alergenios'); event.stopPropagation();" style="cursor:pointer;" title="Ver detalhes"><i class="fas fa-exclamation-circle"></i> <span data-i18n="contains">Contém:</span> ${p.alergenios.join(', ')} <i class="fas fa-info-circle"></i></div>`;
             }
 
             let htmlPreco = `<span class="price">${final}€</span>`;
@@ -1391,14 +1633,14 @@
 
             let badgeDia = '';
             if (p.dia_semana !== null && p.dia_semana !== undefined && p.dia_semana !== "") {
-                badgeDia = `<div style="font-size: 11px; color: var(--s); background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> Especial de ${nomeDiasInt[p.dia_semana]}</div>`;
+                badgeDia = `<div style="font-size: 11px; color: var(--s); background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> Especial de ${nomeDiasInt[p.dia_semana]}</div>`;
             }
 
-            let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> Esgotado</div>` : '';
+            let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> <span data-i18n="out_of_stock">Esgotado</span></div>` : '';
             
             let btnAdicionar = isEsgotado 
-                ? `<button disabled style="background:#94a3b8; color:white; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed;"><i class="fas fa-ban"></i> Produto Esgotado</button>`
-                : `<button onclick="checarPontoCarne(${p.id}, ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> Adicionar</button>`;
+                ? `<button disabled style="background:rgba(0,0,0,0.1); color:inherit; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed; opacity:0.6;"><i class="fas fa-ban"></i> <span data-i18n="product_out_stock">Produto Esgotado</span></button>`
+                : `<button onclick="checarPontoCarne(${p.id}, ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> <span data-i18n="add_cart">Adicionar</span></button>`;
 
             return `
                 <div class="card-container" id="card-${p.id}">
@@ -1415,9 +1657,9 @@
                                         ${htmlPreco}
                                     </div>
                                     ${badgeDia}
-                                    <div style="font-size: 0.75em; color: #94a3b8; margin-top: 4px; font-weight: 500;">IVA incluído</div>
+                                    <div style="font-size: 0.75em; opacity: 0.7; margin-top: 4px; font-weight: 500;" data-i18n="included_tax">IVA incluído</div>
                                 </div>
-                                <div class="btn-flip"><i class="fas fa-undo"></i> Ver Info</div>
+                                <div class="btn-flip"><i class="fas fa-undo"></i> <span data-i18n="see_info">Ver Info</span></div>
                             </div>
                         </div>
 
@@ -1426,13 +1668,15 @@
                             <div class="card-desc">${p.descricao ? parseMarkdownToMenuHTML(p.descricao) : 'Sem descrição disponível.'}</div>
                             ${alergeniosHtml}
                             ${btnAdicionar}
-                            <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;">
+                            <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;" data-i18n="back">
                                 Voltar
                             </button>
                         </div>
                     </div>
                 </div>`;
         }).join('');
+        
+        traduzirInterface(); // Reaplicar dicionário ao renderizar
     }
 
     function setCategoria(cat, btn) {
@@ -1452,23 +1696,6 @@
         );
         renderizar(filtrados);
     }
-
-    legalTexts.alergenios = `<h3 style="font-family: 'Playfair Display', serif; color: #2c3e50; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><i class="fas fa-info-circle"></i> Guia de Alergénios</h3>
-        <div style="font-size: 0.9em; line-height: 1.6; color: #475569; max-height: 60vh; overflow-y: auto;">
-            <p>Se tem dúvidas sobre os alergénios apresentados nos nossos pratos, consulte esta lista (Reg. 1169/2011):</p>
-            <ul style="padding-left: 20px; line-height: 1.6;">
-                <li><b>Glúten:</b> Trigo, centeio, cevada, aveia.</li>
-                <li><b>Lactose:</b> Leite de vaca, ovelha, cabra e derivados (queijo, manteiga).</li>
-                <li><b>Ovos:</b> Ovos de todas as aves e produtos que os contenham.</li>
-                <li><b>Peixe:</b> Todos os tipos de peixe.</li>
-                <li><b>Amendoim:</b> Amendoins, manteiga ou óleo.</li>
-                <li><b>Soja:</b> Grãos de soja, molho, tofu.</li>
-                <li><b>Marisco:</b> Crustáceos (camarão, sapateira) e Moluscos (ameijoas, polvo).</li>
-                <li><b>Frutos de Casca:</b> Amêndoas, avelãs, nozes, cajus.</li>
-                <li><b>Sésamo:</b> Sementes, pasta e óleo de sésamo.</li>
-                <li><b>Mostarda:</b> Grão, pó ou líquido.</li>
-            </ul>
-        </div>`;
 
     init();
 </script>
