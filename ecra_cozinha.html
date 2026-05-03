@@ -12,6 +12,7 @@
         :root { 
             --bg-dark: #0f172a; 
             --bg-card: #1e293b; 
+            --bg-radar: #172554;
             --text-light: #f8fafc; 
             --text-muted: #94a3b8;
             --primary: #3b82f6; 
@@ -19,6 +20,7 @@
             --success: #10b981; 
             --danger: #ef4444;
             --border-color: #334155;
+            --border-radar: #1e3a8a;
         }
         
         body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-light); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -37,9 +39,21 @@
         .status-dot { width: 14px; height: 14px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
 
-        /* GRELHA PRINCIPAL */
-        .main-content { display: flex; gap: 20px; padding: 20px; flex-grow: 1; overflow-x: auto; overflow-y: hidden; align-items: flex-start; scroll-behavior: smooth; }
+        /* GRELHA PRINCIPAL (DIVIDIDA EM DOIS) */
+        .workspace-container { display: flex; flex-grow: 1; overflow: hidden; height: calc(100vh - 75px); }
+
+        .linha-fogo { display: flex; gap: 20px; padding: 20px; flex-grow: 1; overflow-x: auto; overflow-y: hidden; align-items: flex-start; scroll-behavior: smooth; }
+        .linha-fogo::-webkit-scrollbar { height: 12px; } .linha-fogo::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
         
+        .radar-zone { width: 350px; min-width: 350px; background: var(--bg-radar); border-left: 2px solid var(--border-radar); display: flex; flex-direction: column; flex-shrink: 0; box-shadow: -10px 0 25px rgba(0,0,0,0.3); z-index: 5;}
+        .radar-header { padding: 20px; border-bottom: 2px solid var(--border-radar); font-weight: 900; font-size: 1.1em; color: #93c5fd; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);}
+        .radar-body { flex-grow: 1; overflow-y: auto; padding: 15px; }
+        .radar-body::-webkit-scrollbar { width: 6px; } .radar-body::-webkit-scrollbar-thumb { background: var(--border-radar); border-radius: 10px; }
+        
+        .radar-item { background: rgba(30, 58, 138, 0.4); border: 1px solid var(--border-radar); padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .radar-item .qtde { font-weight: 900; color: #60a5fa; font-size: 1.4em; background: rgba(59, 130, 246, 0.1); padding: 5px 12px; border-radius: 6px;}
+        .radar-item .nome { font-weight: 600; font-size: 1.1em; line-height: 1.2; text-align: right; flex-grow: 1; padding-left: 15px; color: #e0e7ff;}
+
         /* CARTÃO DE PEDIDO (TICKET) */
         .ticket { background: var(--bg-card); border-radius: 12px; width: 350px; min-width: 350px; display: flex; flex-direction: column; overflow: hidden; border: 2px solid var(--border-color); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; max-height: 100%; }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -75,7 +89,7 @@
         .btn-finish:hover { background: #059669; }
 
         /* ESTADO VAZIO */
-        .empty-kds { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); }
+        .empty-kds { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center;}
         .empty-kds i { font-size: 5em; margin-bottom: 20px; opacity: 0.2; }
         .empty-kds h2 { font-size: 2em; font-weight: 400; }
         
@@ -91,7 +105,7 @@
         .notificacao-toast.mostrar { bottom: 20px; }
         .notificacao-icon { font-size: 24px; animation: pulse-ring 2s infinite; }
         .piscar-ecra { animation: flash-border 1s infinite; }
-        @keyframes flash-border { 0% { box-shadow: inset 0 0 0px var(--warning); } 50% { box-shadow: inset 0 0 25px var(--warning); } 100% { box-shadow: inset 0 0 0px var(--warning); } }
+        @keyframes flash-border { 0% { box-shadow: inset 0 0 0px var(--warning); } 50% { box-shadow: inset 0 0 40px var(--danger); } 100% { box-shadow: inset 0 0 0px var(--warning); } }
     </style>
 </head>
 <body>
@@ -131,16 +145,29 @@
         </div>
         <div style="display:flex; gap: 15px; align-items: center;">
             <div style="color: var(--text-muted); font-size: 1.2em; font-weight: bold; background: var(--bg-card); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border-color);">
-                Pendentes: <span id="contador-pendentes" style="color: white;">0</span>
+                Fogo: <span id="contador-pendentes" style="color: white;">0</span>
             </div>
             <button onclick="logoutEmpregado()" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5em;" title="Sair do Turno"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
 
-    <div class="main-content" id="linha-producao">
+    <div class="workspace-container">
+        <!-- LINHA DE FOGO (A FAZER AGORA) -->
+        <div class="linha-fogo" id="linha-producao">
+        </div>
+        
+        <!-- RADAR DE RESERVAS (PRÓXIMAS 2 HORAS) -->
+        <div class="radar-zone">
+            <div class="radar-header">
+                <span><i class="fas fa-satellite-dish"></i> Radar de Reservas</span>
+                <i class="fas fa-clock" title="Para as próximas 2 horas"></i>
+            </div>
+            <div class="radar-body" id="radar-corpo">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
     </div>
 </div>
-
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
@@ -152,31 +179,26 @@
 
     // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO) ---
     async function init() {
-        // Verifica se existe sessão no Supabase (O Tablet está autorizado?)
         const { data: { session } } = await _sb.auth.getSession();
         
         if (session) {
-            // O tablet está autorizado. Vai buscar os dados da loja deste Lojista.
             const { data: loja } = await _sb.from('lojas').select('id, nome').eq('user_id', session.user.id).limit(1).maybeSingle();
             
             if (loja) {
                 minhaLojaId = loja.id;
                 nomeLojaAtual = loja.nome;
                 
-                // Agora verificamos se o Empregado já fez login (Sessão Local)
                 const op = sessionStorage.getItem('pv_coz_operador');
                 if (op) {
                     nomeOperadorAtual = op;
                     arrancarCozinha();
                 } else {
-                    // Prepara o ecrã de PIN carregando a equipa
                     carregarEquipaParaLogin();
                 }
             } else {
                 alert("Erro: Não foi encontrada nenhuma loja associada a esta conta.");
             }
         } else {
-            // O tablet não tem sessão. Mostra o ecrã de Autorização do Lojista.
             document.getElementById('auth-screen').style.display = 'flex';
         }
     }
@@ -198,7 +220,6 @@
             btn.innerHTML = '<i class="fas fa-shield-alt"></i> Autorizar Dispositivo';
             btn.disabled = false;
         } else { 
-            // Autorização bem sucedida! Oculta o modal e recarrega para entrar na Camada 2
             document.getElementById('auth-screen').style.display = 'none';
             init(); 
         }
@@ -228,7 +249,7 @@
         }
     }
 
-async function fazerLoginEmpregado() {
+    async function fazerLoginEmpregado() {
         const empId = document.getElementById('select-empregado').value;
         const pinDigitado = document.getElementById('pin-empregado').value;
 
@@ -238,9 +259,6 @@ async function fazerLoginEmpregado() {
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; 
         btn.disabled = true;
 
-        // Tenta colocar a página em Ecrã Inteiro (Fullscreen API)
-        // Colocamos isto aqui em cima porque o browser exige que o pedido de fullscreen 
-        // aconteça "perto" do clique físico do utilizador, antes de operações demoradas (como o await da DB).
         try {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -268,11 +286,9 @@ async function fazerLoginEmpregado() {
     }
 
     function logoutEmpregado() { 
-        // Remove apenas a sessão do empregado. O tablet continua autorizado!
         sessionStorage.removeItem('pv_coz_operador');
         document.getElementById('kds-screen').style.display = 'none';
         
-        // Limpa o PIN e esconde os campos
         document.getElementById('select-empregado').value = "";
         document.getElementById('pin-empregado').value = "";
         document.getElementById('pin-empregado').style.display = 'none';
@@ -289,17 +305,22 @@ async function fazerLoginEmpregado() {
         document.getElementById('nome-restaurante').innerText = "Cozinha - " + nomeLojaAtual;
         document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${nomeOperadorAtual}`;
 
-        carregarPedidos();
+        carregarPedidosFogo();
+        carregarRadarReservas();
 
         if(timerAtualizacao) clearInterval(timerAtualizacao);
-        timerAtualizacao = setInterval(carregarPedidos, 60000);
+        timerAtualizacao = setInterval(() => {
+            carregarPedidosFogo();
+            carregarRadarReservas();
+        }, 30000); // 30s refresh para garantir consistência visual.
 
         _sb.channel('cozinha-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
-                if(payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && payload.new.estado === 'pendente')) {
+                if(payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && payload.new.estado === 'preparacao')) {
                     tocarSinoCozinha();
                 }
-                carregarPedidos();
+                carregarPedidosFogo();
+                carregarRadarReservas();
             })
             .subscribe();
             
@@ -317,8 +338,8 @@ async function fazerLoginEmpregado() {
         return palavrasBloqueadas.some(palavra => nomeLower.includes(palavra));
     }
 
-    // --- CARREGAR E DESENHAR TICKETS ---
-    async function carregarPedidos() {
+    // --- CARREGAR TICKETS (LINHA DE FOGO) ---
+    async function carregarPedidosFogo() {
         const { data: pedidos } = await _sb.from('pedidos')
             .select('*')
             .eq('loja_id', minhaLojaId)
@@ -347,8 +368,8 @@ async function fazerLoginEmpregado() {
             div.innerHTML = `
                 <div class="empty-kds">
                     <i class="fas fa-fire-burner"></i>
-                    <h2>A Cozinha está limpa!</h2>
-                    <p>A aguardar novos pratos...</p>
+                    <h2>A Linha de Fogo está limpa!</h2>
+                    <p>Sem pedidos pendentes no momento...</p>
                 </div>`;
             return;
         }
@@ -409,11 +430,65 @@ async function fazerLoginEmpregado() {
         }).join('');
     }
 
+    // --- NOVO MOTOR: RADAR DE RESERVAS (PRÓXIMAS 2 HORAS) ---
+    async function carregarRadarReservas() {
+        // Limite de 2 Horas no futuro
+        const agora = new Date();
+        const limiteFuturo = new Date(agora.getTime() + (2 * 60 * 60 * 1000));
+        
+        // Puxa as reservas (pendentes ou confirmadas que ainda não saltaram para a linha de fogo)
+        const { data: reservas } = await _sb.from('pedidos')
+            .select('*')
+            .eq('loja_id', minhaLojaId)
+            .in('estado', ['aguarda_confirmacao', 'reserva_confirmada']);
+            
+        const divRadar = document.getElementById('radar-corpo');
+        
+        if (!reservas || reservas.length === 0) {
+            divRadar.innerHTML = `<div class="empty-kds" style="height: 100%;"><i class="fas fa-satellite" style="font-size: 3em; margin-bottom: 10px;"></i><h3 style="margin:0; font-size: 1.2em;">Sem reservas</h3><p style="font-size: 0.8em;">Radar limpo</p></div>`;
+            return;
+        }
+
+        let agregadorRadar = {};
+        let temComida = false;
+
+        reservas.forEach(p => {
+            if (!p.data_agendada) return;
+            const dataAgendada = new Date(p.data_agendada);
+            
+            // Só interessa o que for acontecer daqui a menos de 2 horas e que não ficou já para trás.
+            if (dataAgendada > agora && dataAgendada <= limiteFuturo) {
+                p.itens.forEach(item => {
+                    if (!ignorarNaCozinha(item)) {
+                        temComida = true;
+                        if (!agregadorRadar[item.nome]) agregadorRadar[item.nome] = 0;
+                        agregadorRadar[item.nome] += item.qtde;
+                    }
+                });
+            }
+        });
+
+        if (!temComida) {
+            divRadar.innerHTML = `<div class="empty-kds" style="height: 100%;"><i class="fas fa-satellite" style="font-size: 3em; margin-bottom: 10px;"></i><h3 style="margin:0; font-size: 1.2em;">Sem Previsões</h3><p style="font-size: 0.8em;">(Próximas 2 Horas)</p></div>`;
+            return;
+        }
+
+        // Ordena por maior quantidade
+        const arrayAgregado = Object.entries(agregadorRadar).sort((a, b) => b[1] - a[1]);
+
+        divRadar.innerHTML = arrayAgregado.map(([nome, qtde]) => `
+            <div class="radar-item">
+                <div class="qtde">${qtde}x</div>
+                <div class="nome">${nome}</div>
+            </div>
+        `).join('');
+    }
+
     async function mudarEstado(id, novoEstado) {
         await _sb.from('pedidos').update({ estado: novoEstado }).eq('id', id);
     }
 
-    // Som nativo da campainha
+    // Som de Alta Intensidade
     function tocarSinoCozinha() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -421,13 +496,13 @@ async function fazerLoginEmpregado() {
             const gain = ctx.createGain();
             osc.connect(gain);
             gain.connect(ctx.destination);
-            osc.type = "triangle";
+            osc.type = "square"; // Som mais abrasivo/mecânico para cortar o barulho da cozinha
             osc.frequency.setValueAtTime(800, ctx.currentTime);
             gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.1); // Volume Alto
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
             osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.8);
+            osc.stop(ctx.currentTime + 1.2);
         } catch(e) {}
     }
 
@@ -436,13 +511,12 @@ async function fazerLoginEmpregado() {
         canalNotificacoesCozinha = _sb.channel('alertas-cozinha')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: 'loja_id=eq.' + minhaLojaId }, 
                 (payload) => {
-                    dispararAlertaCozinha(payload.new.mensagem);
-                    carregarPedidos();
+                    dispararAlertaMensagemCozinha(payload.new.mensagem);
                 }
             ).subscribe();
     }
 
-    function dispararAlertaCozinha(mensagem) {
+    function dispararAlertaMensagemCozinha(mensagem) {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = ctx.createOscillator();
@@ -452,10 +526,10 @@ async function fazerLoginEmpregado() {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(300, ctx.currentTime);
             gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.2);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+            gain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.0);
             osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 1.5);
+            osc.stop(ctx.currentTime + 2.0);
         } catch(e) {}
 
         document.body.classList.add('piscar-ecra');
@@ -464,9 +538,9 @@ async function fazerLoginEmpregado() {
         const toast = document.createElement('div');
         toast.className = 'notificacao-toast no-print';
         toast.innerHTML = `
-            <i class="fas fa-bell notificacao-icon"></i>
+            <i class="fas fa-bullhorn notificacao-icon"></i>
             <div style="flex: 1;">
-                <b style="display:block; font-size:14px; margin-bottom:4px;">Notificação:</b>
+                <b style="display:block; font-size:14px; margin-bottom:4px;">Aviso da Sala:</b>
                 <span style="font-size:13px; line-height:1.4;">${mensagem}</span>
             </div>
             <button onclick="this.parentElement.classList.remove('mostrar'); setTimeout(() => this.parentElement.remove(), 500); document.body.classList.remove('piscar-ecra');" style="background:transparent; color:white; border:none; width:auto; padding:5px; font-size:18px; cursor:pointer;">
@@ -481,10 +555,9 @@ async function fazerLoginEmpregado() {
                 toast.classList.remove('mostrar');
                 setTimeout(() => toast.remove(), 500);
             }
-        }, 8000);
+        }, 10000);
     }
 
-    // Arranca a verificação do nível de segurança
     init();
 </script>
 </body>
