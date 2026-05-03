@@ -181,12 +181,23 @@
     let timerAtualizacao = null; 
     let canalNotificacoesCozinha = null;
 
-    // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO) ---
+// --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO) ---
     async function init() {
+        // 1. Lemos primeiro o URL para saber em que loja estamos
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('loja');
+
+        if (!slug) {
+            alert("Erro: Falta o identificador da loja no link (ex: ?loja=restaurante-santos).");
+            return;
+        }
+
+        // 2. Verificamos se o tablet está autorizado (Sessão iniciada)
         const { data: { session } } = await _sb.auth.getSession();
         
         if (session) {
-            const { data: loja } = await _sb.from('lojas').select('id, nome').eq('user_id', session.user.id).limit(1).maybeSingle();
+            // 3. Em vez de procurar pelo user_id, procuramos diretamente pelo SLUG
+            const { data: loja } = await _sb.from('lojas').select('id, nome').eq('slug', slug).limit(1).maybeSingle();
             
             if (loja) {
                 minhaLojaId = loja.id;
@@ -200,9 +211,10 @@
                     carregarEquipaParaLogin();
                 }
             } else {
-                alert("Erro: Não foi encontrada nenhuma loja associada a esta conta.");
+                alert(`Erro: Não foi encontrada nenhuma loja com o slug '${slug}'.`);
             }
         } else {
+            // Sem sessão, pede o login do Lojista
             document.getElementById('auth-screen').style.display = 'flex';
         }
     }
