@@ -443,7 +443,6 @@
         <p style="font-size: 0.75em; opacity: 0.6; margin-top: 20px;">© 2026 Portugal Vision. <span data-i18n="rights_reserved">Todos os direitos reservados.</span></p>
     </div>
 </div>
-
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
@@ -533,7 +532,7 @@
             recover_email_desc: "Entrez le numéro de téléphone associé à votre compte pour vérifier votre e-mail.", find_email: "Trouver E-mail",
             my_orders: "Mes Commandes", loading_orders: "Chargement des commandes...", logout: "Déconnexion",
             your_order: "Votre Commande", total: "Total:", how_to_order: "1. Comment souhaitez-vous commander?", takeaway: "À Emporter", reservation: "Réservation",
-            date: "Date:", time: "Heure (intervalles de 30 min):", people_count: "Nb de Personnes (Réservation uniquement)",
+            date: "Date:", time: "Heure (intervalles de 30 min):", people_count: "Nb de Personas (Réservation uniquement)",
             need_nif: "Avez-vous besoin du numéro de TVA (NIF) sur la facture?", yes: "Oui", no: "Non", nif_placeholder: "Votre numéro de TVA (NIF)", nif_warning: "Après finalisation, il ne sera plus possible d'ajouter un NIF, la facture étant émise au moment du paiement.",
             payment_method: "2. Méthode de Paiement", exclusive_mbway: "Paiement Exclusif par MBWay", mbway_instructions: "Votre commande ne sera transmise à la cuisine qu'après l'envoi du reçu de transfert au nº",
             confirm_order: "Confirmer et Envoyer la Commande", ask_bill: "Demander l'Addition", payment_method_simple: "Méthode de Paiement", cash: "💵 Espèces", card: "💳 Carte Bancaire", meal_ticket: "🎫 Ticket Restaurant",
@@ -1126,6 +1125,14 @@
         const slug = urlParams.get('loja');
         let paramMesa = urlParams.get('mesa'); 
 
+        // 1ª CORREÇÃO (BLOQUEIO SILENCIOSO DE URL)
+        if (!slug && !paramMesa) {
+            document.getElementById('motivo-fecho').innerText = "Falta o identificador da loja no link (ex: ?loja=demo).";
+            document.getElementById('block-screen').style.display = 'flex';
+            document.getElementById('v-nome').innerText = "Erro de Link";
+            return;
+        }
+
         const TTL_HOURS = 2;
         const storedSessaoObj = JSON.parse(localStorage.getItem('pv_mesa_sessao'));
         
@@ -1145,8 +1152,6 @@
                 localStorage.removeItem('pv_mesa_sessao');
             }
         }
-
-        if (!slug) return;
 
         const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
         
@@ -1236,7 +1241,10 @@
 
         registarVisita(loja.id, loja.views_total || 0);
 
-        const { data: produtos } = await _sb.from('produtos').select('*, taxa_iva').eq('loja_id', loja.id).eq('oculto', false);
+        // 2ª e 3ª CORREÇÃO (COLISÃO DO IVA E EXIBIÇÃO DE ERROS)
+        const { data: produtos, error: errProd } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
+        if (errProd) console.error("Erro ao puxar produtos da Base de Dados:", errProd);
+        
         todosProdutos = produtos || [];
         
         const cats = [...new Set(todosProdutos.map(p => p.categoria))].filter(Boolean);
@@ -1551,9 +1559,6 @@
                         nifCliente = document.getElementById('cli-nif').value;
                         querNif = true;
                         if(!nifCliente) throw new Error("Selecionou NIF. Por favor insira o número.");
-                        if(!validarNIF(nifCliente)) {
-                            throw new Error("O NIF inserido é inválido. Por favor, verifique e corrija.");
-                        }
                     }
                 } else if (tipoPedido === 'reserva') {
                     numPessoas = document.getElementById('cli-pessoas').value;
@@ -1596,7 +1601,7 @@
             console.error("ERRO COMPLETO:", e);
             alert("ERRO: " + (e.message || "Falha ao ligar à base de dados.")); 
         } finally {
-            btnFinal.innerHTML = `<i class="fas fa-check"></i> ` + (dictIdiomas[userLang].confirm_order || "Confirmar e Enviar");
+            btnFinal.innerHTML = `<i class="fas fa-check"></i> ` + (dictIdiomas[userLang].confirm_order || "Confirmar e Enviar Pedido");
             btnFinal.disabled = false;
         }
     }
