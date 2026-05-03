@@ -575,8 +575,8 @@
     };
 
     function parseMarkdownToMenuHTML(text) {
-        if(!text) return '';
-        let lines = text.split('\n');
+        if(!text || typeof text !== 'string') return '';
+        let lines = String(text).split('\n');
         let html = '';
         let ingredientes = [];
         
@@ -1245,7 +1245,6 @@
 
         renderizar(todosProdutos);
         
-        // Garante que o stock cativo é libertado se a aba for fechada
         window.addEventListener('beforeunload', () => {
             if(carrinho.length > 0) {
                 carrinho.forEach(item => libertarStockBaseDados(item.id, item.qtde));
@@ -1258,7 +1257,7 @@
     function checarPontoCarne(idProduto, precoRaw, desconto, event) {
         event.stopPropagation();
         
-        const p = todosProdutos.find(item => item.id === idProduto);
+        const p = todosProdutos.find(item => String(item.id) === String(idProduto));
         if (!p) return;
 
         const catLower = (p.categoria || "").toLowerCase();
@@ -1498,7 +1497,6 @@
 
             item.qtde += delta;
             
-            // Renovar temporizador sempre que a pessoa interage ativamente com o carrinho
             tempoFinalExpiracao = new Date(new Date().getTime() + minutosCativos * 60000);
 
             if (item.qtde <= 0) { carrinho = carrinho.filter(i => String(i.idUnico) !== String(idUnicoCarrinho)); }
@@ -1616,8 +1614,16 @@
             const final = calcularPrecoFinal(precoFixo, desc).toFixed(2);
             
             let alergeniosHtml = '';
-            if(p.alergenios && p.alergenios.length > 0) {
-                alergeniosHtml = `<div class="alergenios-badge" onclick="showLegal('alergenios'); event.stopPropagation();" style="cursor:pointer;" title="Ver detalhes"><i class="fas fa-exclamation-circle"></i> <span data-i18n="contains">Contém:</span> ${p.alergenios.join(', ')} <i class="fas fa-info-circle"></i></div>`;
+            if (p.alergenios) {
+                let listaAlg = [];
+                if (Array.isArray(p.alergenios)) {
+                    listaAlg = p.alergenios;
+                } else if (typeof p.alergenios === 'string') {
+                    try { listaAlg = JSON.parse(p.alergenios); } catch(e) { listaAlg = p.alergenios.replace(/[{}]/g, '').split(',').map(s=>s.trim()); }
+                }
+                if (listaAlg.length > 0 && listaAlg[0] !== "") {
+                    alergeniosHtml = `<div class="alergenios-badge" onclick="showLegal('alergenios'); event.stopPropagation();" style="cursor:pointer;" title="Ver detalhes"><i class="fas fa-exclamation-circle"></i> <span data-i18n="contains">Contém:</span> ${listaAlg.join(', ')} <i class="fas fa-info-circle"></i></div>`;
+                }
             }
 
             let htmlPreco = `<span class="price">${final}€</span>`;
@@ -1640,12 +1646,12 @@
             
             let btnAdicionar = isEsgotado 
                 ? `<button disabled style="background:rgba(0,0,0,0.1); color:inherit; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed; opacity:0.6;"><i class="fas fa-ban"></i> <span data-i18n="product_out_stock">Produto Esgotado</span></button>`
-                : `<button onclick="checarPontoCarne(${p.id}, ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> <span data-i18n="add_cart">Adicionar</span></button>`;
+                : `<button onclick="checarPontoCarne('${p.id}', ${precoFixo}, ${desc}, event)" class="btn-add-cart"><i class="fas fa-cart-plus"></i> <span data-i18n="add_cart">Adicionar</span></button>`;
 
             return `
                 <div class="card-container" id="card-${p.id}">
                     <div class="card-inner">
-                        <div class="card-front" onclick="virarCartao(${p.id})">
+                        <div class="card-front" onclick="virarCartao('${p.id}')">
                             <div class="img-container">
                                 ${badgeEsgotado}
                                 <img src="${p.imagem_url || 'https://via.placeholder.com/400x300?text=Sem+Imagem'}" loading="lazy">
@@ -1668,7 +1674,7 @@
                             <div class="card-desc">${p.descricao ? parseMarkdownToMenuHTML(p.descricao) : 'Sem descrição disponível.'}</div>
                             ${alergeniosHtml}
                             ${btnAdicionar}
-                            <button onclick="virarCartao(${p.id}); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;" data-i18n="back">
+                            <button onclick="virarCartao('${p.id}'); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;" data-i18n="back">
                                 Voltar
                             </button>
                         </div>
@@ -1676,7 +1682,7 @@
                 </div>`;
         }).join('');
         
-        traduzirInterface(); // Reaplicar dicionário ao renderizar
+        traduzirInterface(); 
     }
 
     function setCategoria(cat, btn) {
