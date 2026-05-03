@@ -554,6 +554,10 @@
             userLang = 'en'; 
         }
 
+        // ---> INJEÇÃO DE ELITE: Atualiza a tag HTML dinamicamente <---
+        document.documentElement.lang = userLang;
+        // ------------------------------------------------------------
+
         const trans = dictIdiomas[userLang];
         
         document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -1243,7 +1247,12 @@
 
         // 2ª e 3ª CORREÇÃO (COLISÃO DO IVA E EXIBIÇÃO DE ERROS)
         const { data: produtos, error: errProd } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
-        if (errProd) console.error("Erro ao puxar produtos da Base de Dados:", errProd);
+        
+        if (errProd) {
+            console.error("Erro ao puxar produtos da Base de Dados:", errProd);
+            document.getElementById('lista-produtos').innerHTML = `<p style="grid-column: 1/-1; text-align:center; padding:50px; color: red;">Erro ao carregar produtos. Contacte o suporte.</p>`;
+            return;
+        }
         
         todosProdutos = produtos || [];
         
