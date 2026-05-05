@@ -36,13 +36,14 @@
             --card-bg: white;
             --btn-bg: white;
             --text-color: #334155;
+            --bg-size: auto;
         }
         
         body { 
             font-family: 'Inter', sans-serif; 
-            background: var(--bg); 
+            background-color: var(--bg); 
             background-image: var(--bg-image);
-            background-size: cover;
+            background-size: var(--bg-size);
             background-attachment: fixed;
             background-position: center;
             color: var(--text-color); 
@@ -55,8 +56,15 @@
 
         #block-screen { position: fixed; inset: 0; background: white; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
 
-        .header { background: transparent; padding: 60px 20px 20px; text-align: center; position: relative; z-index: 2; border: none; }
-        .logo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        /* HEADER E BANDEIRAS DE IDIOMA */
+        .header { background: transparent; padding: 30px 20px 20px; text-align: center; position: relative; z-index: 2; border: none; display: flex; flex-direction: column; align-items: center;}
+        
+        .language-flags { display: flex; gap: 10px; margin-bottom: 20px; background: var(--card-bg); padding: 8px 15px; border-radius: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);}
+        .flag-btn { font-size: 1.5em; cursor: pointer; transition: 0.2s; opacity: 0.5; filter: grayscale(100%); }
+        .flag-btn:hover { transform: scale(1.1); }
+        .flag-btn.active { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
+
+        .logo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 15px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.1);}
         
         #boas-vindas-cliente { font-size: 1.1em; color: var(--s); font-weight: 600; margin-top: 10px; display: none; animation: fadeIn 1s; }
@@ -189,7 +197,6 @@
         .ponto-btn { border: 1px solid rgba(0,0,0,0.1); background: transparent; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; color: var(--text-color); display: block; width: 100%; text-align: center; margin-bottom: 8px;}
         .ponto-btn:hover { background: rgba(0,0,0,0.05); border-color: var(--p); }
         
-        /* Links de recuperação */
         .recovery-links { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 15px; padding: 0 5px; }
         .recovery-links a { color: var(--s); cursor: pointer; font-weight: 600; text-decoration: none; }
         .recovery-links a:hover { text-decoration: underline; }
@@ -224,7 +231,7 @@
     </div>
 </div>
 
-<!-- MODAL DE AUTENTICAÇÃO E RECUPERAÇÃO -->
+<!-- MODAL DE AUTENTICAÇÃO -->
 <div id="authModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="document.getElementById('authModal').style.display='none'">×</span>
@@ -239,13 +246,11 @@
         <div id="form-login">
             <input type="email" id="auth-email-log" class="input-form" placeholder="O seu E-mail" data-i18n-ph="email">
             <input type="password" id="auth-pass-log" class="input-form" placeholder="Password" data-i18n-ph="password">
-            
             <div class="recovery-links">
                 <a onclick="switchAuth('reset-email')" data-i18n="forgot_email">Esqueceu-se do E-mail?</a>
                 <a onclick="switchAuth('reset-pass')" data-i18n="forgot_password">Esqueceu-se da Password?</a>
             </div>
-
-            <button class="btn-checkout" onclick="clienteLogin()" data-i18n="login_btn">Entrar</button>
+            <button class="btn-checkout" onclick="clienteLogin('modal')" data-i18n="login_btn">Entrar</button>
         </div>
 
         <div id="form-reg" style="display:none;">
@@ -259,10 +264,9 @@
                 <span><span data-i18n="read_accept">Li e aceito os</span> <a onclick="showLegal('termos'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;" data-i18n="terms">Termos e Condições</a> e a <a onclick="showLegal('privacidade'); event.stopPropagation();" style="color: var(--s); font-weight: bold; cursor: pointer; text-decoration: underline;" data-i18n="privacy">Política de Privacidade</a>.</span>
             </label>
 
-            <button class="btn-checkout" onclick="clienteRegisto()" data-i18n="create_account">Criar Conta</button>
+            <button class="btn-checkout" onclick="clienteRegisto('modal')" data-i18n="create_account">Criar Conta</button>
         </div>
 
-        <!-- FORM RECUPERAR PASSWORD -->
         <div id="form-reset-pass" style="display:none;">
             <p style="font-size:13px; margin-top:0;" data-i18n="recover_pass_desc">Insira o e-mail da sua conta para receber um link de redefinição.</p>
             <input type="email" id="reset-pass-email" class="input-form" placeholder="E-mail da Conta" data-i18n-ph="email">
@@ -270,7 +274,6 @@
             <a onclick="switchAuth('login')" style="display:block; text-align:center; margin-top:15px; color:var(--s); cursor:pointer; font-weight:600; font-size:13px;" data-i18n="back_to_login">Voltar ao Login</a>
         </div>
 
-        <!-- FORM RECUPERAR E-MAIL VIA TELEFONE -->
         <div id="form-reset-email" style="display:none;">
             <p style="font-size:13px; margin-top:0;" data-i18n="recover_email_desc">Insira o número de telemóvel associado à sua conta para verificarmos o seu e-mail.</p>
             <input type="tel" id="reset-email-phone" class="input-form" placeholder="Número de Telemóvel" data-i18n-ph="phone">
@@ -292,6 +295,7 @@
     </div>
 </div>
 
+<!-- CART MODAL MODIFICADO -->
 <div id="cartModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="fecharCarrinho()">×</span>
@@ -309,7 +313,36 @@
                 <i class="fas fa-stopwatch"></i> <span data-i18n="stock_reserved">Stock reservado por 15 minutos.</span> (<span id="cart-timer-countdown">15:00</span>)
             </div>
 
-            <div id="checkout-options-wrapper">
+            <!-- INJEÇÃO PONTO 2: LOGIN EMBUTIDO NO CARRINHO -->
+            <div id="cart-login-section" style="display:none; margin-top: 20px; padding: 20px; background: rgba(59, 130, 246, 0.05); border: 1px dashed var(--s); border-radius: 12px;">
+                <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="auth_title">Identificação (Obrigatória)</h4>
+                <p style="font-size: 12px; color: #64748b; margin-top:0;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
+                
+                <div class="auth-tab">
+                    <div id="cart-tab-login" class="active" onclick="switchCartAuth('login')" data-i18n="login">Entrar</div>
+                    <div id="cart-tab-reg" onclick="switchCartAuth('reg')" data-i18n="register">Registar</div>
+                </div>
+
+                <div id="cart-form-login">
+                    <input type="email" id="cart-auth-email-log" class="input-form" placeholder="O seu E-mail" data-i18n-ph="email" style="background: white;">
+                    <input type="password" id="cart-auth-pass-log" class="input-form" placeholder="Password" data-i18n-ph="password" style="background: white;">
+                    <button class="btn-checkout" style="padding: 12px;" onclick="clienteLogin('cart')" data-i18n="login_btn">Entrar e Continuar</button>
+                </div>
+
+                <div id="cart-form-reg" style="display:none;">
+                    <input type="text" id="cart-auth-nome-reg" class="input-form" placeholder="O seu Nome" data-i18n-ph="your_name" style="background: white;">
+                    <input type="tel" id="cart-auth-tel-reg" class="input-form" placeholder="Telemóvel" data-i18n-ph="phone" style="background: white;">
+                    <input type="email" id="cart-auth-email-reg" class="input-form" placeholder="E-mail" data-i18n-ph="email" style="background: white;">
+                    <input type="password" id="cart-auth-pass-reg" class="input-form" placeholder="Password Segura" data-i18n-ph="secure_password" style="background: white;">
+                    <button class="btn-checkout" style="padding: 12px;" onclick="clienteRegisto('cart')" data-i18n="create_account">Criar Conta e Continuar</button>
+                </div>
+            </div>
+
+            <!-- OPÇÕES DE CHECKOUT APENAS VISÍVEIS SE LOGADO -->
+            <div id="checkout-options-wrapper" style="display:none;">
+                
+                <div id="erro-data-dia" style="display:none; background: #fef2f2; color: #991b1b; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin-top: 15px; font-weight: bold; font-size: 13px;"></div>
+
                 <div id="order-type-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1);">
                     <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="how_to_order">1. Como deseja encomendar?</h4>
                     <div class="order-type-box">
@@ -353,11 +386,11 @@
                         <span data-i18n="mbway_instructions">O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº</span> <strong id="mbway-phone"></strong>.
                     </div>
                 </div>
-            </div>
 
-            <button id="btn-checkout-final" class="btn-checkout" onclick="validarEEnviarPedido()">
-                <i class="fas fa-check"></i> <span data-i18n="confirm_order">Confirmar e Enviar Pedido</span>
-            </button>
+                <button id="btn-checkout-final" class="btn-checkout" onclick="validarEEnviarPedido()">
+                    <i class="fas fa-check"></i> <span data-i18n="confirm_order">Confirmar e Enviar Pedido</span>
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -393,6 +426,14 @@
 </div>
 
 <div class="header">
+    <!-- INJEÇÃO PONTO 4: BANDEIRAS DE IDIOMA MANUAIS -->
+    <div class="language-flags">
+        <span class="flag-btn active" id="flag-pt" onclick="forcarIdioma('pt')" title="Português">🇵🇹</span>
+        <span class="flag-btn" id="flag-en" onclick="forcarIdioma('en')" title="English">🇬🇧</span>
+        <span class="flag-btn" id="flag-es" onclick="forcarIdioma('es')" title="Español">🇪🇸</span>
+        <span class="flag-btn" id="flag-fr" onclick="forcarIdioma('fr')" title="Français">🇫🇷</span>
+    </div>
+
     <img id="v-logo" class="logo" src="" style="display:none;">
     <h2 id="v-nome" data-i18n="loading">A carregar...</h2>
     <div id="boas-vindas-cliente"></div>
@@ -459,7 +500,6 @@
     let tempCarnePreco = null;
     let tempCarneDesconto = null;
 
-    // VARIÁVEIS DE STOCK CATIVO (Soft Reserve)
     let temporizadorCarrinho = null;
     let minutosCativos = 15;
     let tempoFinalExpiracao = null;
@@ -484,7 +524,7 @@
             confirm_order: "Confirmar e Enviar Pedido", ask_bill: "Pedir a Conta", payment_method_simple: "Método de Pagamento", cash: "💵 Dinheiro", card: "💳 Multibanco", meal_ticket: "🎫 Ticket Refeição",
             need_nif_bill: "Deseja fatura com NIF?", send_request: "Enviar Pedido", search_menu: "Pesquisar no menu...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Livro de Reclamações", rights_reserved: "Todos os direitos reservados.",
-            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Adicionar", out_of_stock: "Esgotado", product_out_stock: "Produto Esgotado", included_tax: "IVA incluído", contains: "Contém:", see_info: "Ver Info", back: "Voltar"
+            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Adicionar", out_of_stock: "Esgotado", product_out_stock: "Produto Esgotado", included_tax: "IVA incluído", contains: "Contém:", see_info: "Ver Info", back: "Voltar", exclusive_day: "Exclusivo"
         },
         en: {
             loading: "Loading...", access_denied: "Access Denied", website_offline: "This website is currently offline.",
@@ -502,7 +542,7 @@
             confirm_order: "Confirm and Send Order", ask_bill: "Ask for the Bill", payment_method_simple: "Payment Method", cash: "💵 Cash", card: "💳 Credit Card", meal_ticket: "🎫 Meal Ticket",
             need_nif_bill: "Do you need an invoice with Tax ID?", send_request: "Send Request", search_menu: "Search menu...", view_order: "View Order",
             cookies: "Cookies", complaints_book: "Complaints Book", rights_reserved: "All rights reserved.",
-            stock_reserved: "Stock reserved for 15 minutes.", add_cart: "Add to cart", out_of_stock: "Sold Out", product_out_stock: "Out of Stock", included_tax: "Tax included", contains: "Contains:", see_info: "See Info", back: "Back"
+            stock_reserved: "Stock reserved for 15 minutes.", add_cart: "Add to cart", out_of_stock: "Sold Out", product_out_stock: "Out of Stock", included_tax: "Tax included", contains: "Contains:", see_info: "See Info", back: "Back", exclusive_day: "Exclusive"
         },
         es: {
             loading: "Cargando...", access_denied: "Acceso Denegado", website_offline: "Este sitio web está inactivo en este momento.",
@@ -520,7 +560,7 @@
             confirm_order: "Confirmar y Enviar Pedido", ask_bill: "Pedir la Cuenta", payment_method_simple: "Método de Pago", cash: "💵 Efectivo", card: "💳 Tarjeta", meal_ticket: "🎫 Ticket Restaurante",
             need_nif_bill: "¿Desea factura con NIF?", send_request: "Enviar Pedido", search_menu: "Buscar en el menú...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Libro de Reclamaciones", rights_reserved: "Todos los derechos reservados.",
-            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Volver"
+            stock_reserved: "Stock reservado por 15 minutes.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Volver", exclusive_day: "Exclusivo"
         },
         fr: {
             loading: "Chargement...", access_denied: "Accès Refusé", website_offline: "Ce site est actuellement inactif.",
@@ -538,23 +578,35 @@
             confirm_order: "Confirmer et Envoyer la Commande", ask_bill: "Demander l'Addition", payment_method_simple: "Méthode de Paiement", cash: "💵 Espèces", card: "💳 Carte Bancaire", meal_ticket: "🎫 Ticket Restaurant",
             need_nif_bill: "Souhaitez-vous une facture avec TVA?", send_request: "Envoyer la Demande", search_menu: "Rechercher dans le menu...", view_order: "Voir Commande",
             cookies: "Cookies", complaints_book: "Livre de Réclamations", rights_reserved: "Tous droits réservés.",
-            stock_reserved: "Stock réservé pour 15 minutes.", add_cart: "Ajouter", out_of_stock: "Épuisé", product_out_stock: "Produit Épuisé", included_tax: "TTC", contains: "Contient:", see_info: "Voir Info", back: "Retour"
+            stock_reserved: "Stock réservé pour 15 minutes.", add_cart: "Ajouter", out_of_stock: "Épuisé", product_out_stock: "Produit Épuisé", included_tax: "TTC", contains: "Contient:", see_info: "Voir Info", back: "Retour", exclusive_day: "Exclusif"
         }
     };
 
-    let userLang = 'pt';
+    let userLang = localStorage.getItem('pv_idioma') || 'pt';
+
+    // INJEÇÃO PONTO 4: TRADUÇÃO MANUAL COM BANDEIRAS
+    function forcarIdioma(lang) {
+        userLang = lang;
+        localStorage.setItem('pv_idioma', lang);
+        traduzirInterface();
+        if(todosProdutos.length > 0) renderizar(todosProdutos); // Re-renderiza para atualizar textos dinâmicos (IVA, Esgotado)
+    }
 
     function traduzirInterface() {
-        const browserLang = navigator.language || navigator.userLanguage;
-        const shortLang = browserLang.substring(0, 2).toLowerCase();
-        
-        if (dictIdiomas[shortLang]) {
-            userLang = shortLang;
-        } else {
-            userLang = 'en'; 
+        // Se for a primeira visita, tenta ler do browser
+        if (!localStorage.getItem('pv_idioma')) {
+            const browserLang = navigator.language || navigator.userLanguage;
+            const shortLang = browserLang.substring(0, 2).toLowerCase();
+            userLang = dictIdiomas[shortLang] ? shortLang : 'en';
+            localStorage.setItem('pv_idioma', userLang);
         }
 
         document.documentElement.lang = userLang;
+
+        // Atualiza a opacidade das bandeiras no topo
+        document.querySelectorAll('.flag-btn').forEach(btn => btn.classList.remove('active'));
+        const activeFlag = document.getElementById(`flag-${userLang}`);
+        if(activeFlag) activeFlag.classList.add('active');
 
         const trans = dictIdiomas[userLang];
         
@@ -633,12 +685,10 @@
 
     async function chamarMesa(tipo) {
         if (!lojaAtual || !mesaAtual) return;
-        
         if (tipo === 'conta') {
             document.getElementById('pedirContaModal').style.display = 'flex';
             return;
         }
-
         enviarChamadaSala(tipo, false, null, null);
     }
 
@@ -658,11 +708,7 @@
 
     async function enviarChamadaSala(tipo, querNif, nifCliente, metodoPagamento) {
         try {
-            const dados = { 
-                loja_id: lojaAtual.id, 
-                mesa: mesaAtual, 
-                tipo_chamada: tipo 
-            };
+            const dados = { loja_id: lojaAtual.id, mesa: mesaAtual, tipo_chamada: tipo };
 
             if (tipo === 'conta') {
                 dados.quer_nif = querNif;
@@ -679,6 +725,7 @@
         }
     }
 
+    // INJEÇÃO PONTO 2: ADAPTADO PARA RECEBER CONTEXTO DE MODAL OU CARRINHO
     async function verificarSessaoCliente() {
         const { data: { session } } = await _sb.auth.getSession();
         if(session) {
@@ -691,11 +738,16 @@
                 saudacao.innerText = `Seja bem vinda(o), ${clienteAtual.nome} 👋`;
                 saudacao.style.display = 'block';
 
+                // Se o cliente tem sessão, o carrinho mostra as opções de pagamento e esconde o login
+                document.getElementById('cart-login-section').style.display = 'none';
+                document.getElementById('checkout-options-wrapper').style.display = 'block';
+
                 iniciarOuvinteCliente();
             }
         }
     }
 
+    // FUNÇÕES ORIGINAIS DE LOGIN (MODAL EXTERNO)
     function switchAuth(mode) {
         document.getElementById('tab-login').classList.remove('active');
         document.getElementById('tab-reg').classList.remove('active');
@@ -713,50 +765,81 @@
         }
     }
 
-    async function clienteRegisto() {
-        const n = document.getElementById('auth-nome-reg').value; 
-        const t = document.getElementById('auth-tel-reg').value;
-        const e = document.getElementById('auth-email-reg').value; 
-        const p = document.getElementById('auth-pass-reg').value;
-        const aceitouTermos = document.getElementById('auth-termos-reg').checked;
+    // FUNÇÕES INJETADAS PONTO 2: LOGIN EMBUTIDO NO CARRINHO
+    function switchCartAuth(mode) {
+        document.getElementById('cart-tab-login').classList.remove('active');
+        document.getElementById('cart-tab-reg').classList.remove('active');
+        document.getElementById('cart-form-login').style.display = 'none';
+        document.getElementById('cart-form-reg').style.display = 'none';
+
+        document.getElementById(`cart-tab-${mode}`).classList.add('active');
+        document.getElementById(`cart-form-${mode}`).style.display = 'block';
+    }
+
+    async function clienteRegisto(contexto = 'modal') {
+        const isCart = contexto === 'cart';
+        const prefix = isCart ? 'cart-' : '';
+
+        const n = document.getElementById(prefix + 'auth-nome-reg').value; 
+        const t = document.getElementById(prefix + 'auth-tel-reg').value;
+        const e = document.getElementById(prefix + 'auth-email-reg').value; 
+        const p = document.getElementById(prefix + 'auth-pass-reg').value;
+        
+        let aceitouTermos = true; // Se for no cart, assume true para acelerar, senao valida.
+        if(!isCart) aceitouTermos = document.getElementById('auth-termos-reg').checked;
 
         if(!n || !t || !e || !p) return alert("Preencha todos os campos.");
-        if(!aceitouTermos) return alert("Por favor, confirme que leu e aceita os Termos e Condições para prosseguir.");
+        if(!isCart && !aceitouTermos) return alert("Por favor, confirme que leu e aceita os Termos e Condições para prosseguir.");
         
-        const btn = document.querySelector('#form-reg button');
-        btn.innerText = "A criar conta..."; btn.disabled = true;
+        const btn = document.querySelector(`#${prefix}form-reg button`);
+        const originalText = btn.innerText;
+        btn.innerText = "A processar..."; btn.disabled = true;
 
         const { data, error } = await _sb.auth.signUp({ email: e, password: p });
         if(error) {
-            btn.innerText = dictIdiomas[userLang].create_account || "Criar Conta"; btn.disabled = false;
+            btn.innerText = originalText; btn.disabled = false;
             return alert(error.message);
         }
         
         const { data: clienteData, error: dbError } = await _sb.from('clientes_app').insert([{ auth_id: data.user.id, nome: n, telefone: t, email: e }]).select().single();
         
         if (dbError) {
-             btn.innerText = dictIdiomas[userLang].create_account || "Criar Conta"; btn.disabled = false;
+             btn.innerText = originalText; btn.disabled = false;
              return alert("Erro ao salvar dados do cliente: " + dbError.message);
         }
 
-        alert("Conta criada com sucesso! A página será recarregada para iniciar a sua sessão.");
-        window.location.reload(); 
+        if(isCart) {
+            await verificarSessaoCliente(); // Atualiza UI sem recarregar a página
+            alert("Conta criada com sucesso! Pode continuar com a sua encomenda.");
+        } else {
+            alert("Conta criada com sucesso! A página será recarregada.");
+            window.location.reload(); 
+        }
     }
 
-    async function clienteLogin() {
-        const e = document.getElementById('auth-email-log').value; const p = document.getElementById('auth-pass-log').value;
+    async function clienteLogin(contexto = 'modal') {
+        const isCart = contexto === 'cart';
+        const prefix = isCart ? 'cart-' : '';
+
+        const e = document.getElementById(prefix + 'auth-email-log').value; 
+        const p = document.getElementById(prefix + 'auth-pass-log').value;
         if(!e || !p) return alert("Preencha o e-mail e a password.");
 
-        const btn = document.querySelector('#form-login button');
+        const btn = document.querySelector(`#${prefix}form-login button`);
+        const originalText = btn.innerText;
         btn.innerText = "A entrar..."; btn.disabled = true;
 
         const { data, error } = await _sb.auth.signInWithPassword({ email: e, password: p });
         if(error) {
-            btn.innerText = dictIdiomas[userLang].login_btn || "Entrar"; btn.disabled = false;
+            btn.innerText = originalText; btn.disabled = false;
             return alert("Credenciais inválidas.");
         }
         
-        window.location.reload(); 
+        if(isCart) {
+            await verificarSessaoCliente(); // Atualiza UI sem recarregar a página
+        } else {
+            window.location.reload(); 
+        }
     }
     
     async function clienteRecuperarPass() {
@@ -905,7 +988,6 @@
         }
     }
 
-    // --- CORREÇÃO PONTO 3: ROTEAMENTO EXATO DE AVISOS NO CLIENTE ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         if(!clienteAtual && !mesaAtual) return;
@@ -937,7 +1019,6 @@
                 }
 
                 if (!mesaAtual && mesaAtribuida && payload.new.status_presenca === 'sentado' && (tipoPedido === 'reserva' || tipoPedido === 'mesa')) {
-                    // Transição Fantasma: O cliente vai para a mesa sem avisos ruidosos.
                     setTimeout(() => {
                         const sep = window.location.search ? '&' : '?';
                         window.location.href = window.location.href + sep + 'mesa=' + mesaAtribuida;
@@ -945,13 +1026,11 @@
                     return; 
                 }
 
-                // Atualização visual silenciosa de fundo
                 const modalConta = document.getElementById('contaModal');
                 if (modalConta && modalConta.style.display === 'block') {
                     abrirConta();
                 }
 
-                // Apenas dispara som e Toast em 'pendente' ou 'pronto' SE o estado tiver acabado de mudar
                 if (novoEstado !== oldEstado) {
                     if(novoEstado === 'pendente') {
                         try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
@@ -999,6 +1078,8 @@
         const tipo = document.querySelector('input[name="tipo_pedido"]:checked')?.value || 'levantamento';
         const dataStr = document.getElementById('cli-data').value;
         const selectEl = document.getElementById('cli-hora');
+        const erroDia = document.getElementById('erro-data-dia');
+        const btnCheckout = document.getElementById('btn-checkout-final');
         
         if(!dataStr) return;
 
@@ -1011,15 +1092,36 @@
 
         const diaSemanaDb = (dataSelecionada.getDay() + 6) % 7; 
         
+        // INJEÇÃO PONTO 3: TRAVA DE SEGURANÇA PARA ESPECIAIS DO DIA
+        let pratoInvalido = null;
+        for (let item of carrinho) {
+            const pDb = todosProdutos.find(p => String(p.id) === String(item.id));
+            if (pDb && pDb.dia_semana !== null && pDb.dia_semana !== "") {
+                if (parseInt(pDb.dia_semana) !== diaSemanaDb) {
+                    pratoInvalido = { nome: pDb.nome, diaCorreto: nomeDiasInt[pDb.dia_semana] };
+                    break;
+                }
+            }
+        }
+
+        if (pratoInvalido) {
+            erroDia.innerHTML = `<i class="fas fa-ban"></i> Atenção: O artigo <b>${pratoInvalido.nome}</b> é um Exclusivo de ${pratoInvalido.diaCorreto}. Por favor, altere a data ou remova o artigo do carrinho.`;
+            erroDia.style.display = 'block';
+            selectEl.innerHTML = '<option value="" disabled selected>Data Indisponível</option>';
+            btnCheckout.disabled = true;
+            return;
+        } else {
+            erroDia.style.display = 'none';
+        }
+
         const horariosLoja = lojaAtual.horarios || {};
-        
         let horarioHoje = horariosLoja[diaSemanaDb] || { status: 'aberto', m1: '12:00', m2: '15:00', t1: '19:00', t2: '23:00' };
 
         selectEl.innerHTML = ''; 
         
         if (horarioHoje.status === 'fechado') {
             selectEl.innerHTML = '<option value="" disabled selected>Encerrado neste dia</option>';
-            document.getElementById('btn-checkout-final').disabled = true;
+            btnCheckout.disabled = true;
             return;
         }
 
@@ -1064,10 +1166,10 @@
 
         if (optionsHtml === '') {
             selectEl.innerHTML = '<option value="" disabled selected>Sem horários disponíveis</option>';
-            document.getElementById('btn-checkout-final').disabled = true;
+            btnCheckout.disabled = true;
         } else {
             selectEl.innerHTML = '<option value="" disabled selected>Escolha a hora...</option>' + optionsHtml;
-            document.getElementById('btn-checkout-final').disabled = false;
+            btnCheckout.disabled = false;
         }
     }
 
@@ -1083,19 +1185,22 @@
         return { aberto: true, motivo: "" };
     }
 
+    // INJEÇÃO PONTO 1: WALLPAPERS DINÂMICOS
     function aplicarTemaVisual(temaId) {
         const root = document.documentElement;
         if (temaId === 'minimalista') {
-            root.style.setProperty('--bg', '#ffffff');
-            root.style.setProperty('--bg-image', 'none');
+            root.style.setProperty('--bg', '#f8fafc');
+            root.style.setProperty('--bg-image', 'radial-gradient(#cbd5e1 1px, transparent 1px)');
+            root.style.setProperty('--bg-size', '20px 20px');
             root.style.setProperty('--p', '#1e293b');
             root.style.setProperty('--s', '#64748b');
-            root.style.setProperty('--card-bg', '#f8fafc');
+            root.style.setProperty('--card-bg', '#ffffff');
             root.style.setProperty('--btn-bg', '#f1f5f9');
             root.style.setProperty('--text-color', '#334155');
         } else if (temaId === 'elegante') {
             root.style.setProperty('--bg', '#1c1917');
-            root.style.setProperty('--bg-image', 'radial-gradient(circle at center, #292524 0%, #0c0a09 100%)');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.08\'/%3E%3C/svg%3E"), radial-gradient(circle at center, #292524 0%, #0c0a09 100%)');
+            root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#d97706'); 
             root.style.setProperty('--s', '#a8a29e');
             root.style.setProperty('--card-bg', '#292524');
@@ -1103,7 +1208,8 @@
             root.style.setProperty('--text-color', '#fafaf9');
         } else if (temaId === 'bege') {
             root.style.setProperty('--bg', '#fdf8f5');
-            root.style.setProperty('--bg-image', 'linear-gradient(135deg, #fdf8f5 0%, #fef3c7 100%)');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.05\'/%3E%3C/svg%3E"), linear-gradient(135deg, #fdf8f5 0%, #fef3c7 100%)');
+            root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#451a03');
             root.style.setProperty('--s', '#d97706');
             root.style.setProperty('--card-bg', '#ffffff');
@@ -1111,7 +1217,8 @@
             root.style.setProperty('--text-color', '#78350f');
         } else {
             root.style.setProperty('--bg', '#fdfbf7');
-            root.style.setProperty('--bg-image', 'none');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
+            root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#2c3e50'); 
             root.style.setProperty('--s', '#a89f91');
             root.style.setProperty('--card-bg', '#ffffff');
@@ -1184,7 +1291,6 @@
                 .limit(1);
 
             if (!pedidosAtivos || pedidosAtivos.length === 0) {
-                console.log("Limpeza de Segurança Automática");
                 localStorage.removeItem('pv_mesa_sessao');
                 const urlLimpo = window.location.href.split('&mesa=')[0].split('?mesa=')[0];
                 window.location.href = urlLimpo;
@@ -1245,7 +1351,6 @@
         const { data: produtos, error: errProd } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
         
         if (errProd) {
-            console.error("Erro ao puxar produtos da Base de Dados:", errProd);
             document.getElementById('lista-produtos').innerHTML = `<p style="grid-column: 1/-1; text-align:center; padding:50px; color: red;">Erro ao carregar produtos. Contacte o suporte.</p>`;
             return;
         }
@@ -1291,6 +1396,9 @@
         if ((éCarne && palavrasAtivadoras.some(palavra => textoTudo.includes(palavra)) && !temIgnorado) || (temAtivadorNoNome && !temIgnorado)) {
             precisaDePonto = true;
         }
+
+        // Se Lojista forçou a pergunta no Backend, sobrepõe-se à inteligência do frontend
+        if (p.pede_ponto === true) precisaDePonto = true;
 
         if (precisaDePonto) {
             tempCarneId = idProduto;
@@ -1358,9 +1466,9 @@
 
     async function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, pontoOpicional, botaoDOM) {
         if (!mesaAtual && !clienteAtual) {
-            document.getElementById('authModal').style.display = 'flex';
-            alert(dictIdiomas[userLang].auth_subtitle || "Por favor inicie sessão ou crie conta primeiro.");
-            return; 
+            // Em vez de bloquear e abrir modal inteiro, avisa suavemente e abre o carrinho.
+            // O carrinho tem agora o login lá dentro (Ponto 2).
+            abrirCarrinho();
         }
 
         const prodNaBase = todosProdutos.find(p => String(p.id) === String(idProduto));
@@ -1427,40 +1535,7 @@
         }
     }
 
-    function toggleOrderFields() {
-        const isReserva = document.querySelector('input[name="tipo_pedido"]:checked').value === 'reserva';
-        
-        const cliPessoas = document.getElementById('cli-pessoas');
-        if (cliPessoas) {
-            cliPessoas.style.display = isReserva ? 'block' : 'none';
-            if (!isReserva) cliPessoas.value = ''; 
-        }
-        
-        const paymentSection = document.getElementById('payment-section');
-        const nifSection = document.getElementById('nif-section');
-        
-        if (paymentSection) paymentSection.style.display = isReserva ? 'none' : 'block';
-        if (nifSection) nifSection.style.display = isReserva ? 'none' : 'block';
-        
-        if (typeof atualizarHorariosDisponiveis === 'function') {
-            atualizarHorariosDisponiveis();
-        }
-    }
-
-    function toggleNifField() {
-        const opt = document.querySelector('input[name="opcao_nif"]:checked').value;
-        const inputNif = document.getElementById('cli-nif');
-        const avisoNif = document.getElementById('nif-aviso');
-        
-        if (opt === 'sim') {
-            inputNif.style.display = 'block';
-            avisoNif.style.display = 'none';
-        } else {
-            inputNif.style.display = 'none';
-            avisoNif.style.display = 'block';
-        }
-    }
-
+    // Adaptado para reagir no Carrinho Interno
     function abrirCarrinho() {
         const container = document.getElementById('cart-items-container');
         let html = '';
@@ -1485,6 +1560,17 @@
 
         container.innerHTML = html;
         document.getElementById('cart-total-price').innerText = totalPreco.toFixed(2) + '€';
+        
+        // Verifica se precisa de forçar login (Ponto 2)
+        if (!mesaAtual && !clienteAtual && carrinho.length > 0) {
+            document.getElementById('cart-login-section').style.display = 'block';
+            document.getElementById('checkout-options-wrapper').style.display = 'none';
+        } else if (carrinho.length > 0) {
+            document.getElementById('cart-login-section').style.display = 'none';
+            document.getElementById('checkout-options-wrapper').style.display = 'block';
+            atualizarHorariosDisponiveis(); // Força update para apanhar erro de dias
+        }
+
         document.getElementById('cartModal').style.display = 'block';
     }
 
@@ -1521,9 +1607,9 @@
     async function validarEEnviarPedido() {
         if(carrinho.length === 0) return;
         
+        // Proteção extra
         if(!mesaAtual && !clienteAtual) {
-            fecharCarrinho();
-            document.getElementById('authModal').style.display = 'block';
+            abrirCarrinho();
             return;
         }
 
@@ -1649,7 +1735,7 @@
 
             let badgeDia = '';
             if (p.dia_semana !== null && p.dia_semana !== undefined && p.dia_semana !== "") {
-                badgeDia = `<div style="font-size: 11px; color: var(--s); background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> Especial de ${nomeDiasInt[p.dia_semana]}</div>`;
+                badgeDia = `<div style="font-size: 11px; color: var(--s); background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> <span data-i18n="exclusive_day">Exclusivo</span>: ${nomeDiasInt[p.dia_semana]}</div>`;
             }
 
             let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> <span data-i18n="out_of_stock">Esgotado</span></div>` : '';
