@@ -56,13 +56,13 @@
 
         #block-screen { position: fixed; inset: 0; background: white; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
 
-        /* HEADER E BANDEIRAS DE IDIOMA */
+        /* HEADER E BANDEIRAS DE IDIOMA EM TEXTO */
         .header { background: transparent; padding: 30px 20px 20px; text-align: center; position: relative; z-index: 2; border: none; display: flex; flex-direction: column; align-items: center;}
         
-        .language-flags { display: flex; gap: 10px; margin-bottom: 20px; background: var(--card-bg); padding: 8px 15px; border-radius: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);}
-        .flag-btn { font-size: 1.5em; cursor: pointer; transition: 0.2s; opacity: 0.5; filter: grayscale(100%); }
-        .flag-btn:hover { transform: scale(1.1); }
-        .flag-btn.active { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
+        .language-flags { display: flex; gap: 8px; margin-bottom: 25px; background: var(--card-bg); padding: 6px 12px; border-radius: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);}
+        .flag-btn { font-size: 13px; font-weight: 800; cursor: pointer; transition: 0.2s; color: var(--text-color); opacity: 0.4; padding: 6px 12px; border-radius: 20px; letter-spacing: 1px;}
+        .flag-btn:hover { opacity: 0.8; background: rgba(0,0,0,0.05); }
+        .flag-btn.active { opacity: 1; background: var(--p); color: white; }
 
         .logo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 15px; }
         .header h2 { font-family: 'Playfair Display', serif; font-size: 2.2em; margin: 0; color: var(--p); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.1);}
@@ -73,8 +73,10 @@
         .cat-btn { background: var(--btn-bg); border: 1px solid rgba(0,0,0,0.1); color: var(--text-color); padding: 10px 22px; border-radius: 30px; cursor: pointer; transition: 0.3s; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
         .cat-btn.active { background: var(--p); color: white; border-color: var(--p); }
 
-        .search-container { padding: 0 20px 30px; max-width: 600px; margin: auto; position: relative; z-index: 2;}
+        .search-container { padding: 0 20px 20px; max-width: 600px; margin: auto; position: relative; z-index: 2;}
         #search-input { width: 100%; padding: 16px 25px; border-radius: 50px; border: 1px solid rgba(0,0,0,0.1); background: var(--btn-bg); font-size: 16px; outline: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: var(--text-color); transition: 0.3s;}
+
+        .legal-banner { text-align: center; font-size: 11px; color: var(--s); max-width: 800px; margin: 0 auto 20px; padding: 0 20px; font-weight: 600; line-height: 1.5; opacity: 0.8; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding: 20px; max-width: 1200px; margin: auto; position: relative; z-index: 2; }
         
@@ -149,7 +151,7 @@
 
         .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: var(--p); }
         
-        .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-family: inherit; font-size: 14px; background: rgba(0,0,0,0.02); color: var(--text-color); transition: 0.3s; margin-bottom: 5px; }
+        .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-family: inherit; font-size: 14px; background: rgba(0,0,0,0.03); color: inherit; transition: 0.3s; margin-bottom: 5px; }
         .input-form:focus { outline: none; border-color: var(--ok); background: transparent; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
         
         .order-type-box, .payment-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
@@ -295,7 +297,7 @@
     </div>
 </div>
 
-<!-- CART MODAL MODIFICADO -->
+<!-- CART MODAL MODIFICADO COM LOGIN EMBUTIDO E TRAVA DE DIA -->
 <div id="cartModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="fecharCarrinho()">×</span>
@@ -313,7 +315,7 @@
                 <i class="fas fa-stopwatch"></i> <span data-i18n="stock_reserved">Stock reservado por 15 minutos.</span> (<span id="cart-timer-countdown">15:00</span>)
             </div>
 
-            <!-- INJEÇÃO PONTO 2: LOGIN EMBUTIDO NO CARRINHO -->
+            <!-- INJEÇÃO PONTO 2: LOGIN EMBUTIDO NO CARRINHO (Sem cores forçadas) -->
             <div id="cart-login-section" style="display:none; margin-top: 20px; padding: 20px; background: rgba(59, 130, 246, 0.05); border: 1px dashed var(--s); border-radius: 12px;">
                 <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="auth_title">Identificação (Obrigatória)</h4>
                 <p style="font-size: 12px; color: #64748b; margin-top:0;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
@@ -324,16 +326,20 @@
                 </div>
 
                 <div id="cart-form-login">
-                    <input type="email" id="cart-auth-email-log" class="input-form" placeholder="O seu E-mail" data-i18n-ph="email" style="background: white;">
-                    <input type="password" id="cart-auth-pass-log" class="input-form" placeholder="Password" data-i18n-ph="password" style="background: white;">
+                    <input type="email" id="cart-auth-email-log" class="input-form" placeholder="O seu E-mail" data-i18n-ph="email">
+                    <input type="password" id="cart-auth-pass-log" class="input-form" placeholder="Password" data-i18n-ph="password">
+                    <div class="recovery-links">
+                        <a onclick="fecharCarrinho(); document.getElementById('authModal').style.display='flex'; switchAuth('reset-email');" data-i18n="forgot_email">Esqueceu-se do E-mail?</a>
+                        <a onclick="fecharCarrinho(); document.getElementById('authModal').style.display='flex'; switchAuth('reset-pass');" data-i18n="forgot_password">Esqueceu-se da Password?</a>
+                    </div>
                     <button class="btn-checkout" style="padding: 12px;" onclick="clienteLogin('cart')" data-i18n="login_btn">Entrar e Continuar</button>
                 </div>
 
                 <div id="cart-form-reg" style="display:none;">
-                    <input type="text" id="cart-auth-nome-reg" class="input-form" placeholder="O seu Nome" data-i18n-ph="your_name" style="background: white;">
-                    <input type="tel" id="cart-auth-tel-reg" class="input-form" placeholder="Telemóvel" data-i18n-ph="phone" style="background: white;">
-                    <input type="email" id="cart-auth-email-reg" class="input-form" placeholder="E-mail" data-i18n-ph="email" style="background: white;">
-                    <input type="password" id="cart-auth-pass-reg" class="input-form" placeholder="Password Segura" data-i18n-ph="secure_password" style="background: white;">
+                    <input type="text" id="cart-auth-nome-reg" class="input-form" placeholder="O seu Nome" data-i18n-ph="your_name">
+                    <input type="tel" id="cart-auth-tel-reg" class="input-form" placeholder="Telemóvel" data-i18n-ph="phone">
+                    <input type="email" id="cart-auth-email-reg" class="input-form" placeholder="E-mail" data-i18n-ph="email">
+                    <input type="password" id="cart-auth-pass-reg" class="input-form" placeholder="Password Segura" data-i18n-ph="secure_password">
                     <button class="btn-checkout" style="padding: 12px;" onclick="clienteRegisto('cart')" data-i18n="create_account">Criar Conta e Continuar</button>
                 </div>
             </div>
@@ -428,10 +434,10 @@
 <div class="header">
     <!-- INJEÇÃO PONTO 4: BANDEIRAS DE IDIOMA MANUAIS -->
     <div class="language-flags">
-        <span class="flag-btn active" id="flag-pt" onclick="forcarIdioma('pt')" title="Português">🇵🇹</span>
-        <span class="flag-btn" id="flag-en" onclick="forcarIdioma('en')" title="English">🇬🇧</span>
-        <span class="flag-btn" id="flag-es" onclick="forcarIdioma('es')" title="Español">🇪🇸</span>
-        <span class="flag-btn" id="flag-fr" onclick="forcarIdioma('fr')" title="Français">🇫🇷</span>
+        <span class="flag-btn active" id="flag-pt" onclick="forcarIdioma('pt')" title="Português">PT</span>
+        <span class="flag-btn" id="flag-en" onclick="forcarIdioma('en')" title="English">EN</span>
+        <span class="flag-btn" id="flag-es" onclick="forcarIdioma('es')" title="Español">ES</span>
+        <span class="flag-btn" id="flag-fr" onclick="forcarIdioma('fr')" title="Français">FR</span>
     </div>
 
     <img id="v-logo" class="logo" src="" style="display:none;">
@@ -441,6 +447,11 @@
 </div>
 
 <div class="categories-container" id="cat-list"></div>
+
+<!-- INJEÇÃO PONTO 3: AVISO LEGAL DA LEI 10/2015 -->
+<div class="legal-banner" data-i18n="legal_cover">
+    "Nenhum prato, produto alimentar ou bebida, incluindo o couvert, pode ser cobrado se não for solicitado pelo cliente ou por este for inutilizado." (DL n.º 10/2015)
+</div>
 
 <div class="search-container">
     <input type="text" id="search-input" placeholder="Pesquisar no menu..." data-i18n-ph="search_menu">
@@ -524,7 +535,8 @@
             confirm_order: "Confirmar e Enviar Pedido", ask_bill: "Pedir a Conta", payment_method_simple: "Método de Pagamento", cash: "💵 Dinheiro", card: "💳 Multibanco", meal_ticket: "🎫 Ticket Refeição",
             need_nif_bill: "Deseja fatura com NIF?", send_request: "Enviar Pedido", search_menu: "Pesquisar no menu...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Livro de Reclamações", rights_reserved: "Todos os direitos reservados.",
-            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Adicionar", out_of_stock: "Esgotado", product_out_stock: "Produto Esgotado", included_tax: "IVA incluído", contains: "Contém:", see_info: "Ver Info", back: "Voltar", exclusive_day: "Exclusivo"
+            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Adicionar", out_of_stock: "Esgotado", product_out_stock: "Produto Esgotado", included_tax: "IVA incluído", contains: "Contém:", see_info: "Ver Info", back: "Voltar", exclusive_day: "Exclusivo",
+            legal_cover: '"Nenhum prato, produto alimentar ou bebida, incluindo o couvert, pode ser cobrado se não for solicitado pelo cliente ou por este for inutilizado." (DL n.º 10/2015)'
         },
         en: {
             loading: "Loading...", access_denied: "Access Denied", website_offline: "This website is currently offline.",
@@ -542,7 +554,8 @@
             confirm_order: "Confirm and Send Order", ask_bill: "Ask for the Bill", payment_method_simple: "Payment Method", cash: "💵 Cash", card: "💳 Credit Card", meal_ticket: "🎫 Meal Ticket",
             need_nif_bill: "Do you need an invoice with Tax ID?", send_request: "Send Request", search_menu: "Search menu...", view_order: "View Order",
             cookies: "Cookies", complaints_book: "Complaints Book", rights_reserved: "All rights reserved.",
-            stock_reserved: "Stock reserved for 15 minutes.", add_cart: "Add to cart", out_of_stock: "Sold Out", product_out_stock: "Out of Stock", included_tax: "Tax included", contains: "Contains:", see_info: "See Info", back: "Back", exclusive_day: "Exclusive"
+            stock_reserved: "Stock reserved for 15 minutes.", add_cart: "Add to cart", out_of_stock: "Sold Out", product_out_stock: "Out of Stock", included_tax: "Tax included", contains: "Contains:", see_info: "See Info", back: "Back", exclusive_day: "Exclusive",
+            legal_cover: '"No dish, food product, or beverage, including the cover charge, may be charged if not requested by the customer or if left unused." (DL n.º 10/2015)'
         },
         es: {
             loading: "Cargando...", access_denied: "Acceso Denegado", website_offline: "Este sitio web está inactivo en este momento.",
@@ -560,7 +573,8 @@
             confirm_order: "Confirmar y Enviar Pedido", ask_bill: "Pedir la Cuenta", payment_method_simple: "Método de Pago", cash: "💵 Efectivo", card: "💳 Tarjeta", meal_ticket: "🎫 Ticket Restaurante",
             need_nif_bill: "¿Desea factura con NIF?", send_request: "Enviar Pedido", search_menu: "Buscar en el menú...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Libro de Reclamaciones", rights_reserved: "Todos los derechos reservados.",
-            stock_reserved: "Stock reservado por 15 minutes.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Volver", exclusive_day: "Exclusivo"
+            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Volver", exclusive_day: "Exclusivo",
+            legal_cover: '"Ningún plato, producto alimenticio o bebida, incluido el cubierto, podrá ser cobrado si no fue solicitado por el cliente o si no fue consumido." (DL n.º 10/2015)'
         },
         fr: {
             loading: "Chargement...", access_denied: "Accès Refusé", website_offline: "Ce site est actuellement inactif.",
@@ -578,7 +592,8 @@
             confirm_order: "Confirmer et Envoyer la Commande", ask_bill: "Demander l'Addition", payment_method_simple: "Méthode de Paiement", cash: "💵 Espèces", card: "💳 Carte Bancaire", meal_ticket: "🎫 Ticket Restaurant",
             need_nif_bill: "Souhaitez-vous une facture avec TVA?", send_request: "Envoyer la Demande", search_menu: "Rechercher dans le menu...", view_order: "Voir Commande",
             cookies: "Cookies", complaints_book: "Livre de Réclamations", rights_reserved: "Tous droits réservés.",
-            stock_reserved: "Stock réservé pour 15 minutes.", add_cart: "Ajouter", out_of_stock: "Épuisé", product_out_stock: "Produit Épuisé", included_tax: "TTC", contains: "Contient:", see_info: "Voir Info", back: "Retour", exclusive_day: "Exclusif"
+            stock_reserved: "Stock réservé pour 15 minutes.", add_cart: "Ajouter", out_of_stock: "Épuisé", product_out_stock: "Produit Épuisé", included_tax: "TTC", contains: "Contient:", see_info: "Voir Info", back: "Retour", exclusive_day: "Exclusif",
+            legal_cover: '"Aucun plat, produit alimentaire ou boisson, y compris le couvert, ne peut être facturé s\'il n\'a pas été commandé par le client ou s\'il n\'a pas été consommé." (DL n.º 10/2015)'
         }
     };
 
@@ -988,6 +1003,7 @@
         }
     }
 
+    // --- CORREÇÃO PONTO 3: ROTEAMENTO EXATO DE AVISOS NO CLIENTE ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         if(!clienteAtual && !mesaAtual) return;
@@ -1019,6 +1035,7 @@
                 }
 
                 if (!mesaAtual && mesaAtribuida && payload.new.status_presenca === 'sentado' && (tipoPedido === 'reserva' || tipoPedido === 'mesa')) {
+                    // Transição Fantasma: O cliente vai para a mesa sem avisos ruidosos.
                     setTimeout(() => {
                         const sep = window.location.search ? '&' : '?';
                         window.location.href = window.location.href + sep + 'mesa=' + mesaAtribuida;
@@ -1026,11 +1043,13 @@
                     return; 
                 }
 
+                // Atualização visual silenciosa de fundo
                 const modalConta = document.getElementById('contaModal');
                 if (modalConta && modalConta.style.display === 'block') {
                     abrirConta();
                 }
 
+                // Apenas dispara som e Toast em 'pendente' ou 'pronto' SE o estado tiver acabado de mudar
                 if (novoEstado !== oldEstado) {
                     if(novoEstado === 'pendente') {
                         try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
@@ -1217,7 +1236,7 @@
             root.style.setProperty('--text-color', '#78350f');
         } else {
             root.style.setProperty('--bg', '#fdfbf7');
-            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
             root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#2c3e50'); 
             root.style.setProperty('--s', '#a89f91');
@@ -1228,146 +1247,162 @@
     }
 
     async function init() {
-        traduzirInterface();
+        try {
+            traduzirInterface();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('loja');
-        let paramMesa = urlParams.get('mesa'); 
+            const urlParams = new URLSearchParams(window.location.search);
+            const slug = urlParams.get('loja');
+            let paramMesa = urlParams.get('mesa'); 
 
-        if (!slug && !paramMesa) {
-            document.getElementById('motivo-fecho').innerText = "Falta o identificador da loja no link (ex: ?loja=demo).";
-            document.getElementById('block-screen').style.display = 'flex';
-            document.getElementById('v-nome').innerText = "Erro de Link";
-            return;
-        }
+            if (!slug && !paramMesa) {
+                document.getElementById('motivo-fecho').innerText = "Falta o identificador da loja no link (ex: ?loja=demo).";
+                document.getElementById('block-screen').style.display = 'flex';
+                document.getElementById('v-nome').innerText = "Erro de Link";
+                return;
+            }
 
-        const TTL_HOURS = 2;
-        const storedSessaoObj = JSON.parse(localStorage.getItem('pv_mesa_sessao'));
-        
-        if (paramMesa) {
-            localStorage.setItem('pv_mesa_sessao', JSON.stringify({ mesa: paramMesa, timestamp: Date.now() }));
-            mesaAtual = paramMesa;
-        } else if (storedSessaoObj) {
-            const hoursPassed = (Date.now() - storedSessaoObj.timestamp) / (1000 * 60 * 60);
-            if (hoursPassed < TTL_HOURS) {
-                mesaAtual = storedSessaoObj.mesa;
-                if (!urlParams.has('mesa')) {
-                    const sep = window.location.search ? '&' : '?';
-                    window.location.href = window.location.href + sep + 'mesa=' + mesaAtual;
+            const TTL_HOURS = 2;
+            const storedSessaoObj = JSON.parse(localStorage.getItem('pv_mesa_sessao'));
+            
+            if (paramMesa) {
+                localStorage.setItem('pv_mesa_sessao', JSON.stringify({ mesa: paramMesa, timestamp: Date.now() }));
+                mesaAtual = paramMesa;
+            } else if (storedSessaoObj) {
+                const hoursPassed = (Date.now() - storedSessaoObj.timestamp) / (1000 * 60 * 60);
+                if (hoursPassed < TTL_HOURS) {
+                    mesaAtual = storedSessaoObj.mesa;
+                    if (!urlParams.has('mesa')) {
+                        const sep = window.location.search ? '&' : '?';
+                        window.location.href = window.location.href + sep + 'mesa=' + mesaAtual;
+                        return; 
+                    }
+                } else {
+                    localStorage.removeItem('pv_mesa_sessao');
+                }
+            }
+
+            const { data: loja, error: erroLoja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
+            
+            if (erroLoja || !loja) {
+                document.getElementById('motivo-fecho').innerText = "Loja não encontrada ou erro de ligação.";
+                document.getElementById('block-screen').style.display = 'flex';
+                document.getElementById('v-nome').innerText = "Erro";
+                return;
+            }
+            
+            const estadoLoja = verificarSeAberto(loja);
+            if (loja.status !== 'ativa' || loja.status_catalogo === false || !estadoLoja.aberto) {
+                document.getElementById('motivo-fecho').innerText = !estadoLoja.aberto ? estadoLoja.motivo : dictIdiomas[userLang].website_offline;
+                document.getElementById('block-screen').style.display = 'flex';
+                return;
+            }
+
+            lojaAtual = loja;
+            aplicarTemaVisual(loja.tema_sazonal);
+
+            const nomeLoja = lojaAtual.nome || "Estabelecimento";
+            const nifLoja = lojaAtual.nif || "N/A";
+            legalTexts.termos = `<h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px;">Termos e Condições</h3>
+            <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>1. Identificação da Entidade:</strong> O presente serviço digital é operado pelo estabelecimento <strong>${nomeLoja}</strong>, com o NIF <strong>${nifLoja}</strong>.</p>
+            <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Direito de Livre Resolução (DL 24/2014):</strong> Ao abrigo do Artigo 17.º, alínea d) do Decreto-Lei n.º 24/2014, o consumidor não goza do direito de livre resolução nos contratos de fornecimento de bens que, por natureza, não possam ser devolvidos ou sejam suscetíveis de se deteriorarem rapidamente. <strong>Não são aceites cancelamentos ou devoluções após o início da confeção do pedido.</strong></p>
+            <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira responsabilidade do Lojista. Confirme as suas alergias no momento do pedido.</p>`;
+
+            if (mesaAtual) {
+                const { data: pedidosAtivos } = await _sb
+                    .from('pedidos')
+                    .select('id')
+                    .eq('loja_id', lojaAtual.id)
+                    .eq('mesa', mesaAtual)
+                    .neq('estado', 'finalizado')
+                    .neq('estado', 'cancelado') 
+                    .limit(1);
+
+                if (!pedidosAtivos || pedidosAtivos.length === 0) {
+                    console.log("Limpeza de Segurança Automática");
+                    localStorage.removeItem('pv_mesa_sessao');
+                    const urlLimpo = window.location.href.split('&mesa=')[0].split('?mesa=')[0];
+                    window.location.href = urlLimpo;
                     return; 
                 }
-            } else {
-                localStorage.removeItem('pv_mesa_sessao');
             }
-        }
 
-        const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
-        
-        const estadoLoja = verificarSeAberto(loja);
-        if (!loja || loja.status !== 'ativa' || loja.status_catalogo === false || !estadoLoja.aberto) {
-            document.getElementById('motivo-fecho').innerText = !estadoLoja.aberto ? estadoLoja.motivo : dictIdiomas[userLang].website_offline;
+            configurarDatasIniciais();
+            atualizarHorariosDisponiveis();
+            await verificarSessaoCliente(); 
+
+            if (lojaAtual.takeaway_ativo === false) {
+                const lblLev = document.getElementById('lbl-levantamento');
+                if(lblLev) lblLev.style.display = 'none';
+                const radioReserva = document.querySelector('input[name="tipo_pedido"][value="reserva"]');
+                if(radioReserva) radioReserva.checked = true;
+                toggleOrderFields(); 
+            }
+
+            if (mesaAtual) {
+                document.getElementById('mesa-badge').innerText = `📍 Mesa ${mesaAtual}`;
+                document.getElementById('mesa-badge').style.display = 'inline-block';
+                document.getElementById('checkout-options-wrapper').style.display = 'none';
+                
+                const btnFinal = document.getElementById('btn-checkout-final');
+                btnFinal.innerHTML = `<i class="fas fa-paper-plane"></i> Enviar Pedido - Mesa ${mesaAtual}`;
+                
+                document.getElementById('btn-chamar-empregado').style.display = 'flex';
+                document.getElementById('btn-pedir-conta').style.display = 'flex';
+                document.getElementById('cart-text-btn').innerText = ''; 
+                document.getElementById('btn-user-account').style.display = 'none'; 
+                
+                iniciarOuvinteCliente();
+            }
+
+            document.getElementById('v-nome').innerText = loja.nome;
+            if(loja.morada) document.getElementById('footer-morada').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loja.morada}`;
+            
+            const mEnc = encodeURIComponent(loja.morada || loja.nome);
+            document.getElementById('link-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${mEnc}`;
+            document.getElementById('link-waze').href = `https://waze.com/ul?q=${mEnc}&navigate=yes`;
+
+            if (loja.logo_url) {
+                const logo = document.getElementById('v-logo');
+                logo.src = loja.logo_url; logo.style.display = 'inline-block';
+                
+                document.getElementById('dynamic-favicon').href = loja.logo_url;
+                document.getElementById('dynamic-apple-icon').href = loja.logo_url;
+                document.title = loja.nome + " | Website";
+            }
+
+            if (loja.mbway_num && !mesaAtual) {
+                document.getElementById('mbway-phone').innerText = loja.mbway_num;
+            }
+
+            registarVisita(loja.id, loja.views_total || 0);
+
+            const { data: produtos, error: errProd } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
+            
+            if (errProd) {
+                console.error("Erro ao puxar produtos da Base de Dados:", errProd);
+                document.getElementById('lista-produtos').innerHTML = `<p style="grid-column: 1/-1; text-align:center; padding:50px; color: red;">Erro ao carregar produtos. Contacte o suporte.</p>`;
+                return;
+            }
+            
+            todosProdutos = produtos || [];
+            
+            const cats = [...new Set(todosProdutos.map(p => p.categoria))].filter(Boolean);
+            document.getElementById('cat-list').innerHTML = `<button class="cat-btn active" onclick="setCategoria('todos', this)">Todos</button>` +
+                cats.map(c => `<button class="cat-btn" onclick="setCategoria('${c}', this)">${c}</button>`).join('');
+
+            renderizar(todosProdutos);
+            
+            window.addEventListener('beforeunload', () => {
+                if(carrinho.length > 0) {
+                    carrinho.forEach(item => libertarStockBaseDados(item.id, item.qtde));
+                }
+            });
+            
+        } catch (e) {
+            document.getElementById('v-nome').innerText = "Erro de Sistema";
+            document.getElementById('motivo-fecho').innerText = "Falha ao ligar à base de dados. Tente recarregar a página.";
             document.getElementById('block-screen').style.display = 'flex';
-            return;
         }
-
-        lojaAtual = loja;
-        aplicarTemaVisual(loja.tema_sazonal);
-
-        const nomeLoja = lojaAtual.nome || "Estabelecimento";
-        const nifLoja = lojaAtual.nif || "N/A";
-        legalTexts.termos = `<h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px;">Termos e Condições</h3>
-        <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>1. Identificação da Entidade:</strong> O presente serviço digital é operado pelo estabelecimento <strong>${nomeLoja}</strong>, com o NIF <strong>${nifLoja}</strong>.</p>
-        <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Direito de Livre Resolução (DL 24/2014):</strong> Ao abrigo do Artigo 17.º, alínea d) do Decreto-Lei n.º 24/2014, o consumidor não goza do direito de livre resolução nos contratos de fornecimento de bens que, por natureza, não possam ser devolvidos ou sejam suscetíveis de se deteriorarem rapidamente. <strong>Não são aceites cancelamentos ou devoluções após o início da confeção do pedido.</strong></p>
-        <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira responsabilidade do Lojista. Confirme as suas alergias no momento do pedido.</p>`;
-
-        if (mesaAtual) {
-            const { data: pedidosAtivos } = await _sb
-                .from('pedidos')
-                .select('id')
-                .eq('loja_id', lojaAtual.id)
-                .eq('mesa', mesaAtual)
-                .neq('estado', 'finalizado')
-                .neq('estado', 'cancelado') 
-                .limit(1);
-
-            if (!pedidosAtivos || pedidosAtivos.length === 0) {
-                localStorage.removeItem('pv_mesa_sessao');
-                const urlLimpo = window.location.href.split('&mesa=')[0].split('?mesa=')[0];
-                window.location.href = urlLimpo;
-                return; 
-            }
-        }
-
-        configurarDatasIniciais();
-        atualizarHorariosDisponiveis();
-        await verificarSessaoCliente(); 
-
-        if (lojaAtual.takeaway_ativo === false) {
-            const lblLev = document.getElementById('lbl-levantamento');
-            if(lblLev) lblLev.style.display = 'none';
-            const radioReserva = document.querySelector('input[name="tipo_pedido"][value="reserva"]');
-            if(radioReserva) radioReserva.checked = true;
-            toggleOrderFields(); 
-        }
-
-        if (mesaAtual) {
-            document.getElementById('mesa-badge').innerText = `📍 Mesa ${mesaAtual}`;
-            document.getElementById('mesa-badge').style.display = 'inline-block';
-            document.getElementById('checkout-options-wrapper').style.display = 'none';
-            
-            const btnFinal = document.getElementById('btn-checkout-final');
-            btnFinal.innerHTML = `<i class="fas fa-paper-plane"></i> Enviar Pedido - Mesa ${mesaAtual}`;
-            
-            document.getElementById('btn-chamar-empregado').style.display = 'flex';
-            document.getElementById('btn-pedir-conta').style.display = 'flex';
-            document.getElementById('cart-text-btn').innerText = ''; 
-            document.getElementById('btn-user-account').style.display = 'none'; 
-            
-            iniciarOuvinteCliente();
-        }
-
-        document.getElementById('v-nome').innerText = loja.nome;
-        if(loja.morada) document.getElementById('footer-morada').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loja.morada}`;
-        
-        const mEnc = encodeURIComponent(loja.morada || loja.nome);
-        document.getElementById('link-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${mEnc}`;
-        document.getElementById('link-waze').href = `https://waze.com/ul?q=${mEnc}&navigate=yes`;
-
-        if (loja.logo_url) {
-            const logo = document.getElementById('v-logo');
-            logo.src = loja.logo_url; logo.style.display = 'inline-block';
-            
-            document.getElementById('dynamic-favicon').href = loja.logo_url;
-            document.getElementById('dynamic-apple-icon').href = loja.logo_url;
-            document.title = loja.nome + " | Website";
-        }
-
-        if (loja.mbway_num && !mesaAtual) {
-            document.getElementById('mbway-phone').innerText = loja.mbway_num;
-        }
-
-        registarVisita(loja.id, loja.views_total || 0);
-
-        const { data: produtos, error: errProd } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
-        
-        if (errProd) {
-            document.getElementById('lista-produtos').innerHTML = `<p style="grid-column: 1/-1; text-align:center; padding:50px; color: red;">Erro ao carregar produtos. Contacte o suporte.</p>`;
-            return;
-        }
-        
-        todosProdutos = produtos || [];
-        
-        const cats = [...new Set(todosProdutos.map(p => p.categoria))].filter(Boolean);
-        document.getElementById('cat-list').innerHTML = `<button class="cat-btn active" onclick="setCategoria('todos', this)">Todos</button>` +
-            cats.map(c => `<button class="cat-btn" onclick="setCategoria('${c}', this)">${c}</button>`).join('');
-
-        renderizar(todosProdutos);
-        
-        window.addEventListener('beforeunload', () => {
-            if(carrinho.length > 0) {
-                carrinho.forEach(item => libertarStockBaseDados(item.id, item.qtde));
-            }
-        });
     }
 
     function virarCartao(id) { document.getElementById(`card-${id}`).classList.toggle('flipped'); }
