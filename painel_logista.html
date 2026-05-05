@@ -245,7 +245,7 @@
         
         .print-item-allergens { font-size: 11px; color: #b45309; text-transform: uppercase; letter-spacing: 1px; font-family: 'Inter', sans-serif; font-weight: bold; background: #fffbeb; padding: 6px 12px; border-radius: 6px; border: 1px solid #fde68a;}
 
-        /* ESTILOS ESPECÍFICOS: FICHA TÉCNICA E COMPRAS */
+        /* ESTILOS ESPECÍFICOS: FICHA TÉCNICA E COMPRAS E AUDITORIA */
         .ficha-tecnica-box { text-align: left !important; align-items: flex-start !important; }
         .ficha-layout-flex { display: flex; gap: 20px; width: 100%; flex-wrap: wrap; }
         .ficha-internal-notes { background: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 10px; margin-top: 20px; width: 100%; font-size: 12px; color: #92400e; font-family: 'Inter', sans-serif; line-height: 1.5; }
@@ -264,7 +264,7 @@
             body { background: white; margin: 0; padding: 0; }
             .no-print { display: none !important; }
             
-            /* MODO: RELATÓRIO FECHO DE CAIXA E LISTA COMPRAS */
+            /* MODO: RELATÓRIO FECHO DE CAIXA E LISTA COMPRAS E AUDITORIA */
             body.is-printing-report .container { display: none !important; }
             body.is-printing-report #print-area-wrapper { display: none !important; }
             body.is-printing-report #print-area { display: block !important; padding: 1cm; width: 100%; color: black; font-family: 'Arial', sans-serif; }
@@ -484,6 +484,7 @@
                     <input type="date" id="data-export" style="margin: 0; padding: 8px; height: auto;">
                 </div>
                 <button style="background: #475569; width: auto; flex: 1;" onclick="gerarRelatorioPDF()"><i class="fas fa-file-pdf"></i> Exportar Fecho</button>
+                <button style="background: var(--err); width: auto; flex: 1;" onclick="abrirAuditoria()"><i class="fas fa-user-shield"></i> Ver Auditoria</button>
                 <button style="background: var(--ia); width: auto; flex: 1; border: 1px solid #7c3aed; box-shadow: 0 4px 10px rgba(139,92,246,0.3);" onclick="gerarMenuFisico('menu')"><i class="fas fa-book-open"></i> Imprimir Menu</button>
                 <button style="background: var(--warn); width: auto; flex: 1; border: 1px solid #d97706; box-shadow: 0 4px 10px rgba(245,158,11,0.3);" onclick="gerarMenuFisico('ficha')"><i class="fas fa-utensils"></i> Imprimir Fichas</button>
                 <button style="background: #0284c7; width: auto; flex: 1; border: 1px solid #0369a1; box-shadow: 0 4px 10px rgba(2,132,199,0.3);" onclick="gerarTemplateCompras()"><i class="fas fa-shopping-cart"></i> Lista de Compras</button>
@@ -675,12 +676,12 @@
 
         <div class="card" style="margin-top: 25px;">
             <h3 class="toggle-titulo" onclick="toggleStaff()" style="margin: 0;">
-                <span><i class="fas fa-users-cog"></i> Equipa & Acessos (Sala)</span>
+                <span><i class="fas fa-users-cog"></i> Equipa & Acessos (Sala e Cozinha)</span>
                 <span id="seta-staff">▼</span>
             </h3>
             
             <div id="config-staff" class="hidden" style="margin-top: 15px;">
-                <p style="font-size: 0.9em; color: #64748b;">Crie ou edite códigos de acesso (PIN) para os seus empregados operarem o tablet de sala.</p>
+                <p style="font-size: 0.9em; color: #64748b;">Crie ou edite códigos de acesso (PIN) para os seus empregados operarem os tablets.</p>
                 <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
                     <input type="hidden" id="staff-edit-id">
                     <input type="text" id="staff-nome" placeholder="Nome do Empregado" style="margin:0; flex: 1;">
@@ -775,6 +776,36 @@
     </div>
 </div>
 
+<!-- NOVO: MODAL DA AUDITORIA / FIREWALL -->
+<div id="modal-auditoria" class="hidden no-print" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; padding: 0; border-radius: 16px; max-width: 800px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+        <div style="background: #f8fafc; padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="margin:0; color:var(--err);"><i class="fas fa-user-shield"></i> Registo de Auditoria</h3>
+                <small style="color: #64748b;">Monitorização das últimas ações de risco da equipa de Sala/Cozinha.</small>
+            </div>
+            <button onclick="fecharAuditoria()" style="background:transparent; color:#64748b; border:none; font-size:20px; cursor:pointer; width:auto; padding:5px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="padding: 20px; overflow-y: auto; flex: 1;">
+            <table class="compras-table" style="min-width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Colaborador</th>
+                        <th>Ação de Risco Registada</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-auditoria-body">
+                    <tr><td colspan="3" style="text-align:center;">A carregar registos de auditoria...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="padding: 15px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+            <button onclick="carregarAuditoria()" style="width: auto; margin: 0 auto;"><i class="fas fa-sync-alt"></i> Recarregar Logs</button>
+        </div>
+    </div>
+</div>
+
 <div id="print-area"></div>
 
 <div id="print-area-wrapper" class="hidden">
@@ -790,7 +821,6 @@
     </div>
     <div id="print-preview-content"></div>
 </div>
-
 <script>
     const _URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
@@ -838,6 +868,55 @@
             mostraAlergenios: true, placeholder: "Nome (Ex: Frango Assado)"
         }
     };
+
+    // --- NOVA LÓGICA DE AUDITORIA DO LOJISTA ---
+    async function registarAuditoriaLojista(acaoDetalhe) {
+        if(!lojaAtiva) return;
+        try {
+            await _sb.from('auditoria_logs').insert([{
+                loja_id: lojaAtiva.id,
+                empregado_id: lojaAtiva.auth_id,
+                empregado_nome: "Lojista (Patrão)",
+                acao: acaoDetalhe
+            }]);
+        } catch(e) { console.error("Log lojista falhou.", e); }
+    }
+
+    async function carregarAuditoria() {
+        if(!lojaAtiva) return;
+        const tbody = document.getElementById('tabela-auditoria-body');
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">A carregar registos da Firewall...</td></tr>';
+        
+        // Puxar os ultimos 50 registos de auditoria
+        const { data: logs, error } = await _sb.from('auditoria_logs')
+            .select('*')
+            .eq('loja_id', lojaAtiva.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+            
+        if (error || !logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8;">Nenhum registo de auditoria encontrado.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = logs.map(l => {
+            const dataHora = new Date(l.created_at).toLocaleString('pt-PT');
+            return `<tr>
+                <td style="font-size: 12px; color: #64748b;">${dataHora}</td>
+                <td><strong>${l.empregado_nome}</strong></td>
+                <td>${l.acao}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function abrirAuditoria() {
+        document.getElementById('modal-auditoria').classList.remove('hidden');
+        carregarAuditoria();
+    }
+
+    function fecharAuditoria() {
+        document.getElementById('modal-auditoria').classList.add('hidden');
+    }
 
     function validarTelefonePT(telefone) {
         if (!telefone) return false;
@@ -1268,9 +1347,11 @@
         if(id) {
             const res = await _sb.from('empregados').update({ nome: nome, pin_acesso: pin }).eq('id', id);
             error = res.error;
+            registarAuditoriaLojista(`Atualizou PIN/Nome do Empregado ${nome}`);
         } else {
             const res = await _sb.from('empregados').insert([{ loja_id: lojaAtiva.id, nome: nome, pin_acesso: pin }]);
             error = res.error;
+            registarAuditoriaLojista(`Adicionou novo Empregado: ${nome}`);
         }
 
         if(error) return alert("Erro ao guardar empregado: " + error.message);
@@ -1302,7 +1383,9 @@
 
     async function removerStaff(id) {
         if(confirm("Tem a certeza que deseja remover o acesso a este empregado?")) {
+            const emp = empregadosLocais.find(e => e.id === id);
             await _sb.from('empregados').delete().eq('id', id);
+            if(emp) registarAuditoriaLojista(`Removeu o Empregado: ${emp.nome}`);
             carregarStaff();
         }
     }
@@ -1777,6 +1860,7 @@
         if(!error) { 
             lojaAtiva = {...lojaAtiva, ...dados};
             btn.classList.remove('pendente'); 
+            registarAuditoriaLojista(`Alterou as configurações globais da loja.`);
             alert("Perfil e configurações atualizados com sucesso!"); 
         } else {
             alert("Erro ao guardar: " + error.message);
@@ -1796,6 +1880,8 @@
             
             document.getElementById('dynamic-favicon').href = data.publicUrl;
             document.getElementById('dynamic-apple-icon').href = data.publicUrl;
+            
+            registarAuditoriaLojista(`Atualizou o Logotipo da loja`);
             alert("Logótipo atualizado! Reabra a app no telemóvel para ver o novo ícone.");
         } catch (e) { alert("Erro ao fazer upload do logo."); }
     }
@@ -1834,6 +1920,7 @@
             lojaAtiva.em_ferias = fAtiva;
             
             btn.classList.remove('pendente'); 
+            registarAuditoriaLojista(`Atualizou o horário de funcionamento/férias.`);
             alert("Horários e Férias atualizados com sucesso!"); 
         } else {
             alert("Erro ao guardar horários: " + error.message);
@@ -2022,6 +2109,7 @@
             }
 
             lojaAtiva.creditos_ia = data.creditosRestantes;
+            registarAuditoriaLojista(`Usou IA para extrair dados do artigo ${nomeProd}`);
 
         } catch (e) { 
             alert(e.message); 
@@ -2045,7 +2133,8 @@
         const alergenios = Array.from(document.querySelectorAll('#p-alergenios-container input:checked')).map(cb => cb.value);
         
         const precoVal = parseFloat(document.getElementById('p-preco').value);
-        if(!document.getElementById('p-nome').value || isNaN(precoVal)) return alert("Nome e preço são obrigatórios.");
+        const nomeProd = document.getElementById('p-nome').value;
+        if(!nomeProd || isNaN(precoVal)) return alert("Nome e preço são obrigatórios.");
 
         const taxaIvaVal = parseFloat(document.getElementById('p-taxa-iva').value) || 0;
 
@@ -2059,7 +2148,7 @@
         const pedePontoCarne = document.getElementById('p-pede-ponto').checked;
 
         const dados = {
-            nome: document.getElementById('p-nome').value,
+            nome: nomeProd,
             preco: precoVal,
             taxa_iva: taxaIvaVal,
             desconto_percent: parseInt(document.getElementById('p-desc').value) || 0,
@@ -2112,8 +2201,13 @@
             }
             
             let res;
-            if (id) { res = await _sb.from('produtos').update(dados).eq('id', id); } 
-            else { res = await _sb.from('produtos').insert([dados]); }
+            if (id) { 
+                res = await _sb.from('produtos').update(dados).eq('id', id); 
+                registarAuditoriaLojista(`Atualizou o Artigo: ${nomeProd}`);
+            } else { 
+                res = await _sb.from('produtos').insert([dados]); 
+                registarAuditoriaLojista(`Criou um novo Artigo: ${nomeProd}`);
+            }
 
             if(res.error) throw res.error;
 
@@ -2126,7 +2220,11 @@
     async function alternarOculto(id, estadoAtual) {
         const novoEstado = !estadoAtual;
         const { error } = await _sb.from('produtos').update({ oculto: novoEstado }).eq('id', id);
-        if (!error) { carregarDados(); } else { alert("Erro ao alterar visibilidade: " + error.message); }
+        if (!error) { 
+            carregarDados(); 
+        } else { 
+            alert("Erro ao alterar visibilidade: " + error.message); 
+        }
     }
 
     function marcarAltPerfil() { document.getElementById('btn-save-profile').classList.add('pendente'); }
@@ -2146,7 +2244,16 @@
         if(inputs) inputs.style.display = status === 'aberto' ? 'flex' : 'none';
     }
     
-    async function apagarProd(id) { if(confirm("Tem a certeza que deseja apagar este artigo?")) { const { error } = await _sb.from('produtos').delete().eq('id', id); if(!error) carregarDados(); } }
+    async function apagarProd(id) { 
+        if(confirm("Tem a certeza que deseja apagar este artigo?")) { 
+            const p = produtosLocais.find(item => item.id === id);
+            const { error } = await _sb.from('produtos').delete().eq('id', id); 
+            if(!error) {
+                if(p) registarAuditoriaLojista(`Apagou o Artigo: ${p.nome}`);
+                carregarDados(); 
+            }
+        } 
+    }
     
     function cancelarEdicao() {
         ['edit-id', 'p-nome', 'p-preco', 'p-desc', 'p-categoria', 'p-ingredientes', 'p-media', 'p-stock', 'p-dia-semana', 'p-ficha-file', 'p-ficha-texto'].forEach(id => {
