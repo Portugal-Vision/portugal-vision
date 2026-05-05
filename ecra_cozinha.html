@@ -181,9 +181,8 @@
     let timerAtualizacao = null; 
     let canalNotificacoesCozinha = null;
 
-// --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO) ---
+    // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO CORRIGIDA) ---
     async function init() {
-        // 1. Lemos primeiro o URL para saber em que loja estamos
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('loja');
 
@@ -192,11 +191,9 @@
             return;
         }
 
-        // 2. Verificamos se o tablet está autorizado (Sessão iniciada)
         const { data: { session } } = await _sb.auth.getSession();
         
         if (session) {
-            // 3. Em vez de procurar pelo user_id, procuramos diretamente pelo SLUG
             const { data: loja } = await _sb.from('lojas').select('id, nome').eq('slug', slug).limit(1).maybeSingle();
             
             if (loja) {
@@ -214,7 +211,6 @@
                 alert(`Erro: Não foi encontrada nenhuma loja com o slug '${slug}'.`);
             }
         } else {
-            // Sem sessão, pede o login do Lojista
             document.getElementById('auth-screen').style.display = 'flex';
         }
     }
@@ -328,13 +324,20 @@
         timerAtualizacao = setInterval(() => {
             carregarPedidosFogo();
             carregarRadarReservas();
-        }, 30000); // 30s refresh
+        }, 30000);
 
         _sb.channel('cozinha-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
-                if(payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && payload.new.estado === 'preparacao')) {
+                
+                // OS 3 GATILHOS DA COZINHA CORRIGIDOS
+                const isNovoPOS = payload.eventType === 'INSERT';
+                const isConfirmadoMBWay = payload.eventType === 'UPDATE' && payload.old.estado !== 'pendente' && payload.new.estado === 'pendente';
+                const isClienteSentado = payload.eventType === 'UPDATE' && payload.old.estado !== 'preparacao' && payload.new.estado === 'preparacao';
+
+                if(isNovoPOS || isConfirmadoMBWay || isClienteSentado) {
                     tocarSinoCozinha();
                 }
+                
                 carregarPedidosFogo();
                 carregarRadarReservas();
             })
@@ -464,7 +467,6 @@
             return;
         }
 
-        // Objecto de agregação: { "20:00": { "Bacalhau": 2, "Bife": 1 }, "20:30": { "Bacalhau": 1 } }
         let blocosTempo = {};
         let temComida = false;
 
@@ -473,7 +475,6 @@
             const dataAgendada = new Date(p.data_agendada);
             
             if (dataAgendada > agora && dataAgendada <= limiteFuturo) {
-                // Formatar Hora (ex: "20:00")
                 const horaStr = dataAgendada.getHours().toString().padStart(2, '0') + ':' + dataAgendada.getMinutes().toString().padStart(2, '0');
                 
                 p.itens.forEach(item => {
@@ -494,7 +495,6 @@
             return;
         }
 
-        // Ordenar as horas de forma crescente (ex: 20:00 antes de 20:30)
         const horasOrdenadas = Object.keys(blocosTempo).sort();
         
         let htmlRadarFinal = '';
@@ -502,7 +502,6 @@
         horasOrdenadas.forEach(hora => {
             htmlRadarFinal += `<div class="radar-hora-block"><i class="fas fa-clock"></i> Para as ${hora}</div>`;
             
-            // Ordenar os pratos dentro da hora por quantidade (decrescente)
             const pratosDestaHora = Object.entries(blocosTempo[hora]).sort((a, b) => b[1] - a[1]);
             
             pratosDestaHora.forEach(([nome, qtde]) => {
