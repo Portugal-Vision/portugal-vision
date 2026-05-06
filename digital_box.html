@@ -107,6 +107,7 @@
     <div id="slider"></div>
     <div id="error-msg"><h1>Montra Indisponível</h1><p>Contacte o administrador da plataforma.</p></div>
 
+    <!-- INJEÇÃO DO QR CODE MINIMALISTA -->
     <div id="qr-code-container">
         <img id="qr-code-img" src="" alt="QR Code">
     </div>
@@ -133,9 +134,8 @@
             const slug = urlParams.get('loja');
             if (!slug) return;
 
-            // Gera o QR Code dinamicamente
-            const baseUrl = window.location.origin + window.location.pathname.replace('/montra.html', '/index.html'); 
-            const orderLink = `${baseUrl}?loja=${slug}`;
+            // Gera o QR Code dinamicamente com o link absoluto correto
+            const orderLink = `https://portugal-vision.github.io/portugal-vision/website_digital.html?loja=${slug}`;
             document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(orderLink)}&margin=10`;
 
             // Busca dados da loja e status
