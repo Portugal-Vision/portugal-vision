@@ -346,6 +346,9 @@
     window.mesasGlobais = {};
     let modalDetalheAberto = { tipo: null, id: null }; 
 
+    // O objeto global de dias importado da tua lógica para cruzar com o POS
+    const nomeDiasInt = {1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado", 0: "Domingo"};
+
     // --- NOVA LÓGICA DE AUDITORIA (FIREWALL PONTO 9) ---
     async function registarAuditoria(acaoDetalhe) {
         const empId = sessionStorage.getItem('pv_sala_operador_id') || '0';
@@ -433,12 +436,36 @@
             return;
         }
         
+        // Ponto 1: Determinar que dia é hoje para bloquear exclusivos de outros dias
+        const hoje = new Date();
+        const diaSemanaDb = (hoje.getDay() + 6) % 7;
+
         container.innerHTML = produtosCatalogo.map(p => {
             const precoFinal = p.desconto_percent > 0 ? p.preco * (1 - p.desconto_percent / 100) : p.preco;
+            
+            // Lógica de bloqueio visual
+            let isEsgotado = p.stock !== null && p.stock !== "" && parseInt(p.stock) <= 0;
+            let isDiaErrado = p.dia_semana !== null && p.dia_semana !== "" && parseInt(p.dia_semana) !== diaSemanaDb;
+
+            let overlayHtml = '';
+            let onclickAttr = `onclick="adicionarAoPOS(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFinal})"`;
+            let styleOpacity = '';
+
+            if (isEsgotado) {
+                overlayHtml = `<div style="position:absolute; top:5px; left:5px; background:var(--danger); color:white; padding:3px 8px; border-radius:6px; font-weight:bold; font-size:11px;"><i class="fas fa-ban"></i> Esgotado</div>`;
+                onclickAttr = '';
+                styleOpacity = 'opacity: 0.5; cursor: not-allowed;';
+            } else if (isDiaErrado) {
+                overlayHtml = `<div style="position:absolute; top:5px; left:5px; background:var(--warning); color:white; padding:3px 8px; border-radius:6px; font-weight:bold; font-size:11px;"><i class="fas fa-calendar-day"></i> Só ${nomeDiasInt[p.dia_semana]}</div>`;
+                onclickAttr = '';
+                styleOpacity = 'opacity: 0.5; cursor: not-allowed;';
+            }
+
             return `
-                <div class="pos-item" onclick="adicionarAoPOS(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFinal})">
+                <div class="pos-item" ${onclickAttr} style="position:relative; ${styleOpacity}">
+                    ${overlayHtml}
                     <img src="${p.imagem_url || 'https://via.placeholder.com/150?text=Sem+Imagem'}" alt="${p.nome}">
-                    <strong style="font-size:0.9em;">${p.nome}</strong>
+                    <strong style="font-size:0.9em; margin-top:5px;">${p.nome}</strong>
                     <span style="color:var(--primary); font-weight:bold;">${precoFinal.toFixed(2)}€</span>
                 </div>
             `;
@@ -446,12 +473,36 @@
     }
 
     function adicionarAoPOS(id, nome, preco) {
-        const existente = posCarrinho.find(i => i.id === id);
-        if (existente) existente.qtde += 1; else posCarrinho.push({ id, nome, preco, qtde: 1 });
+        // Ponto 2: Bloqueio Lógico no Clique - Validar se podemos adicionar mais com base no stock
+        const pDb = produtosCatalogo.find(p => String(p.id) === String(id));
+        const existente = posCarrinho.find(i => String(i.id) === String(id));
+        const qtyAtual = existente ? existente.qtde : 0;
+
+        if (pDb && pDb.stock !== null && pDb.stock !== "") {
+            if (qtyAtual + 1 > parseInt(pDb.stock)) {
+                alert(`Não é possível adicionar mais. O limite de stock foi atingido para: ${nome}.`);
+                return;
+            }
+        }
+
+        if (existente) existente.qtde += 1; 
+        else posCarrinho.push({ id, nome, preco, qtde: 1 });
         atualizarCarrinhoPOS();
     }
 
     function alterarQtdePOS(index, delta) {
+        // Ponto 3: Bloqueio de incremento manual pelos botões +/- do carrinho
+        if (delta > 0) {
+            const item = posCarrinho[index];
+            const pDb = produtosCatalogo.find(p => String(p.id) === String(item.id));
+            if (pDb && pDb.stock !== null && pDb.stock !== "") {
+                if (item.qtde + 1 > parseInt(pDb.stock)) {
+                    alert(`Não é possível adicionar mais. O limite de stock foi atingido para: ${item.nome}.`);
+                    return;
+                }
+            }
+        }
+
         posCarrinho[index].qtde += delta;
         if (posCarrinho[index].qtde <= 0) posCarrinho.splice(index, 1);
         atualizarCarrinhoPOS();
@@ -724,7 +775,8 @@
         document.getElementById('nome-restaurante').innerText = loja.nome + " - Sala";
         document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${nomeOperadorAtual}`;
         
-        const { data: prods } = await _sb.from('produtos').select('id, nome, preco, desconto_percent, imagem_url').eq('loja_id', minhaLojaId).eq('oculto', false);
+        // Ponto 1A: Modificámos esta Query para incluir 'stock' e 'dia_semana' para o tablet
+        const { data: prods } = await _sb.from('produtos').select('id, nome, preco, desconto_percent, imagem_url, stock, dia_semana').eq('loja_id', minhaLojaId).eq('oculto', false);
         if(prods) produtosCatalogo = prods;
 
         carregarDados();
