@@ -23,18 +23,32 @@
 
         .slide.active { opacity: 1; z-index: 10; }
 
-        .slide img { 
-            width: 100%; height: 100%; object-fit: cover; object-position: center;
+        /* NOVA LÓGICA DE IMAGEM: DUPLA-CAMADA (Fundo Desfocado + Imagem Contida) */
+        .bg-blur {
+            position: absolute; 
+            inset: -10%; /* Margem extra para o blur não deixar bordas brancas */
+            background-size: cover; 
+            background-position: center;
+            filter: blur(30px) brightness(0.3); /* Escurece e desfoca o fundo */
+            z-index: 1;
             transform: scale(1);
-            transition: transform 10s linear; 
+            transition: transform 12s linear;
         }
 
-        /* Efeito Ken Burns Suavizado (Correção do Zoom excessivo) */
-        .slide.active img { transform: scale(1.05) translateX(10px); }
+        .fg-img {
+            position: relative;
+            width: 100%; height: 100%; 
+            object-fit: contain; /* NUNCA corta a imagem */
+            z-index: 2;
+            filter: drop-shadow(0 25px 50px rgba(0,0,0,0.8)); /* Sombra para descolar do fundo */
+        }
+
+        /* Efeito Ken Burns Apenas no Fundo */
+        .slide.active .bg-blur { transform: scale(1.15) translateX(10px); }
 
         .overlay { 
             position: absolute; bottom: 0; left: 0; right: 0; 
-            background: linear-gradient(transparent, rgba(0,0,0,0.9) 80%); 
+            background: linear-gradient(transparent, rgba(0,0,0,0.95) 80%); 
             color: white; padding: 100px 50px 120px;
             z-index: 20;
             transform: translateY(20px);
@@ -45,8 +59,8 @@
 
         /* Ajustes no Nome do Produto */
         .overlay p { font-size: 1.5em; opacity: 0.8; margin: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
-        .overlay h1 { font-size: 3.5em; margin: 5px 0; font-weight: 600; line-height: 1.1; letter-spacing: -1px; }
-        .overlay h2 { font-size: 2.8em; color: #38bdf8; margin: 0; font-weight: 600; }
+        .overlay h1 { font-size: 3.5em; margin: 5px 0; font-weight: 600; line-height: 1.1; letter-spacing: -1px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .overlay h2 { font-size: 2.8em; color: #38bdf8; margin: 0; font-weight: 600; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
 
         .promo-badge {
             position: absolute; top: 50px; right: 50px;
@@ -59,33 +73,44 @@
             animation: pulse 2s infinite;
         }
 
-        /* NOVO: Estilos do QR Code Flutuante */
+        /* NOVO DESIGN DO CARTÃO QR CODE */
         #qr-code-container {
             position: absolute; bottom: 80px; right: 50px;
-            background: white; padding: 15px; border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            z-index: 30; display: none; /* Só mostra se a loja for válida */
-            text-align: center; color: #1e293b;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 25px; border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            z-index: 30; display: none; /* Controlado via JS (agora display: flex) */
+            align-items: center; gap: 20px;
             animation: float 4s ease-in-out infinite;
         }
 
-        #qr-code-container img {
-            width: 150px; height: 150px; display: block;
-            border-radius: 10px; margin-bottom: 10px;
+        .qr-text-block {
+            text-align: right;
+            display: flex; flex-direction: column; justify-content: center;
         }
 
-        #qr-code-container .qr-label {
-            font-size: 1.1em; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.5px; margin: 0;
-            background: #e63946; color: white;
-            padding: 5px 10px; border-radius: 8px;
+        .qr-sub {
+            font-size: 1.2em; color: #64748b; 
+            font-weight: 700; text-transform: uppercase; 
+            letter-spacing: 2px; margin-bottom: -5px;
+        }
+
+        .qr-main {
+            font-size: 2.5em; color: #e63946; 
+            font-weight: 900; line-height: 1.1;
+        }
+
+        #qr-code-container img {
+            width: 140px; height: 140px; display: block;
+            border-radius: 12px; border: 2px solid #f1f5f9;
         }
 
         .legal-footer {
             position: absolute; bottom: 0; left: 0; right: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px);
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.4);
             padding: 15px 50px;
             font-size: 0.85em;
             z-index: 100;
@@ -102,7 +127,7 @@
 
         @keyframes float {
             0% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
+            50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
         }
 
@@ -116,10 +141,13 @@
     <div id="slider"></div>
     <div id="error-msg"><h1>Montra Indisponível</h1><p>Contacte o administrador da plataforma.</p></div>
 
-    <!-- INJEÇÃO DO QR CODE -->
+    <!-- INJEÇÃO DO NOVO CARTÃO QR CODE -->
     <div id="qr-code-container">
+        <div class="qr-text-block">
+            <span class="qr-sub">Sem Filas</span>
+            <span class="qr-main">PEÇA AQUI!</span>
+        </div>
         <img id="qr-code-img" src="" alt="QR Code Encomendas">
-        <p class="qr-label">Faça aqui<br>o seu pedido</p>
     </div>
 
     <div class="legal-footer">
@@ -145,15 +173,15 @@
             const slug = urlParams.get('loja');
             if (!slug) return;
 
-            // Gera o QR Code dinamicamente com base no slug atual e coloca-o visível
-            const baseUrl = window.location.origin + window.location.pathname.replace('/montra.html', '/index.html'); // Ajustar caso a raiz seja diferente
+            // Gera o QR Code dinamicamente com base no slug atual
+            const baseUrl = window.location.origin + window.location.pathname.replace('/montra.html', '/index.html'); 
             const orderLink = `${baseUrl}?loja=${slug}`;
-            document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(orderLink)}`;
+            document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(orderLink)}&margin=10`;
 
             // Busca dados da loja e status
             const { data: loja, error: errorLoja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
             
-            // VERIFICAÇÃO DE SEGURANÇA (MASTER CONTROL)
+            // VERIFICAÇÃO DE SEGURANÇA
             if (!loja || loja.status !== 'ativa' || !loja.status_digital_box) {
                 document.getElementById('slider').style.display = 'none';
                 document.getElementById('qr-code-container').style.display = 'none';
@@ -161,7 +189,8 @@
                 return;
             } else {
                 document.getElementById('slider').style.display = 'block';
-                document.getElementById('qr-code-container').style.display = 'block'; // Revela o QR Code se estiver ativa
+                // ATENÇÃO: Agora é flex para não estragar o design do cartão
+                document.getElementById('qr-code-container').style.display = 'flex'; 
                 document.getElementById('error-msg').style.display = 'none';
             }
 
@@ -192,11 +221,17 @@
                 const preco = parseFloat(p.preco) || 0;
                 const desc = parseInt(p.desconto_percent) || 0;
                 const final = desc > 0 ? (preco * (1 - desc / 100)).toFixed(2) : preco.toFixed(2);
+                
+                const imgSrc = p.imagem_url || 'https://via.placeholder.com/1920x1080?text=Portugal+Vision';
 
+                // Implementação da Dupla-Camada
                 return `
                     <div class="slide ${i === currentIndex ? 'active' : ''}">
-                        <img src="${p.imagem_url || ''}" onerror="this.src='https://via.placeholder.com/1920x1080?text=Portugal+Vision'">
+                        <div class="bg-blur" style="background-image: url('${imgSrc}')"></div>
+                        <img class="fg-img" src="${imgSrc}" onerror="this.src='https://via.placeholder.com/1920x1080?text=Portugal+Vision'">
+                        
                         ${desc > 0 ? `<div class="promo-badge">-${desc}%</div>` : ''}
+                        
                         <div class="overlay">
                             <p>${nomeLoja}</p>
                             <h1>${p.nome}</h1>
