@@ -24,13 +24,13 @@
         .slide.active { opacity: 1; z-index: 10; }
 
         .slide img { 
-            width: 100%; height: 100%; object-fit: cover; 
+            width: 100%; height: 100%; object-fit: cover; object-position: center;
             transform: scale(1);
             transition: transform 10s linear; 
         }
 
-        /* Efeito Ken Burns */
-        .slide.active img { transform: scale(1.15) translateX(10px); }
+        /* Efeito Ken Burns Suavizado (Correção do Zoom excessivo) */
+        .slide.active img { transform: scale(1.05) translateX(10px); }
 
         .overlay { 
             position: absolute; bottom: 0; left: 0; right: 0; 
@@ -59,6 +59,28 @@
             animation: pulse 2s infinite;
         }
 
+        /* NOVO: Estilos do QR Code Flutuante */
+        #qr-code-container {
+            position: absolute; bottom: 80px; right: 50px;
+            background: white; padding: 15px; border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            z-index: 30; display: none; /* Só mostra se a loja for válida */
+            text-align: center; color: #1e293b;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        #qr-code-container img {
+            width: 150px; height: 150px; display: block;
+            border-radius: 10px; margin-bottom: 10px;
+        }
+
+        #qr-code-container .qr-label {
+            font-size: 1.1em; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.5px; margin: 0;
+            background: #e63946; color: white;
+            padding: 5px 10px; border-radius: 8px;
+        }
+
         .legal-footer {
             position: absolute; bottom: 0; left: 0; right: 0;
             background: rgba(0, 0, 0, 0.6);
@@ -78,6 +100,12 @@
             100% { transform: scale(1); }
         }
 
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
         /* Mensagem de Erro/Bloqueio */
         #error-msg {
             color: white; text-align: center; padding-top: 20%; font-size: 2em; display: none;
@@ -87,6 +115,12 @@
 <body>
     <div id="slider"></div>
     <div id="error-msg"><h1>Montra Indisponível</h1><p>Contacte o administrador da plataforma.</p></div>
+
+    <!-- INJEÇÃO DO QR CODE -->
+    <div id="qr-code-container">
+        <img id="qr-code-img" src="" alt="QR Code Encomendas">
+        <p class="qr-label">Faça aqui<br>o seu pedido</p>
+    </div>
 
     <div class="legal-footer">
         As imagens, descrições e preços apresentados são da inteira responsabilidade do anunciante. 
@@ -111,16 +145,23 @@
             const slug = urlParams.get('loja');
             if (!slug) return;
 
+            // Gera o QR Code dinamicamente com base no slug atual e coloca-o visível
+            const baseUrl = window.location.origin + window.location.pathname.replace('/montra.html', '/index.html'); // Ajustar caso a raiz seja diferente
+            const orderLink = `${baseUrl}?loja=${slug}`;
+            document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(orderLink)}`;
+
             // Busca dados da loja e status
             const { data: loja, error: errorLoja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
             
             // VERIFICAÇÃO DE SEGURANÇA (MASTER CONTROL)
             if (!loja || loja.status !== 'ativa' || !loja.status_digital_box) {
                 document.getElementById('slider').style.display = 'none';
+                document.getElementById('qr-code-container').style.display = 'none';
                 document.getElementById('error-msg').style.display = 'block';
                 return;
             } else {
                 document.getElementById('slider').style.display = 'block';
+                document.getElementById('qr-code-container').style.display = 'block'; // Revela o QR Code se estiver ativa
                 document.getElementById('error-msg').style.display = 'none';
             }
 
