@@ -797,7 +797,8 @@
               carregarDados(); 
           })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => { 
-              if (payload.old.estado === 'preparacao' && payload.new.estado === 'pronto') {
+              // CORREÇÃO 1: Removida a dependência do payload.old para garantir que o sino toca sempre
+              if (payload.new.estado === 'pronto') {
                   const tagLocal = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : `Takeaway (${payload.new.nome_cliente || 'Anónimo'})`;
                   tocarSinoCozinhaPronta();
                   dispararToast('Prato Pronto!', `O pedido da ${tagLocal} está pronto a levantar na bancada.`, 'cozinha');
@@ -1269,9 +1270,11 @@
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             
-            const numMesa = document.getElementById('pagar-mesa-num').innerText;
-            if(!numMesa.includes('Takeaway') && !numMesa.includes('Reserva')) {
-                localStorage.removeItem('mesa_ocupacao_' + numMesa);
+            const numMesaText = document.getElementById('pagar-mesa-num').innerText;
+            if(!numMesaText.includes('Takeaway') && !numMesaText.includes('Reserva')) {
+                // CORREÇÃO 2: Limpar a palavra "Mesa " para bater certo com a chave original do cronómetro
+                const numMesaLimpo = numMesaText.replace('Mesa ', '').trim();
+                localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
             }
 
             registarAuditoria(`Fechou a conta (Pagamento por ${metodo}) das encomendas: ${idsStr}`);
