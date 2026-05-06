@@ -502,6 +502,11 @@
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
+    // --- FUNÇÕES DE SEGURANÇA (Anti-Blocking do Browser) ---
+    function safeStorageGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+    function safeStorageSet(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
+    function safeStorageRemove(key) { try { localStorage.removeItem(key); } catch(e) {} }
+
     let todosProdutos = [];
     let categoriaSelecionada = 'todos';
     let lojaAtual = null;
@@ -601,21 +606,21 @@
         }
     };
 
-    let userLang = localStorage.getItem('pv_idioma') || 'pt';
+    let userLang = safeStorageGet('pv_idioma') || 'pt';
 
     function forcarIdioma(lang) {
         userLang = lang;
-        localStorage.setItem('pv_idioma', lang);
+        safeStorageSet('pv_idioma', lang);
         traduzirInterface();
         if(todosProdutos.length > 0) renderizar(todosProdutos); 
     }
 
     function traduzirInterface() {
-        if (!localStorage.getItem('pv_idioma')) {
+        if (!safeStorageGet('pv_idioma')) {
             const browserLang = navigator.language || navigator.userLanguage;
             const shortLang = browserLang.substring(0, 2).toLowerCase();
             userLang = dictIdiomas[shortLang] ? shortLang : 'en';
-            localStorage.setItem('pv_idioma', userLang);
+            safeStorageSet('pv_idioma', userLang);
         }
 
         document.documentElement.lang = userLang;
@@ -741,23 +746,28 @@
     }
 
     async function verificarSessaoCliente() {
-        const { data: { session } } = await _sb.auth.getSession();
-        if(session) {
-            const { data: userData } = await _sb.from('clientes_app').select('*').eq('auth_id', session.user.id).maybeSingle();
-            if(userData) {
-                clienteAtual = userData;
-                
-                document.getElementById('btn-user-account-top').style.display = 'flex';
-                
-                const saudacao = document.getElementById('boas-vindas-cliente');
-                saudacao.innerText = `Seja bem vinda(o), ${clienteAtual.nome} 👋`;
-                saudacao.style.display = 'block';
+        try {
+            const { data: { session }, error } = await _sb.auth.getSession();
+            if (error) throw error;
+            if(session) {
+                const { data: userData } = await _sb.from('clientes_app').select('*').eq('auth_id', session.user.id).maybeSingle();
+                if(userData) {
+                    clienteAtual = userData;
+                    
+                    document.getElementById('btn-user-account-top').style.display = 'flex';
+                    
+                    const saudacao = document.getElementById('boas-vindas-cliente');
+                    saudacao.innerText = `Seja bem vinda(o), ${clienteAtual.nome} 👋`;
+                    saudacao.style.display = 'block';
 
-                document.getElementById('cart-login-section').style.display = 'none';
-                document.getElementById('checkout-options-wrapper').style.display = 'block';
+                    document.getElementById('cart-login-section').style.display = 'none';
+                    document.getElementById('checkout-options-wrapper').style.display = 'block';
 
-                iniciarOuvinteCliente();
+                    iniciarOuvinteCliente();
+                }
             }
+        } catch (e) {
+            console.warn("Aviso: Browser bloqueou o acesso à sessão/cookies. O cliente não vai aparecer autenticado.", e);
         }
     }
 
@@ -788,7 +798,6 @@
         document.getElementById(`cart-form-${mode}`).style.display = 'block';
     }
 
-    // INJEÇÃO (Funções repostas que tinham desaparecido): Controlo Inteligente de Display do Carrinho
     function toggleOrderFields() {
         const isReserva = document.querySelector('input[name="tipo_pedido"]:checked').value === 'reserva';
         
@@ -929,10 +938,10 @@
     async function clienteLogout() { await _sb.auth.signOut(); window.location.reload(); }
 
     function ocultarMeuPedido(id) {
-        let ocultos = JSON.parse(localStorage.getItem('pedidos_ocultos') || '[]');
+        let ocultos = JSON.parse(safeStorageGet('pedidos_ocultos') || '[]');
         if (!ocultos.includes(id)) {
             ocultos.push(id);
-            localStorage.setItem('pedidos_ocultos', JSON.stringify(ocultos));
+            safeStorageSet('pedidos_ocultos', JSON.stringify(ocultos));
         }
         abrirConta(); 
     }
@@ -946,7 +955,7 @@
         
         if(!pedidos || pedidos.length === 0) { container.innerHTML = "<p>Ainda não tem pedidos.</p>"; return; }
 
-        const pedidosOcultos = JSON.parse(localStorage.getItem('pedidos_ocultos') || '[]');
+        const pedidosOcultos = JSON.parse(safeStorageGet('pedidos_ocultos') || '[]');
         const pedidosVisiveis = pedidos.filter(p => !pedidosOcultos.includes(p.id));
 
         if(pedidosVisiveis.length === 0) { container.innerHTML = "<p>Ainda não tem pedidos visíveis.</p>"; return; }
@@ -1054,7 +1063,7 @@
                 const msgEl = document.getElementById('cliente-alert-msg');
                 
                 if (mesaAtual && (novoEstado === 'finalizado' || novoEstado === 'cancelado')) {
-                    localStorage.removeItem('pv_mesa_sessao');
+                    safeStorageRemove('pv_mesa_sessao');
                     if (novoEstado === 'finalizado') {
                         alert("A sua conta foi finalizada. Obrigado pela visita e volte sempre!");
                     } else {
@@ -1100,7 +1109,7 @@
             })
             .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pedidos', filter: filtroStr }, payload => {
                 if (mesaAtual) {
-                    localStorage.removeItem('pv_mesa_sessao');
+                    safeStorageRemove('pv_mesa_sessao');
                     alert("A sua sessão de mesa foi encerrada pelo sistema.");
                     const urlSemMesa = window.location.href.replace(/([&?])mesa=[^&]+(&|$)/, '$1').replace(/&$/, '').replace(/\?$/, '');
                     window.location.href = urlSemMesa;
@@ -1276,10 +1285,11 @@
             }
 
             const TTL_HOURS = 2;
-            const storedSessaoObj = JSON.parse(localStorage.getItem('pv_mesa_sessao'));
+            let storedSessaoObj = null;
+            try { storedSessaoObj = JSON.parse(safeStorageGet('pv_mesa_sessao')); } catch(e) {}
             
             if (paramMesa) {
-                localStorage.setItem('pv_mesa_sessao', JSON.stringify({ mesa: paramMesa, timestamp: Date.now() }));
+                safeStorageSet('pv_mesa_sessao', JSON.stringify({ mesa: paramMesa, timestamp: Date.now() }));
                 mesaAtual = paramMesa;
             } else if (storedSessaoObj) {
                 const hoursPassed = (Date.now() - storedSessaoObj.timestamp) / (1000 * 60 * 60);
@@ -1291,7 +1301,7 @@
                         return; 
                     }
                 } else {
-                    localStorage.removeItem('pv_mesa_sessao');
+                    safeStorageRemove('pv_mesa_sessao');
                 }
             }
 
@@ -1335,8 +1345,7 @@
                     .limit(1);
 
                 if (!pedidosAtivos || pedidosAtivos.length === 0) {
-                    console.log("Limpeza de Segurança Automática");
-                    localStorage.removeItem('pv_mesa_sessao');
+                    safeStorageRemove('pv_mesa_sessao');
                     const urlLimpo = window.location.href.split('&mesa=')[0].split('?mesa=')[0];
                     window.location.href = urlLimpo;
                     return; 
@@ -1366,7 +1375,7 @@
                 document.getElementById('btn-chamar-empregado').style.display = 'flex';
                 document.getElementById('btn-pedir-conta').style.display = 'flex';
                 document.getElementById('cart-text-btn').innerText = ''; 
-                document.getElementById('btn-user-account').style.display = 'none'; 
+                document.getElementById('btn-user-account-top').style.display = 'none'; 
                 
                 iniciarOuvinteCliente();
             }
@@ -1415,6 +1424,7 @@
             });
             
         } catch (e) {
+            console.error("ERRO FATAL NO INIT:", e);
             document.getElementById('v-nome').innerText = "Erro de Sistema";
             document.getElementById('motivo-fecho').innerText = "Falha ao ligar à base de dados. Tente recarregar a página.";
             document.getElementById('block-screen').style.display = 'flex';
