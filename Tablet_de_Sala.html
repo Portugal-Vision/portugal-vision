@@ -265,7 +265,8 @@
 <div id="modal-pagar-mesa" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header">
-            <h3 style="margin:0;">Fechar Pedido <span id="pagar-mesa-num" style="display: none;"></span></h3>
+            <!-- Título limpo de tags, agora controlamos isto no JavaScript -->
+            <h3 id="modal-pagar-mesa-title" style="margin:0;">Fechar Pedido</h3>
             <div class="close-modal" onclick="fecharModal('modal-pagar-mesa')"><i class="fas fa-times"></i></div> 
         </div>
         <div class="modal-body">
@@ -278,6 +279,8 @@
                 <option value="Ticket Refeição">🎫 Ticket Refeição</option>
             </select>
             <input type="hidden" id="pagar-mesa-ids">
+            <!-- INPUT 100% SEGURO PARA GUARDAR A MESA -->
+            <input type="hidden" id="pagar-mesa-id-seguro">
             <button class="btn-login btn-success" style="background: var(--success); margin-top: 15px;" onclick="confirmarFechoMesa()">
                 <i class="fas fa-check-double"></i> Confirmar Pagamento
             </button>
@@ -1237,12 +1240,14 @@
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
         fecharModal('modal-detalhes-gerais'); 
         
+        // CORREÇÃO 1 & 3: Guardar a informação num campo hidden 100% seguro!
+        document.getElementById('pagar-mesa-id-seguro').value = mesa;
+        
+        // Atualiza apenas a parte visual do título
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
-            document.getElementById('pagar-mesa-num').innerText = mesa;
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
         } else {
-            document.getElementById('pagar-mesa-num').innerText = mesa;
-            document.querySelector('#modal-pagar-mesa h3').innerHTML = 'Fechar Mesa <span id="pagar-mesa-num">' + mesa + '</span>';
+            document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-utensils"></i> Fechar Mesa ' + mesa;
         }
 
         document.getElementById('pagar-mesa-total').innerText = total.toFixed(2);
@@ -1270,10 +1275,10 @@
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             
-            const numMesaText = document.getElementById('pagar-mesa-num').innerText;
-            if(!numMesaText.includes('Takeaway') && !numMesaText.includes('Reserva')) {
-                // CORREÇÃO 2: Limpar a palavra "Mesa " para bater certo com a chave original do cronómetro
-                const numMesaLimpo = numMesaText.replace('Mesa ', '').trim();
+            // CORREÇÃO 2 & 4: Ler a mesa do campo seguro e limpar o cronómetro
+            const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
+            if(mesaSegura !== 'Takeaway' && mesaSegura !== 'Reserva') {
+                const numMesaLimpo = mesaSegura.replace('Mesa ', '').trim();
                 localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
             }
 
