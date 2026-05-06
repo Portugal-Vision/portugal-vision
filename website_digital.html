@@ -571,7 +571,7 @@
             recover_email_desc: "Introduzca el número de teléfono asociado a su cuenta para verificar su correo electrónico.", find_email: "Buscar E-mail",
             my_orders: "Mis Pedidos", loading_orders: "Cargando pedidos...", logout: "Cerrar Sesión",
             your_order: "Su Pedido", total: "Total:", how_to_order: "1. ¿Cómo desea pedir?", takeaway: "Para Llevar", reservation: "Reserva",
-            date: "Fecha:", time: "Hora (Intervalos de 30 min):", people_count: "Nº de Personas (Solo para Reserva)",
+            date: "Date:", time: "Hora (Intervalos de 30 min):", people_count: "Nº de Personas (Solo para Reserva)",
             need_nif: "¿Desea NIF en la factura?", yes: "Sí", no: "No", nif_placeholder: "Su número de identificación fiscal (NIF)", nif_warning: "Tras finalizar, no será posible añadir el NIF, ya que la factura se emite en el momento del pago.",
             payment_method: "2. Método de Pago", exclusive_mbway: "Pago Exclusivo por MBWay", mbway_instructions: "Su pedido solo pasará a la cocina tras enviar el comprobante de transferencia al nº",
             confirm_order: "Confirmar y Enviar Pedido", ask_bill: "Pedir la Cuenta", payment_method_simple: "Método de Pago", cash: "💵 Efectivo", card: "💳 Tarjeta", meal_ticket: "🎫 Ticket Restaurante",
@@ -1078,6 +1078,42 @@
             })
             .subscribe();
     }
+
+    // --- NOVAS FUNÇÕES PARA RESOLVER OS PROBLEMAS DE FLUXO E LÓGICA ---
+    
+    function toggleNifField() {
+        const querNif = document.querySelector('input[name="opcao_nif"]:checked').value;
+        const nifInput = document.getElementById('cli-nif');
+        if (querNif === 'sim') {
+            nifInput.style.display = 'block';
+        } else {
+            nifInput.style.display = 'none';
+            nifInput.value = ''; // Limpa o valor para não enviar acidentalmente
+        }
+    }
+
+    function toggleOrderFields() {
+        const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
+        const numPessoasInput = document.getElementById('cli-pessoas');
+        const nifSection = document.getElementById('nif-section');
+        const paymentSection = document.getElementById('payment-section');
+
+        if (tipoPedido === 'reserva') {
+            numPessoasInput.style.display = 'block';
+            nifSection.style.display = 'none';      // Na reserva, o NIF normalmente pede-se presencialmente
+            paymentSection.style.display = 'none';  // Desativar MBWay / zona de pagamento nas reservas
+        } else {
+            numPessoasInput.style.display = 'none';
+            numPessoasInput.value = '';             // Limpa o valor para não enviar acidentalmente
+            nifSection.style.display = 'block';
+            paymentSection.style.display = 'block'; // Voltar a mostrar métodos de pagamento no levantamento
+        }
+        
+        // Atualiza os horários pois a reserva tem margem diferente do levantamento (30min vs 60min)
+        atualizarHorariosDisponiveis(); 
+    }
+
+    // ------------------------------------------------------------------
 
     function configurarDatasIniciais() {
         const agora = new Date();
