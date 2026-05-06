@@ -448,7 +448,7 @@
     </div>
 
     <img id="v-logo" class="logo" src="" style="display:none;">
-    <h2 id="v-nome" data-i18n="loading">A carregar...</h2>
+    <h2 id="v-nome">A carregar...</h2>
     <div id="boas-vindas-cliente"></div>
     <div id="mesa-badge" style="display:none; background: var(--ok); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 10px; display: inline-block;"></div>
 </div>
@@ -1346,6 +1346,7 @@
                 document.getElementById('btn-chamar-empregado').style.display = 'flex';
                 document.getElementById('btn-pedir-conta').style.display = 'flex';
                 document.getElementById('cart-text-btn').innerText = ''; 
+                document.getElementById('btn-user-account').style.display = 'none'; 
                 
                 iniciarOuvinteCliente();
             }
@@ -1427,6 +1428,7 @@
             precisaDePonto = true;
         }
 
+        // Se Lojista forçou a pergunta no Backend, sobrepõe-se à inteligência do frontend
         if (p.pede_ponto === true) precisaDePonto = true;
 
         if (precisaDePonto) {
@@ -1437,6 +1439,7 @@
             
             document.getElementById('modal-ponto-carne').style.display = 'flex';
         } else {
+            // INJEÇÃO PONTO 2 CORRIGIDO (Adiciona diretamente à array do carrinho primeiro)
             adicionarAoCarrinho(idProduto, p.nome, precoRaw, desconto, null, event.currentTarget);
         }
     }
@@ -1493,13 +1496,13 @@
         }, 1000);
     }
 
+    // INJEÇÃO PONTO 2 CORRIGIDO (TIMING DA FUNÇÃO)
     async function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, pontoOpicional, botaoDOM) {
-        if (!mesaAtual && !clienteAtual) {
-            abrirCarrinho();
-        }
-
+        
+        // 1. Encontrar o produto na base de dados
         const prodNaBase = todosProdutos.find(p => String(p.id) === String(idProduto));
         
+        // 2. Verificar e abater stock ANTES de abrir qualquer janela
         if (prodNaBase && prodNaBase.stock !== null) {
             if (prodNaBase.stock <= 0) {
                 alert("Lamentamos, mas este artigo acabou de esgotar.");
@@ -1509,6 +1512,7 @@
             await cativarStockBaseDados(idProduto, 1);
         }
 
+        // 3. Fazer a matemática e adicionar o produto à array do carrinho
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         const idBaseString = String(idProduto);
         const idUnicoCarrinho = pontoOpicional ? `${idBaseString}-${pontoOpicional.replace(/\s+/g, '')}` : idBaseString;
@@ -1529,21 +1533,30 @@
             }); 
         }
         
+        // 4. Iniciar relógios e atualizar botões visuais do carrinho
         iniciarRelogioStock();
         atualizarFloater();
         
-        if(botaoDOM) {
-            const originalText = botaoDOM.innerHTML;
-            botaoDOM.innerHTML = `<i class="fas fa-check"></i>`;
-            botaoDOM.style.background = "#166534"; 
-            setTimeout(() => { botaoDOM.innerHTML = originalText; botaoDOM.style.background = "var(--ok)"; }, 1500);
+        // 5. DECISÃO FINAL: Tem login feito?
+        if (!mesaAtual && !clienteAtual) {
+            // O cliente não tem sessão, então abrimos logo o carrinho para ele fazer login.
+            // A grande diferença é que agora o "Arroz Doce" já está no carrinho!
+            abrirCarrinho();
         } else {
-            const alerta = document.getElementById('cliente-alert');
-            const msgEl = document.getElementById('cliente-alert-msg');
-            msgEl.innerText = "Adicionado ao carrinho!";
-            alerta.style.background = "var(--ok)"; 
-            alerta.classList.add('show');
-            setTimeout(() => alerta.classList.remove('show'), 2000);
+            // O cliente tem sessão, por isso mostramos apenas a mensagem verde de sucesso.
+            if(botaoDOM) {
+                const originalText = botaoDOM.innerHTML;
+                botaoDOM.innerHTML = `<i class="fas fa-check"></i>`;
+                botaoDOM.style.background = "#166534"; 
+                setTimeout(() => { botaoDOM.innerHTML = originalText; botaoDOM.style.background = "var(--ok)"; }, 1500);
+            } else {
+                const alerta = document.getElementById('cliente-alert');
+                const msgEl = document.getElementById('cliente-alert-msg');
+                msgEl.innerText = "Adicionado ao carrinho!";
+                alerta.style.background = "var(--ok)"; 
+                alerta.classList.add('show');
+                setTimeout(() => alerta.classList.remove('show'), 2000);
+            }
         }
     }
 
