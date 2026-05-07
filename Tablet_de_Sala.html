@@ -107,6 +107,19 @@
 
         .pin-modal-input { text-align: center; letter-spacing: 15px; font-size: 28px; font-weight: 800; }
 
+        /* Estilos do Modal de Alertas/Confirmações Customizadas */
+        .custom-alert-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px);
+            display: none; align-items: center; justify-content: center; z-index: 10001;
+        }
+        .custom-alert-box {
+            background: white; border-radius: 16px; padding: 30px; width: 90%; max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center;
+        }
+        .custom-alert-title { font-size: 1.4em; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+        .custom-alert-text { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 1em; }
+        .custom-alert-actions { display: flex; gap: 10px; justify-content: center; }
+
         @media print {
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
@@ -116,6 +129,16 @@
     </style>
 </head>
 <body>
+
+<div id="custom-alert-modal" class="custom-alert-overlay">
+    <div class="custom-alert-box">
+        <div id="custom-alert-icon" style="font-size: 3em; margin-bottom: 15px; color: var(--primary);"><i class="fas fa-info-circle"></i></div>
+        <div id="custom-alert-title" class="custom-alert-title">Aviso</div>
+        <div id="custom-alert-text" class="custom-alert-text">Mensagem...</div>
+        <div id="custom-alert-actions" class="custom-alert-actions">
+            </div>
+    </div>
+</div>
 
 <div id="login-screen">
     <div class="login-box">
@@ -265,7 +288,6 @@
 <div id="modal-pagar-mesa" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header">
-            <!-- Título limpo de tags, agora controlamos isto no JavaScript -->
             <h3 id="modal-pagar-mesa-title" style="margin:0;">Fechar Pedido</h3>
             <div class="close-modal" onclick="fecharModal('modal-pagar-mesa')"><i class="fas fa-times"></i></div> 
         </div>
@@ -279,7 +301,6 @@
                 <option value="Ticket Refeição">🎫 Ticket Refeição</option>
             </select>
             <input type="hidden" id="pagar-mesa-ids">
-            <!-- INPUT 100% SEGURO PARA GUARDAR A MESA -->
             <input type="hidden" id="pagar-mesa-id-seguro">
             <button class="btn-login btn-success" style="background: var(--success); margin-top: 15px;" onclick="confirmarFechoMesa()">
                 <i class="fas fa-check-double"></i> Confirmar Pagamento
@@ -349,10 +370,42 @@
     window.mesasGlobais = {};
     let modalDetalheAberto = { tipo: null, id: null }; 
 
-    // O objeto global de dias importado da tua lógica para cruzar com o POS
     const nomeDiasInt = {1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado", 0: "Domingo"};
 
-    // --- NOVA LÓGICA DE AUDITORIA (FIREWALL PONTO 9) ---
+    // --- FUNÇÕES DE ALERTA NATIVAS DA INTERFACE (Substituem alert e confirm) ---
+    function mostrarAlertaCustom(mensagem, titulo = "Aviso") {
+        document.getElementById('custom-alert-icon').innerHTML = '<i class="fas fa-info-circle"></i>';
+        document.getElementById('custom-alert-icon').style.color = 'var(--primary)';
+        document.getElementById('custom-alert-title').innerText = titulo;
+        document.getElementById('custom-alert-text').innerText = mensagem;
+        
+        const actions = document.getElementById('custom-alert-actions');
+        actions.innerHTML = `<button class="btn-login" style="width: 100px;" onclick="document.getElementById('custom-alert-modal').style.display='none'">OK</button>`;
+        
+        document.getElementById('custom-alert-modal').style.display = 'flex';
+    }
+
+    function mostrarConfirmacaoCustom(mensagem, funcaoConfirmar, titulo = "Tem a certeza?") {
+        document.getElementById('custom-alert-icon').innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        document.getElementById('custom-alert-icon').style.color = 'var(--warning)';
+        document.getElementById('custom-alert-title').innerText = titulo;
+        document.getElementById('custom-alert-text').innerText = mensagem;
+        
+        const actions = document.getElementById('custom-alert-actions');
+        actions.innerHTML = `
+            <button class="btn-action" style="background:#e2e8f0; flex:1;" onclick="document.getElementById('custom-alert-modal').style.display='none'">Cancelar</button>
+            <button class="btn-action btn-danger" style="background:var(--danger); color:white; flex:1;" id="btn-confirmar-accao">Confirmar</button>
+        `;
+        
+        document.getElementById('btn-confirmar-accao').onclick = () => {
+            document.getElementById('custom-alert-modal').style.display='none';
+            funcaoConfirmar();
+        };
+        
+        document.getElementById('custom-alert-modal').style.display = 'flex';
+    }
+    // --------------------------------------------------------------------------
+
     async function registarAuditoria(acaoDetalhe) {
         const empId = sessionStorage.getItem('pv_sala_operador_id') || '0';
         const empNome = sessionStorage.getItem('pv_sala_operador') || 'Desconhecido';
@@ -439,14 +492,12 @@
             return;
         }
         
-        // Ponto 1: Determinar que dia é hoje para bloquear exclusivos de outros dias
         const hoje = new Date();
         const diaSemanaDb = (hoje.getDay() + 6) % 7;
 
         container.innerHTML = produtosCatalogo.map(p => {
             const precoFinal = p.desconto_percent > 0 ? p.preco * (1 - p.desconto_percent / 100) : p.preco;
             
-            // Lógica de bloqueio visual
             let isEsgotado = p.stock !== null && p.stock !== "" && parseInt(p.stock) <= 0;
             let isDiaErrado = p.dia_semana !== null && p.dia_semana !== "" && parseInt(p.dia_semana) !== diaSemanaDb;
 
@@ -476,14 +527,13 @@
     }
 
     function adicionarAoPOS(id, nome, preco) {
-        // Ponto 2: Bloqueio Lógico no Clique - Validar se podemos adicionar mais com base no stock
         const pDb = produtosCatalogo.find(p => String(p.id) === String(id));
         const existente = posCarrinho.find(i => String(i.id) === String(id));
         const qtyAtual = existente ? existente.qtde : 0;
 
         if (pDb && pDb.stock !== null && pDb.stock !== "") {
             if (qtyAtual + 1 > parseInt(pDb.stock)) {
-                alert(`Não é possível adicionar mais. O limite de stock foi atingido para: ${nome}.`);
+                mostrarAlertaCustom(`Não é possível adicionar mais. O limite de stock foi atingido para: ${nome}.`);
                 return;
             }
         }
@@ -494,13 +544,12 @@
     }
 
     function alterarQtdePOS(index, delta) {
-        // Ponto 3: Bloqueio de incremento manual pelos botões +/- do carrinho
         if (delta > 0) {
             const item = posCarrinho[index];
             const pDb = produtosCatalogo.find(p => String(p.id) === String(item.id));
             if (pDb && pDb.stock !== null && pDb.stock !== "") {
                 if (item.qtde + 1 > parseInt(pDb.stock)) {
-                    alert(`Não é possível adicionar mais. O limite de stock foi atingido para: ${item.nome}.`);
+                    mostrarAlertaCustom(`Não é possível adicionar mais. O limite de stock foi atingido para: ${item.nome}.`);
                     return;
                 }
             }
@@ -540,10 +589,16 @@
     }
 
     async function enviarPedidoPOS() {
-        if (posCarrinho.length === 0) return alert("O carrinho está vazio. Adicione produtos antes de enviar.");
+        if (posCarrinho.length === 0) {
+            mostrarAlertaCustom("O carrinho está vazio. Adicione produtos antes de enviar.");
+            return;
+        }
         
         const mesaInput = document.getElementById('pos-mesa').value.trim();
-        if (!mesaInput) return alert("Indique o número da mesa ou o nome para o Takeaway.");
+        if (!mesaInput) {
+            mostrarAlertaCustom("Indique o número da mesa ou o nome para o Takeaway.");
+            return;
+        }
 
         const btn = document.querySelector('#modal-pos .btn-login');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A enviar...';
@@ -577,7 +632,7 @@
 
             fecharModal('modal-pos'); posCarrinho = []; carregarDados();
         } catch (error) {
-            alert("Erro ao enviar pedido para a cozinha: " + error.message);
+            mostrarAlertaCustom("Erro ao enviar pedido para a cozinha: " + error.message, "Erro");
         } finally {
             btn.innerHTML = '<i class="fas fa-fire"></i> Enviar Direto para a Cozinha'; btn.disabled = false;
         }
@@ -611,7 +666,7 @@
                 acaoSegurancaPendente = null;
             }
         } else {
-            alert("PIN Inválido ou não autorizado.");
+            mostrarAlertaCustom("PIN Inválido ou não autorizado.", "Erro de Segurança");
             document.getElementById('input-pin-seguranca').value = '';
         }
     }
@@ -666,7 +721,10 @@
         const empId = document.getElementById('select-empregado').value;
         const pinDigitado = document.getElementById('pin-empregado').value;
 
-        if (!empId || !pinDigitado) return alert("Selecione o seu nome e insira o PIN.");
+        if (!empId || !pinDigitado) {
+            mostrarAlertaCustom("Selecione o seu nome e insira o PIN.", "Atenção");
+            return;
+        }
 
         const btn = document.getElementById('btn-login-text');
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; btn.disabled = true;
@@ -683,7 +741,8 @@
             iniciarDashboard(minhaLojaId);
             registarAuditoria(`Iniciou o Turno`);
         } else {
-            alert("❌ PIN incorreto."); document.getElementById('pin-empregado').value = "";
+            mostrarAlertaCustom("PIN incorreto. Tente novamente.", "Acesso Negado");
+            document.getElementById('pin-empregado').value = "";
             btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Iniciar Turno`; btn.disabled = false;
         }
     }
@@ -778,7 +837,6 @@
         document.getElementById('nome-restaurante').innerText = loja.nome + " - Sala";
         document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${nomeOperadorAtual}`;
         
-        // Ponto 1A: Modificámos esta Query para incluir 'stock' e 'dia_semana' para o tablet
         const { data: prods } = await _sb.from('produtos').select('id, nome, preco, desconto_percent, imagem_url, stock, dia_semana').eq('loja_id', minhaLojaId).eq('oculto', false);
         if(prods) produtosCatalogo = prods;
 
@@ -800,7 +858,6 @@
               carregarDados(); 
           })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => { 
-              // CORREÇÃO 1: Removida a dependência do payload.old para garantir que o sino toca sempre
               if (payload.new.estado === 'pronto') {
                   const tagLocal = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : `Takeaway (${payload.new.nome_cliente || 'Anónimo'})`;
                   tocarSinoCozinhaPronta();
@@ -1137,7 +1194,10 @@
     
     async function confirmarMesaReserva() {
         const id = document.getElementById('reserva-id-escondido').value; const mesa = document.getElementById('input-mesa-reserva').value.trim();
-        if (!mesa) return alert("Por favor, introduza o número da mesa a que a reserva pertence.");
+        if (!mesa) {
+            mostrarAlertaCustom("Por favor, introduza o número da mesa a que a reserva pertence.");
+            return;
+        }
         
         await _sb.from('pedidos').update({ 
             mesa: mesa, 
@@ -1155,9 +1215,9 @@
     }
 
     function apagarPedidoSeguro(id) { pedirPin(() => efetuarCancelamentoLogico(id)); }
+    
     async function efetuarCancelamentoLogico(id) {
-        if(confirm("Tem a certeza que deseja CANCELAR este pedido? (Ele será movido para o Histórico).")) { 
-            
+        mostrarConfirmacaoCustom("Tem a certeza que deseja CANCELAR este pedido? (Ele será movido para o Histórico).", async () => {
             const p = window.pedidosGlobais.find(x => x.id === id);
             if(p && p.itens) await restaurarStockPermanente(p.itens);
 
@@ -1168,14 +1228,14 @@
             registarAuditoria(`Cancelou o pedido #${id}`);
             fecharModal('modal-detalhes-gerais');
             carregarDados(); 
-        } 
+        });
     }
 
     function abrirEdicaoSegura(id) { pedirPin(() => efetuarAberturaEdicao(id)); }
 
     async function efetuarAberturaEdicao(id) {
         const { data: p } = await _sb.from('pedidos').select('*').eq('id', id).single();
-        if (!p) return alert("Erro ao carregar pedido.");
+        if (!p) return mostrarAlertaCustom("Erro ao carregar pedido.", "Erro");
         pedidoEditando = JSON.parse(JSON.stringify(p)); 
         document.getElementById('edit-pedido-id').innerText = `#${p.id}`; document.getElementById('edit-nome').value = p.nome_cliente || ''; document.getElementById('edit-nif').value = p.nif_cliente || ''; document.getElementById('edit-mesa').value = p.mesa || '';
         document.getElementById('edit-add-produto-select').innerHTML = '<option value="" disabled selected>Escolher produto a adicionar...</option>' + produtosCatalogo.map(prod => { const finalP = prod.desconto_percent > 0 ? prod.preco * (1 - prod.desconto_percent/100) : prod.preco; return `<option value="${prod.id}">${prod.nome} (${finalP.toFixed(2)}€)</option>`; }).join('');
@@ -1225,16 +1285,16 @@
 
             fecharModal('modal-edicao'); 
             carregarDados(); 
-        } catch (e) { alert("Erro ao atualizar a base de dados: " + e.message); } 
+        } catch (e) { mostrarAlertaCustom("Erro ao atualizar a base de dados: " + e.message, "Erro"); } 
         finally { btn.innerHTML = `<i class="fas fa-save"></i> Guardar Alterações`; btn.disabled = false; }
     }
 
     async function confirmarTakeaway(id) { 
-        if(confirm("O pagamento MBWay já foi validado e a fatura emitida?")) { 
+        mostrarConfirmacaoCustom("O pagamento MBWay já foi validado e a fatura emitida?", async () => {
             await _sb.from('pedidos').update({ estado: 'pendente' }).eq('id', id); 
             registarAuditoria(`Validou o pagamento MBWay do Takeaway #${id}`);
             carregarDados();
-        } 
+        }, "Confirmação de Pagamento");
     }
     
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
@@ -1288,7 +1348,7 @@
             await carregarDados();
             
         } catch(e) {
-            alert("Erro ao fechar mesa.");
+            mostrarAlertaCustom("Erro ao fechar mesa.", "Erro Fatal");
         } finally {
             btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; btn.disabled = false;
         }
@@ -1332,12 +1392,12 @@
     }
 
     async function efetuarReabertura(id) {
-        if(confirm("Deseja reabrir este pedido? Ele voltará para a Sala (estado PRONTO) e o pagamento será anulado.")) {
+        mostrarConfirmacaoCustom("Deseja reabrir este pedido? Ele voltará para a Sala (estado PRONTO) e o pagamento será anulado.", async () => {
             await _sb.from('pedidos').update({ estado: 'pronto', metodo_pagamento: null }).eq('id', id);
             registarAuditoria(`Reabriu (Estorno) o Pedido #${id}`);
             fecharModal('modal-historico'); 
             carregarDados();
-        }
+        }, "Confirmar Estorno");
     }
 
     function fecharModal(id) { 
