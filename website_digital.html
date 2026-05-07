@@ -233,7 +233,6 @@
     </div>
 </div>
 
-<!-- MODAL DE AUTENTICAÇÃO -->
 <div id="authModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="document.getElementById('authModal').style.display='none'">×</span>
@@ -297,7 +296,6 @@
     </div>
 </div>
 
-<!-- CART MODAL MODIFICADO COM LOGIN EMBUTIDO E TRAVA DE DIA -->
 <div id="cartModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="fecharCarrinho()">×</span>
@@ -315,7 +313,6 @@
                 <i class="fas fa-stopwatch"></i> <span data-i18n="stock_reserved">Stock reservado por 15 minutos.</span> (<span id="cart-timer-countdown">15:00</span>)
             </div>
 
-            <!-- INJEÇÃO PONTO 2: LOGIN EMBUTIDO NO CARRINHO (Sem cores forçadas) -->
             <div id="cart-login-section" style="display:none; margin-top: 20px; padding: 20px; background: rgba(128, 128, 128, 0.05); border: 1px dashed var(--s); border-radius: 12px;">
                 <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="auth_title">Identificação (Obrigatória)</h4>
                 <p style="font-size: 12px; color: var(--s); margin-top:0;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
@@ -344,7 +341,6 @@
                 </div>
             </div>
 
-            <!-- OPÇÕES DE CHECKOUT APENAS VISÍVEIS SE LOGADO -->
             <div id="checkout-options-wrapper" style="display:none;">
                 
                 <div id="erro-data-dia" style="display:none; background: #fef2f2; color: #991b1b; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin-top: 15px; font-weight: bold; font-size: 13px;"></div>
@@ -433,7 +429,6 @@
 
 <div class="header">
     <div class="top-bar">
-        <!-- INJEÇÃO PONTO 4: BANDEIRAS DE IDIOMA MANUAIS -->
         <div class="language-flags" style="margin-bottom: 0;">
             <span class="flag-btn active" id="flag-pt" onclick="forcarIdioma('pt')" title="Português">PT</span>
             <span class="flag-btn" id="flag-en" onclick="forcarIdioma('en')" title="English">EN</span>
@@ -441,7 +436,6 @@
             <span class="flag-btn" id="flag-fr" onclick="forcarIdioma('fr')" title="Français">FR</span>
         </div>
         
-        <!-- INJEÇÃO ÍCONE CONTA NO TOPO -->
         <button id="btn-user-account-top" onclick="abrirConta()" style="display:none; background: var(--p); color: white; width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: none; transition: 0.3s;" title="A Minha Conta">
             <i class="fas fa-user"></i>
         </button>
@@ -455,7 +449,6 @@
 
 <div class="categories-container" id="cat-list"></div>
 
-<!-- INJEÇÃO PONTO 3: AVISO LEGAL DA LEI 10/2015 -->
 <div class="legal-banner" data-i18n="legal_cover">
     "Nenhum prato, produto alimentar ou bebida, incluindo o couvert, pode ser cobrado se não for solicitado pelo cliente ou por este for inutilizado." (DL n.º 10/2015)
 </div>
@@ -509,6 +502,7 @@
     let mesaAtual = null; 
     let clienteAtual = null; 
     let realtimeCanal = null;
+    let ultimoEstadoConhecido = null; // MEMÓRIA: Evita notificações duplicadas
     
     let tempCarneId = null;
     let tempCarneNome = null;
@@ -577,7 +571,7 @@
             confirm_order: "Confirmar y Enviar Pedido", ask_bill: "Pedir la Cuenta", payment_method_simple: "Método de Pago", cash: "💵 Efectivo", card: "💳 Tarjeta", meal_ticket: "🎫 Ticket Restaurante",
             need_nif_bill: "¿Desea factura con NIF?", send_request: "Enviar Pedido", search_menu: "Buscar en el menú...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Libro de Reclamaciones", rights_reserved: "Todos los derechos reservados.",
-            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Volver", exclusive_day: "Exclusivo",
+            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Voltar", exclusive_day: "Exclusivo",
             legal_cover: '"Ningún plato, producto alimenticio o bebida, incluido el cubierto, podrá ser cobrado si no fue solicitado por el cliente o si no fue consumido." (DL n.º 10/2015)'
         },
         fr: {
@@ -603,12 +597,11 @@
 
     let userLang = localStorage.getItem('pv_idioma') || 'pt';
 
-    // INJEÇÃO PONTO 4: TRADUÇÃO MANUAL COM BANDEIRAS
     function forcarIdioma(lang) {
         userLang = lang;
         localStorage.setItem('pv_idioma', lang);
         traduzirInterface();
-        if(todosProdutos.length > 0) renderizar(todosProdutos); // Re-renderiza para atualizar textos dinâmicos (IVA, Esgotado)
+        if(todosProdutos.length > 0) renderizar(todosProdutos);
     }
 
     function traduzirInterface() {
@@ -748,7 +741,6 @@
             if(userData) {
                 clienteAtual = userData;
                 
-                // NOVO: Ícone de perfil no TOP
                 document.getElementById('btn-user-account-top').style.display = 'flex';
                 
                 const saudacao = document.getElementById('boas-vindas-cliente');
@@ -1002,6 +994,7 @@
         }
     }
 
+    // --- CORREÇÃO 2 E 3: URL SEGURO E MEMÓRIA DE ESTADO ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         if(!clienteAtual && !mesaAtual) return;
@@ -1014,12 +1007,12 @@
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: filtroStr }, payload => {
                 
                 const novoEstado = payload.new.estado;
-                const oldEstado = payload.old ? payload.old.estado : null;
                 const tipoPedido = payload.new.tipo_pedido;
                 const mesaAtribuida = payload.new.mesa;
                 const alerta = document.getElementById('cliente-alert');
                 const msgEl = document.getElementById('cliente-alert-msg');
                 
+                // Limpeza e Salto Seguro (Quando Conta é Fechada)
                 if (mesaAtual && (novoEstado === 'finalizado' || novoEstado === 'cancelado')) {
                     localStorage.removeItem('pv_mesa_sessao');
                     if (novoEstado === 'finalizado') {
@@ -1027,15 +1020,18 @@
                     } else {
                         alert("O seu pedido/mesa foi cancelado pelo restaurante.");
                     }
-                    const urlSemMesa = window.location.href.replace(/([&?])mesa=[^&]+(&|$)/, '$1').replace(/&$/, '').replace(/\?$/, '');
-                    window.location.href = urlSemMesa;
+                    const novaUrl = new URL(window.location.href);
+                    novaUrl.searchParams.delete('mesa'); // Remove parâmetro sem matar a loja
+                    window.location.href = novaUrl.toString();
                     return;
                 }
 
+                // Redirecionamento Seguro (Quando Mesa é Atribuída)
                 if (!mesaAtual && mesaAtribuida && payload.new.status_presenca === 'sentado' && (tipoPedido === 'reserva' || tipoPedido === 'mesa')) {
                     setTimeout(() => {
-                        const sep = window.location.search ? '&' : '?';
-                        window.location.href = window.location.href + sep + 'mesa=' + mesaAtribuida;
+                        const novaUrl = new URL(window.location.href);
+                        novaUrl.searchParams.set('mesa', mesaAtribuida); // Adiciona parâmetro sem matar a loja
+                        window.location.href = novaUrl.toString();
                     }, 500);
                     return; 
                 }
@@ -1045,7 +1041,10 @@
                     abrirConta();
                 }
 
-                if (novoEstado !== oldEstado) {
+                // Prevenir Duplicação de Alertas
+                if (novoEstado !== ultimoEstadoConhecido) {
+                    ultimoEstadoConhecido = novoEstado; // Memoriza o estado para não apitar novamente
+
                     if(novoEstado === 'pendente') {
                         try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
                         if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
@@ -1069,8 +1068,9 @@
                 if (mesaAtual) {
                     localStorage.removeItem('pv_mesa_sessao');
                     alert("A sua sessão de mesa foi encerrada pelo sistema.");
-                    const urlSemMesa = window.location.href.replace(/([&?])mesa=[^&]+(&|$)/, '$1').replace(/&$/, '').replace(/\?$/, '');
-                    window.location.href = urlSemMesa;
+                    const novaUrl = new URL(window.location.href);
+                    novaUrl.searchParams.delete('mesa');
+                    window.location.href = novaUrl.toString();
                 } else {
                     const modalConta = document.getElementById('contaModal');
                     if (modalConta && modalConta.style.display === 'block') abrirConta();
@@ -1079,8 +1079,6 @@
             .subscribe();
     }
 
-    // --- NOVAS FUNÇÕES PARA RESOLVER OS PROBLEMAS DE FLUXO E LÓGICA ---
-    
     function toggleNifField() {
         const querNif = document.querySelector('input[name="opcao_nif"]:checked').value;
         const nifInput = document.getElementById('cli-nif');
@@ -1088,7 +1086,7 @@
             nifInput.style.display = 'block';
         } else {
             nifInput.style.display = 'none';
-            nifInput.value = ''; // Limpa o valor para não enviar acidentalmente
+            nifInput.value = '';
         }
     }
 
@@ -1100,20 +1098,17 @@
 
         if (tipoPedido === 'reserva') {
             numPessoasInput.style.display = 'block';
-            nifSection.style.display = 'none';      // Na reserva, o NIF normalmente pede-se presencialmente
-            paymentSection.style.display = 'none';  // Desativar MBWay / zona de pagamento nas reservas
+            nifSection.style.display = 'none';      
+            paymentSection.style.display = 'none';  
         } else {
             numPessoasInput.style.display = 'none';
-            numPessoasInput.value = '';             // Limpa o valor para não enviar acidentalmente
+            numPessoasInput.value = '';             
             nifSection.style.display = 'block';
-            paymentSection.style.display = 'block'; // Voltar a mostrar métodos de pagamento no levantamento
+            paymentSection.style.display = 'block'; 
         }
         
-        // Atualiza os horários pois a reserva tem margem diferente do levantamento (30min vs 60min)
         atualizarHorariosDisponiveis(); 
     }
-
-    // ------------------------------------------------------------------
 
     function configurarDatasIniciais() {
         const agora = new Date();
@@ -1275,6 +1270,7 @@
         }
     }
 
+    // --- CORREÇÃO 1: MOTOR DE AUTO-RECUPERAÇÃO (TENTATIVAS SUCESSIVAS) ---
     async function init() {
         try {
             traduzirInterface();
@@ -1301,8 +1297,9 @@
                 if (hoursPassed < TTL_HOURS) {
                     mesaAtual = storedSessaoObj.mesa;
                     if (!urlParams.has('mesa')) {
-                        const sep = window.location.search ? '&' : '?';
-                        window.location.href = window.location.href + sep + 'mesa=' + mesaAtual;
+                        const novaUrl = new URL(window.location.href);
+                        novaUrl.searchParams.set('mesa', mesaAtual);
+                        window.location.href = novaUrl.toString();
                         return; 
                     }
                 } else {
@@ -1310,12 +1307,27 @@
                 }
             }
 
-            const { data: loja, error: erroLoja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
+            // Loop de tentativas (Auto-Retry de 5x para a Loja)
+            let loja = null;
+            let erroLoja = true;
+            let tentativasLoja = 0;
             
+            while (tentativasLoja < 5) {
+                const res = await _sb.from('lojas').select('*').eq('slug', slug).single();
+                if (res.data && !res.error) {
+                    loja = res.data;
+                    erroLoja = false;
+                    break;
+                }
+                tentativasLoja++;
+                console.warn(`Rede instável. A tentar ligar à loja (${tentativasLoja}/5)...`);
+                await new Promise(r => setTimeout(r, 3000));
+            }
+
             if (erroLoja || !loja) {
-                document.getElementById('motivo-fecho').innerText = "Loja não encontrada ou erro de ligação.";
+                document.getElementById('motivo-fecho').innerText = "Falha de rede persistente. Por favor, verifique a sua ligação à internet ou tente recarregar.";
                 document.getElementById('block-screen').style.display = 'flex';
-                document.getElementById('v-nome').innerText = "Erro";
+                document.getElementById('v-nome').innerText = "Erro de Ligação";
                 return;
             }
             
@@ -1336,7 +1348,6 @@
             <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Direito de Livre Resolução (DL 24/2014):</strong> Ao abrigo do Artigo 17.º, alínea d) do Decreto-Lei n.º 24/2014, o consumidor não goza do direito de livre resolução nos contratos de fornecimento de bens que, por natureza, não possam ser devolvidos ou sejam suscetíveis de se deteriorarem rapidamente. <strong>Não são aceites cancelamentos ou devoluções após o início da confeção do pedido.</strong></p>
             <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira responsabilidade do Lojista. Confirme as suas alergias no momento do pedido.</p>`;
 
-            // INJEÇÃO DA VACINA: Define o nome e remove o atributo para evitar re-tradução
             document.getElementById('v-nome').innerText = loja.nome;
             document.getElementById('v-nome').removeAttribute('data-i18n');
 
@@ -1353,8 +1364,9 @@
                 if (!pedidosAtivos || pedidosAtivos.length === 0) {
                     console.log("Limpeza de Segurança Automática");
                     localStorage.removeItem('pv_mesa_sessao');
-                    const urlLimpo = window.location.href.split('&mesa=')[0].split('?mesa=')[0];
-                    window.location.href = urlLimpo;
+                    const urlLimpo = new URL(window.location.href);
+                    urlLimpo.searchParams.delete('mesa');
+                    window.location.href = urlLimpo.toString();
                     return; 
                 }
             }
@@ -1408,11 +1420,24 @@
 
             registarVisita(loja.id, loja.views_total || 0);
 
-            const { data: produtos, error: errProd } = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
-            
-            if (errProd) {
-                console.error("Erro ao puxar produtos da Base de Dados:", errProd);
-                document.getElementById('lista-produtos').innerHTML = `<p style="grid-column: 1/-1; text-align:center; padding:50px; color: red;">Erro ao carregar produtos. Contacte o suporte.</p>`;
+            // Auto-Retry para os Produtos também
+            let produtos = null;
+            let erroProd = true;
+            let tentativasProd = 0;
+            while(tentativasProd < 3) {
+                const resP = await _sb.from('produtos').select('*').eq('loja_id', loja.id).eq('oculto', false);
+                if (resP.data && !resP.error) {
+                    produtos = resP.data;
+                    erroProd = false;
+                    break;
+                }
+                tentativasProd++;
+                await new Promise(r => setTimeout(r, 2000));
+            }
+
+            if (erroProd) {
+                console.error("Erro ao puxar produtos da Base de Dados.");
+                document.getElementById('lista-produtos').innerHTML = `<p style="grid-column: 1/-1; text-align:center; padding:50px; color: red;">A rede está instável. Tente recarregar a página.</p>`;
                 return;
             }
             
@@ -1432,7 +1457,7 @@
             
         } catch (e) {
             document.getElementById('v-nome').innerText = "Erro de Sistema";
-            document.getElementById('motivo-fecho').innerText = "Falha ao ligar à base de dados. Tente recarregar a página.";
+            document.getElementById('motivo-fecho').innerText = "Falha crítica no sistema. Tente recarregar a página.";
             document.getElementById('block-screen').style.display = 'flex';
         }
     }
@@ -1464,7 +1489,6 @@
             precisaDePonto = true;
         }
 
-        // Se Lojista forçou a pergunta no Backend, sobrepõe-se à inteligência do frontend
         if (p.pede_ponto === true) precisaDePonto = true;
 
         if (precisaDePonto) {
@@ -1475,7 +1499,6 @@
             
             document.getElementById('modal-ponto-carne').style.display = 'flex';
         } else {
-            // INJEÇÃO PONTO 2 CORRIGIDO (Adiciona diretamente à array do carrinho primeiro)
             adicionarAoCarrinho(idProduto, p.nome, precoRaw, desconto, null, event.currentTarget);
         }
     }
@@ -1532,13 +1555,9 @@
         }, 1000);
     }
 
-    // INJEÇÃO PONTO 2 CORRIGIDO (TIMING DA FUNÇÃO)
     async function adicionarAoCarrinho(idProduto, nome, precoRaw, desconto, pontoOpicional, botaoDOM) {
-        
-        // 1. Encontrar o produto na base de dados
         const prodNaBase = todosProdutos.find(p => String(p.id) === String(idProduto));
         
-        // 2. Verificar e abater stock ANTES de abrir qualquer janela
         if (prodNaBase && prodNaBase.stock !== null) {
             if (prodNaBase.stock <= 0) {
                 alert("Lamentamos, mas este artigo acabou de esgotar.");
@@ -1548,7 +1567,6 @@
             await cativarStockBaseDados(idProduto, 1);
         }
 
-        // 3. Fazer a matemática e adicionar o produto à array do carrinho
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         const idBaseString = String(idProduto);
         const idUnicoCarrinho = pontoOpicional ? `${idBaseString}-${pontoOpicional.replace(/\s+/g, '')}` : idBaseString;
@@ -1569,17 +1587,12 @@
             }); 
         }
         
-        // 4. Iniciar relógios e atualizar botões visuais do carrinho
         iniciarRelogioStock();
         atualizarFloater();
         
-        // 5. DECISÃO FINAL: Tem login feito?
         if (!mesaAtual && !clienteAtual) {
-            // O cliente não tem sessão, então abrimos logo o carrinho para ele fazer login.
-            // A grande diferença é que agora o "Arroz Doce" já está no carrinho!
             abrirCarrinho();
         } else {
-            // O cliente tem sessão, por isso mostramos apenas a mensagem verde de sucesso.
             if(botaoDOM) {
                 const originalText = botaoDOM.innerHTML;
                 botaoDOM.innerHTML = `<i class="fas fa-check"></i>`;
