@@ -1076,7 +1076,7 @@
         });
     }
 
-    // --- CORREÇÃO 2: URL SEGURO ---
+    // --- ROTEAMENTO DE ÁUDIO INTELIGENTE ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         if(!clienteAtual && !mesaAtual) return;
@@ -1127,17 +1127,23 @@
                     ultimoEstadoConhecido = novoEstado;
 
                     if(novoEstado === 'pendente') {
-                        try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
-                        if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+                        const isSilencioso = (tipoPedido === 'reserva' || tipoPedido === 'mesa');
+                        if (!isSilencioso) {
+                            try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
+                            if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+                        }
                         msgEl.innerText = "O restaurante confirmou o seu pedido! Vai para a cozinha.";
                         alerta.style.background = "var(--s)"; 
                         alerta.classList.add('show');
                         setTimeout(() => alerta.classList.remove('show'), 6000);
                     } 
                     else if(novoEstado === 'pronto') {
-                        try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
-                        if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300]); 
-                        msgEl.innerText = "O seu pedido já está Pronto!";
+                        const isSilencioso = (tipoPedido === 'reserva' || tipoPedido === 'mesa');
+                        if (!isSilencioso) {
+                            try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
+                            if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300, 100, 500]); 
+                        }
+                        msgEl.innerText = isSilencioso ? "O seu pedido já está Pronto! O empregado vai servi-lo à mesa." : "O seu pedido já está Pronto! Pode levantar ao balcão.";
                         alerta.style.background = "var(--ok)"; 
                         alerta.classList.add('show');
                         setTimeout(() => alerta.classList.remove('show'), 8000);
@@ -1353,7 +1359,6 @@
         }
     }
 
-    // --- CORREÇÃO 1: MOTOR DE AUTO-RECUPERAÇÃO (TENTATIVAS SUCESSIVAS) ---
     async function init() {
         try {
             traduzirInterface();
@@ -1390,7 +1395,6 @@
                 }
             }
 
-            // Loop de tentativas (Auto-Retry de 5x para a Loja)
             let loja = null;
             let erroLoja = true;
             let tentativasLoja = 0;
@@ -1471,13 +1475,10 @@
                 document.getElementById('mesa-badge').style.display = 'inline-block';
                 document.getElementById('checkout-options-wrapper').style.display = 'none';
                 
-                const btnFinal = document.getElementById('btn-checkout-final');
-                btnFinal.innerHTML = `<i class="fas fa-paper-plane"></i> Enviar Pedido - Mesa ${mesaAtual}`;
-                
                 document.getElementById('btn-chamar-empregado').style.display = 'flex';
                 document.getElementById('btn-pedir-conta').style.display = 'flex';
                 document.getElementById('cart-text-btn').innerText = ''; 
-                document.getElementById('btn-user-account-top').style.display = 'none'; // CORREÇÃO FATAL DO BUG DO CADEADO
+                document.getElementById('btn-user-account-top').style.display = 'none';
                 
                 iniciarOuvinteCliente();
             }
@@ -1503,7 +1504,6 @@
 
             registarVisita(loja.id, loja.views_total || 0);
 
-            // Auto-Retry para os Produtos também
             let produtos = null;
             let erroProd = true;
             let tentativasProd = 0;
@@ -1652,7 +1652,7 @@
 
         const precoFinal = calcularPrecoFinal(precoRaw, desconto);
         const idBaseString = String(idProduto);
-        const idUnicoCarrinho = pontoOpicional ? `${idBaseString}-${pontoOpicional.replace(/\s+/g, '')}` : idBaseString;
+        const idUnicoCarrinho = pontoOpicional ? `${idBaseString}-${pontoOpicional.replace(/\\s+/g, '')}` : idBaseString;
         
         const itemExistente = carrinho.find(item => String(item.idUnico) === String(idUnicoCarrinho));
         
@@ -1707,6 +1707,7 @@
         }
     }
 
+    // --- FRICÇÃO ZERO NO CARRINHO ---
     function abrirCarrinho() {
         const container = document.getElementById('cart-items-container');
         let html = '';
@@ -1738,7 +1739,31 @@
         } else if (carrinho.length > 0) {
             document.getElementById('cart-login-section').style.display = 'none';
             document.getElementById('checkout-options-wrapper').style.display = 'block';
-            atualizarHorariosDisponiveis(); 
+            
+            // Lógica de Ocultação Seletiva de Fricção
+            if (mesaAtual) {
+                document.getElementById('order-type-section').style.display = 'none';
+                document.getElementById('payment-section').style.display = 'none';
+                document.getElementById('erro-data-dia').style.display = 'none';
+                
+                const btnFinal = document.getElementById('btn-checkout-final');
+                btnFinal.innerHTML = `<i class="fas fa-fire"></i> Enviar para a Cozinha - Mesa ${mesaAtual}`;
+                btnFinal.style.padding = "20px";
+                btnFinal.style.fontSize = "1.2em";
+                btnFinal.style.marginTop = "10px";
+            } else {
+                document.getElementById('order-type-section').style.display = 'block';
+                document.getElementById('payment-section').style.display = 'block';
+                
+                const btnFinal = document.getElementById('btn-checkout-final');
+                btnFinal.innerHTML = `<i class="fas fa-check"></i> <span data-i18n="confirm_order">Confirmar e Enviar Pedido</span>`;
+                btnFinal.style.padding = "16px";
+                btnFinal.style.fontSize = "1.1em";
+                btnFinal.style.marginTop = "20px";
+                
+                atualizarHorariosDisponiveis();
+                traduzirInterface();
+            }
         }
 
         document.getElementById('cartModal').style.display = 'flex';
@@ -1774,6 +1799,7 @@
         }
     }
 
+    // --- BYPASS DE ENVIO DIRETO PARA COZINHA ---
     async function validarEEnviarPedido() {
         if(carrinho.length === 0) return;
         
@@ -1796,11 +1822,11 @@
                     mesa: mesaAtual,
                     itens: carrinho,
                     total: totalPreco,
-                    estado: 'aguarda_confirmacao'
+                    estado: 'pendente' // Alterado de 'aguarda_confirmacao' para 'pendente' (disparo instantâneo)
                 }]);
 
                 if (error) throw error; 
-                mostrarAlertaCustom(`Pedido registado!\nO empregado irá à sua mesa num instante para confirmar.`, "Sucesso");
+                mostrarAlertaCustom(`Pedido disparado para a Cozinha!\nOs produtos foram adicionados à sua conta da Mesa ${mesaAtual}.`, "Sucesso");
             } else {
                 const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
                 const data = document.getElementById('cli-data').value;
@@ -1861,7 +1887,7 @@
             console.error("ERRO COMPLETO:", e);
             mostrarAlertaCustom((e.message || "Falha ao ligar à base de dados."), "Erro"); 
         } finally {
-            btnFinal.innerHTML = `<i class="fas fa-check"></i> ` + (dictIdiomas[userLang].confirm_order || "Confirmar e Enviar Pedido");
+            btnFinal.innerHTML = mesaAtual ? `<i class="fas fa-fire"></i> Enviar para a Cozinha - Mesa ${mesaAtual}` : `<i class="fas fa-check"></i> <span data-i18n="confirm_order">Confirmar e Enviar Pedido</span>`;
             btnFinal.disabled = false;
         }
     }
