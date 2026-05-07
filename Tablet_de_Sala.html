@@ -363,6 +363,7 @@
     let acaoSegurancaPendente = null; 
     let intervalCronometros = null;
     let canalSala = null;
+    let canalPedidosNovos = null; // NOVO CANAL DE WEBSOCKETS PARA PEDIDOS
     
     // Globais para gerir o Modal e os Dados Vivos
     window.pedidosGlobais = [];
@@ -763,6 +764,7 @@
         if(timerAtualizacao) clearInterval(timerAtualizacao); 
         if(intervalCronometros) clearInterval(intervalCronometros);
         if(canalSala) _sb.removeChannel(canalSala);
+        if(canalPedidosNovos) _sb.removeChannel(canalPedidosNovos);
         
         document.getElementById('select-empregado').value = ""; document.getElementById('pin-empregado').value = "";
         document.getElementById('pin-empregado').style.display = 'none'; document.getElementById('label-pin').style.display = 'none'; document.getElementById('btn-login-text').style.display = 'none';
@@ -841,10 +843,9 @@
         if(prods) produtosCatalogo = prods;
 
         carregarDados();
-        iniciarCicloCronometros();
+        iniciarCicloCronometros(); // Mantém o relógio local ativo para os cartões
         
-        if(timerAtualizacao) clearInterval(timerAtualizacao);
-        timerAtualizacao = setInterval(carregarDados, 30000); 
+        // Removemos o timerAtualizacao cego de 30s. A interface agora é 100% Reativa!
         
         if(canalSala) _sb.removeChannel(canalSala);
         canalSala = _sb.channel('sala-updates')
@@ -865,6 +866,14 @@
               }
               carregarDados(); 
           }) 
+          .subscribe();
+          
+        // INJEÇÃO DA SOLUÇÃO 1: RADAR DE NOVOS PEDIDOS (WEBSOCKETS)
+        if(canalPedidosNovos) _sb.removeChannel(canalPedidosNovos);
+        canalPedidosNovos = _sb.channel('sala-pedidos-novos')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
+              carregarDados(); // Atualiza a sala instantaneamente quando cai um pedido novo!
+          })
           .subscribe();
     }
 
@@ -1022,11 +1031,12 @@
         let chamadasHtml = '';
         let metodoSelecionadoPeloCliente = ''; 
 
+        // INJEÇÃO DA SOLUÇÃO 2: LER A MEMÓRIA DO PEDIDO DE CONTA
         chamadasMesa.forEach(c => {
             const isC = c.tipo_chamada === 'conta'; 
             if(isC) {
                 const metodo = c.metodo_pagamento || "Dinheiro";
-                metodoSelecionadoPeloCliente = metodo; 
+                metodoSelecionadoPeloCliente = metodo; // AQUI GUARDA A ESCOLHA DO CLIENTE!
                 const nif = (c.quer_nif && c.nif_cliente) ? `<br><strong style="color: var(--danger);">NIF:</strong> ${c.nif_cliente}` : '';
                 chamadasHtml += `<div style="background:#fef2f2; border:1px solid #fecaca; padding:15px; border-radius:12px; margin-bottom:15px; font-size:1em; color:var(--danger);">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1071,6 +1081,7 @@
             btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${idConf}, 'pendente'); event.stopPropagation();"><i class="fas fa-fire"></i> Enviar p/ Cozinha</button>
                    <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedidoSeguro(${idConf}); event.stopPropagation();"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; 
         } else if (m.tudoPronto) { 
+            // INJEÇÃO DA SOLUÇÃO 2: PASSA O METODO AO FECHO
             btn = `<button class="btn-action btn-success" onclick="prepararFechoMesa('Mesa ${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar e Fechar (${m.totalAcumulado.toFixed(2)}€)</button>`; 
         } else {
             btn = `<button class="btn-action btn-resolve" style="opacity:0.5;">Mesa em Consumo (Fila/Cozinha)</button>`;
@@ -1300,10 +1311,8 @@
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
         fecharModal('modal-detalhes-gerais'); 
         
-        // CORREÇÃO 1 & 3: Guardar a informação num campo hidden 100% seguro!
         document.getElementById('pagar-mesa-id-seguro').value = mesa;
         
-        // Atualiza apenas a parte visual do título
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
         } else {
@@ -1313,6 +1322,7 @@
         document.getElementById('pagar-mesa-total').innerText = total.toFixed(2);
         document.getElementById('pagar-mesa-ids').value = idsStr;
         
+        // INJEÇÃO DA SOLUÇÃO 2: INJETAR O MÉTODO DO CLIENTE NO SELECT
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
             document.getElementById('pagar-mesa-metodo').value = metodoPreferido;
         } else {
@@ -1335,7 +1345,6 @@
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             
-            // CORREÇÃO 2 & 4: Ler a mesa do campo seguro e limpar o cronómetro
             const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
             if(mesaSegura !== 'Takeaway' && mesaSegura !== 'Reserva') {
                 const numMesaLimpo = mesaSegura.replace('Mesa ', '').trim();
