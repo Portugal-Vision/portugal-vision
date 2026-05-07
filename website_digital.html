@@ -127,9 +127,9 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Estilos do Modal */
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 15px;}
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 15px; align-items: center; justify-content: center;}
         .modal-content { 
-            background: var(--card-bg); margin: 2vh auto; padding: 25px; border-radius: 20px; width: 100%; max-width: 500px; 
+            background: var(--card-bg); margin: auto; padding: 25px; border-radius: 20px; width: 100%; max-width: 500px; 
             max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); color: var(--text-color);
             display: flex; flex-direction: column; overscroll-behavior: contain;
         }
@@ -149,7 +149,7 @@
 
         .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: var(--p); }
         
-        /* INPUTS CORRIGIDOS (Visíveis no modo claro e escuro) */
+        /* INPUTS CORRIGIDOS */
         .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2); font-family: inherit; font-size: 14px; background: rgba(128,128,128,0.05); color: var(--text-color); transition: 0.3s; margin-bottom: 5px; }
         .input-form:focus { outline: none; border-color: var(--ok); background: transparent; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
         .input-form::placeholder { color: #94a3b8; }
@@ -202,9 +202,44 @@
         .recovery-links { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 15px; padding: 0 5px; }
         .recovery-links a { color: var(--s); cursor: pointer; font-weight: 600; text-decoration: none; }
         .recovery-links a:hover { text-decoration: underline; }
+
+        /* Estilos dos Modais de Alerta Premium */
+        .custom-alert-box {
+            background: var(--card-bg); border-radius: 20px; padding: 30px; width: 100%; max-width: 350px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center; color: var(--text-color);
+        }
+        .custom-alert-title { font-size: 1.4em; font-weight: 800; font-family: 'Playfair Display', serif; color: var(--p); margin-bottom: 10px; }
+        .custom-alert-text { color: var(--s); margin-bottom: 25px; line-height: 1.5; font-size: 0.95em; }
+        .custom-alert-actions { display: flex; gap: 10px; justify-content: center; }
+        .btn-alert-cancel { background: rgba(0,0,0,0.05); color: var(--text-color); padding: 12px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; flex: 1; transition: 0.2s; }
+        .btn-alert-confirm { background: var(--ok); color: white; padding: 12px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; flex: 1; transition: 0.2s; }
+        .btn-alert-confirm.danger { background: var(--accent); }
     </style>
 </head>
 <body>
+
+<div id="custom-alert-modal" class="modal" style="z-index: 100001; align-items: center; justify-content: center;">
+    <div class="custom-alert-box">
+        <div id="custom-alert-icon" style="font-size: 3em; margin-bottom: 15px; color: var(--p);"><i class="fas fa-info-circle"></i></div>
+        <div id="custom-alert-title" class="custom-alert-title">Aviso</div>
+        <div id="custom-alert-text" class="custom-alert-text">Mensagem...</div>
+        <div id="custom-alert-actions" class="custom-alert-actions">
+            </div>
+    </div>
+</div>
+
+<div id="custom-prompt-modal" class="modal" style="z-index: 100001; align-items: center; justify-content: center;">
+    <div class="custom-alert-box">
+        <div style="font-size: 3em; margin-bottom: 15px; color: var(--s);"><i class="fas fa-clock"></i></div>
+        <div class="custom-alert-title">Aviso de Atraso</div>
+        <div class="custom-alert-text">Quantos minutos prevê chegar atrasado?</div>
+        <input type="number" id="custom-prompt-input" class="input-form" placeholder="Ex: 15" style="text-align: center; margin-bottom: 20px; font-size: 1.2em; font-weight: bold;">
+        <div class="custom-alert-actions">
+            <button class="btn-alert-cancel" onclick="fecharModal('custom-prompt-modal')">Cancelar</button>
+            <button class="btn-alert-confirm" id="btn-prompt-confirm">Enviar</button>
+        </div>
+    </div>
+</div>
 
 <div id="cliente-alert"><i class="fas fa-bell fa-shake" style="font-size: 1.2em;"></i> <span id="cliente-alert-msg" style="font-size: 0.95em;"></span></div>
 
@@ -221,8 +256,8 @@
     </div>
 </div>
 
-<div id="modal-ponto-carne" class="modal">
-    <div class="modal-content" style="max-width: 350px;">
+<div id="modal-ponto-carne" class="modal" style="align-items: center; justify-content: center;">
+    <div class="modal-content" style="max-width: 350px; margin: auto;">
         <h3 style="margin-bottom: 5px; font-size: 1.3em;" data-i18n="meat_doneness">Ponto da Carne</h3>
         <p style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;" data-i18n="how_to_prepare">Como prefere que preparemos este prato?</p>
         <button class="ponto-btn" onclick="confirmarAdicionarComPonto('Mal Passada')" data-i18n="rare">🥩 Mal Passada</button>
@@ -233,8 +268,8 @@
     </div>
 </div>
 
-<div id="authModal" class="modal">
-    <div class="modal-content">
+<div id="authModal" class="modal" style="align-items: center; justify-content: center;">
+    <div class="modal-content" style="margin: auto;">
         <span class="close-modal" onclick="document.getElementById('authModal').style.display='none'">×</span>
         <h3 data-i18n="auth_title">Identificação</h3>
         <p style="font-size: 13px; color: #64748b; margin-top:-10px;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
@@ -285,19 +320,19 @@
     </div>
 </div>
 
-<div id="contaModal" class="modal">
-    <div class="modal-content">
+<div id="contaModal" class="modal" style="align-items: center; justify-content: center;">
+    <div class="modal-content" style="margin: auto;">
         <span class="close-modal" onclick="document.getElementById('contaModal').style.display='none'">×</span>
         <h3 data-i18n="my_orders">Os Meus Pedidos</h3>
         <div class="modal-body" id="lista-meus-pedidos">
             <p style="text-align:center; opacity: 0.7;" data-i18n="loading_orders">A carregar pedidos...</p>
         </div>
-        <button class="input-form" style="border-color:var(--err); color:var(--err); background:transparent; margin-top:20px; font-weight:bold;" onclick="clienteLogout()" data-i18n="logout">Encerrar Sessão</button>
+        <button class="input-form" style="border-color:var(--accent); color:var(--accent); background:transparent; margin-top:20px; font-weight:bold;" onclick="clienteLogout()" data-i18n="logout">Encerrar Sessão</button>
     </div>
 </div>
 
-<div id="cartModal" class="modal">
-    <div class="modal-content">
+<div id="cartModal" class="modal" style="align-items: center; justify-content: center;">
+    <div class="modal-content" style="margin: auto;">
         <span class="close-modal" onclick="fecharCarrinho()">×</span>
         <h3 data-i18n="your_order">O seu Pedido</h3>
         
@@ -397,10 +432,10 @@
     </div>
 </div>
 
-<div id="pedirContaModal" class="modal">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
+<div id="pedirContaModal" class="modal" style="align-items: center; justify-content: center;">
+    <div class="modal-content" style="max-width: 400px; text-align: center; margin: auto;">
         <span class="close-modal" onclick="fecharModal('pedirContaModal')">×</span>
-        <h3><i class="fas fa-file-invoice-dollar"></i> <span data-i18n="ask_bill">Pedir a Conta</span></h3>
+        <h3 style="padding-right: 0;"><i class="fas fa-file-invoice-dollar"></i> <span data-i18n="ask_bill">Pedir a Conta</span></h3>
         
         <div style="text-align: left; margin-bottom: 15px;">
             <label style="font-size: 12px; font-weight: bold; opacity: 0.8;" data-i18n="payment_method_simple">Método de Pagamento</label>
@@ -502,7 +537,7 @@
     let mesaAtual = null; 
     let clienteAtual = null; 
     let realtimeCanal = null;
-    let ultimoEstadoConhecido = null; // MEMÓRIA: Evita notificações duplicadas
+    let ultimoEstadoConhecido = null;
     
     let tempCarneId = null;
     let tempCarneNome = null;
@@ -515,7 +550,6 @@
 
     const nomeDiasInt = {1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado", 0: "Domingo"};
 
-    // DICIONÁRIO DE TRADUÇÃO (i18n)
     const dictIdiomas = {
         pt: {
             loading: "A carregar...", access_denied: "Acesso Indisponível", website_offline: "Este website não se encontra ativo no momento.",
@@ -571,7 +605,7 @@
             confirm_order: "Confirmar y Enviar Pedido", ask_bill: "Pedir la Cuenta", payment_method_simple: "Método de Pago", cash: "💵 Efectivo", card: "💳 Tarjeta", meal_ticket: "🎫 Ticket Restaurante",
             need_nif_bill: "¿Desea factura con NIF?", send_request: "Enviar Pedido", search_menu: "Buscar en el menú...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Libro de Reclamaciones", rights_reserved: "Todos los derechos reservados.",
-            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Voltar", exclusive_day: "Exclusivo",
+            stock_reserved: "Stock reservado por 15 minutos.", add_cart: "Añadir", out_of_stock: "Agotado", product_out_stock: "Producto Agotado", included_tax: "IVA incluido", contains: "Contiene:", see_info: "Ver Info", back: "Volver", exclusive_day: "Exclusivo",
             legal_cover: '"Ningún plato, producto alimenticio o bebida, incluido el cubierto, podrá ser cobrado si no fue solicitado por el cliente o si no fue consumido." (DL n.º 10/2015)'
         },
         fr: {
@@ -596,6 +630,55 @@
     };
 
     let userLang = localStorage.getItem('pv_idioma') || 'pt';
+
+    // --- FUNÇÕES DE ALERTA NATIVAS DA INTERFACE (Substituem alert, confirm e prompt) ---
+    function mostrarAlertaCustom(mensagem, titulo = "Aviso") {
+        document.getElementById('custom-alert-icon').innerHTML = '<i class="fas fa-info-circle"></i>';
+        document.getElementById('custom-alert-icon').style.color = 'var(--p)';
+        document.getElementById('custom-alert-title').innerText = titulo;
+        document.getElementById('custom-alert-text').innerText = mensagem;
+        
+        const actions = document.getElementById('custom-alert-actions');
+        actions.innerHTML = `<button class="btn-alert-confirm" style="width: 100px;" onclick="document.getElementById('custom-alert-modal').style.display='none'">OK</button>`;
+        
+        document.getElementById('custom-alert-modal').style.display = 'flex';
+    }
+
+    function mostrarConfirmacaoCustom(mensagem, funcaoConfirmar, titulo = "Tem a certeza?") {
+        document.getElementById('custom-alert-icon').innerHTML = '<i class="fas fa-question-circle"></i>';
+        document.getElementById('custom-alert-icon').style.color = 'var(--accent)';
+        document.getElementById('custom-alert-title').innerText = titulo;
+        document.getElementById('custom-alert-text').innerText = mensagem;
+        
+        const actions = document.getElementById('custom-alert-actions');
+        actions.innerHTML = `
+            <button class="btn-alert-cancel" onclick="document.getElementById('custom-alert-modal').style.display='none'">Cancelar</button>
+            <button class="btn-alert-confirm danger" id="btn-confirmar-accao">Confirmar</button>
+        `;
+        
+        document.getElementById('btn-confirmar-accao').onclick = () => {
+            document.getElementById('custom-alert-modal').style.display='none';
+            funcaoConfirmar();
+        };
+        
+        document.getElementById('custom-alert-modal').style.display = 'flex';
+    }
+
+    function mostrarPromptCustom(funcaoConfirmar) {
+        document.getElementById('custom-prompt-input').value = '';
+        
+        document.getElementById('btn-prompt-confirm').onclick = () => {
+            const val = document.getElementById('custom-prompt-input').value;
+            if(val) {
+                document.getElementById('custom-prompt-modal').style.display='none';
+                funcaoConfirmar(val);
+            }
+        };
+        
+        document.getElementById('custom-prompt-modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('custom-prompt-input').focus(), 100);
+    }
+    // --------------------------------------------------------------------------
 
     function forcarIdioma(lang) {
         userLang = lang;
@@ -707,7 +790,7 @@
         const metodo = document.getElementById('input-metodo-pagamento-conta').value;
         
         if (querNif && !nif) {
-            alert("Por favor, insira o seu NIF.");
+            mostrarAlertaCustom("Por favor, insira o seu NIF.");
             return;
         }
 
@@ -728,9 +811,9 @@
             const { error } = await _sb.from('chamadas_sala').insert([dados]);
             if (error) throw error; 
             
-            alert(tipo === 'empregado' ? 'O empregado foi chamado à sua mesa.' : 'A sua conta foi solicitada. Aguarde um momento.');
+            mostrarAlertaCustom(tipo === 'empregado' ? 'O empregado foi chamado à sua mesa.' : 'A sua conta foi solicitada. Aguarde um momento.', "Aviso à Sala");
         } catch (e) { 
-            alert("ERRO DO SUPABASE:\n" + (e.message || JSON.stringify(e))); 
+            mostrarAlertaCustom("ERRO DO SUPABASE:\n" + (e.message || JSON.stringify(e)), "Erro"); 
         }
     }
 
@@ -794,8 +877,8 @@
         let aceitouTermos = true;
         if(!isCart) aceitouTermos = document.getElementById('auth-termos-reg').checked;
 
-        if(!n || !t || !e || !p) return alert("Preencha todos os campos.");
-        if(!isCart && !aceitouTermos) return alert("Por favor, confirme que leu e aceita os Termos e Condições para prosseguir.");
+        if(!n || !t || !e || !p) return mostrarAlertaCustom("Preencha todos os campos.");
+        if(!isCart && !aceitouTermos) return mostrarAlertaCustom("Por favor, confirme que leu e aceita os Termos e Condições para prosseguir.");
         
         const btn = document.querySelector(`#${prefix}form-reg button`);
         const originalText = btn.innerText;
@@ -804,22 +887,22 @@
         const { data, error } = await _sb.auth.signUp({ email: e, password: p });
         if(error) {
             btn.innerText = originalText; btn.disabled = false;
-            return alert(error.message);
+            return mostrarAlertaCustom(error.message, "Erro de Registo");
         }
         
         const { data: clienteData, error: dbError } = await _sb.from('clientes_app').insert([{ auth_id: data.user.id, nome: n, telefone: t, email: e }]).select().single();
         
         if (dbError) {
              btn.innerText = originalText; btn.disabled = false;
-             return alert("Erro ao salvar dados do cliente: " + dbError.message);
+             return mostrarAlertaCustom("Erro ao salvar dados do cliente: " + dbError.message, "Erro");
         }
 
         if(isCart) {
             await verificarSessaoCliente(); 
-            alert("Conta criada com sucesso! Pode continuar com a sua encomenda.");
+            mostrarAlertaCustom("Conta criada com sucesso! Pode continuar com a sua encomenda.", "Sucesso");
         } else {
-            alert("Conta criada com sucesso! A página será recarregada.");
-            window.location.reload(); 
+            mostrarAlertaCustom("Conta criada com sucesso! A página será recarregada.", "Sucesso");
+            setTimeout(() => window.location.reload(), 1500); 
         }
     }
 
@@ -829,7 +912,7 @@
 
         const e = document.getElementById(prefix + 'auth-email-log').value; 
         const p = document.getElementById(prefix + 'auth-pass-log').value;
-        if(!e || !p) return alert("Preencha o e-mail e a password.");
+        if(!e || !p) return mostrarAlertaCustom("Preencha o e-mail e a password.");
 
         const btn = document.querySelector(`#${prefix}form-login button`);
         const originalText = btn.innerText;
@@ -838,7 +921,7 @@
         const { data, error } = await _sb.auth.signInWithPassword({ email: e, password: p });
         if(error) {
             btn.innerText = originalText; btn.disabled = false;
-            return alert("Credenciais inválidas.");
+            return mostrarAlertaCustom("Credenciais inválidas.", "Acesso Negado");
         }
         
         if(isCart) {
@@ -850,7 +933,7 @@
     
     async function clienteRecuperarPass() {
         const e = document.getElementById('reset-pass-email').value;
-        if(!e) return alert("Insira o seu e-mail.");
+        if(!e) return mostrarAlertaCustom("Insira o seu e-mail.");
         
         const btn = document.querySelector('#form-reset-pass button');
         const originTxt = btn.innerText;
@@ -858,9 +941,9 @@
 
         const { error } = await _sb.auth.resetPasswordForEmail(e);
         if(error) {
-            alert("Erro: " + error.message);
+            mostrarAlertaCustom("Erro: " + error.message, "Erro");
         } else {
-            alert("Se o e-mail estiver registado, receberá um link de recuperação.");
+            mostrarAlertaCustom("Se o e-mail estiver registado, receberá um link de recuperação.", "Link Enviado");
             switchAuth('login');
         }
         btn.innerText = originTxt; btn.disabled = false;
@@ -868,7 +951,7 @@
 
     async function clienteRecuperarEmail() {
         const t = document.getElementById('reset-email-phone').value;
-        if(!t) return alert("Insira o telemóvel associado à conta.");
+        if(!t) return mostrarAlertaCustom("Insira o telemóvel associado à conta.");
         
         const btn = document.querySelector('#form-reset-email button');
         const originTxt = btn.innerText;
@@ -876,7 +959,7 @@
 
         const { data, error } = await _sb.from('clientes_app').select('email').eq('telefone', t).maybeSingle();
         if(error || !data) {
-            alert("Nenhuma conta encontrada com esse número de telemóvel.");
+            mostrarAlertaCustom("Nenhuma conta encontrada com esse número de telemóvel.", "Não Encontrado");
         } else {
             const parts = data.email.split('@');
             const masked = parts[0].substring(0, 3) + "***@" + parts[1];
@@ -897,18 +980,18 @@
     }
 
     async function abrirConta() {
-        document.getElementById('contaModal').style.display = 'block';
+        document.getElementById('contaModal').style.display = 'flex';
         const container = document.getElementById('lista-meus-pedidos');
         if(!clienteAtual) { container.innerHTML = "<p>Faça login primeiro.</p>"; return; }
         
         const { data: pedidos } = await _sb.from('pedidos').select('*').eq('cliente_id', clienteAtual.id).order('created_at', { ascending: false });
         
-        if(!pedidos || pedidos.length === 0) { container.innerHTML = "<p>Ainda não tem pedidos.</p>"; return; }
+        if(!pedidos || pedidos.length === 0) { container.innerHTML = "<p style='text-align:center;'>Ainda não tem pedidos.</p>"; return; }
 
         const pedidosOcultos = JSON.parse(localStorage.getItem('pedidos_ocultos') || '[]');
         const pedidosVisiveis = pedidos.filter(p => !pedidosOcultos.includes(p.id));
 
-        if(pedidosVisiveis.length === 0) { container.innerHTML = "<p>Ainda não tem pedidos visíveis.</p>"; return; }
+        if(pedidosVisiveis.length === 0) { container.innerHTML = "<p style='text-align:center;'>Ainda não tem pedidos visíveis.</p>"; return; }
 
         const agora = new Date();
         container.innerHTML = pedidosVisiveis.map(p => {
@@ -932,7 +1015,7 @@
                     btnAcoes += `<span style="font-size:11px; color:var(--ok); font-weight:bold; margin-left:5px;"><i class="fas fa-check"></i> Receção Notificada</span>`;
                 } else {
                     btnAcoes += `<button onclick="sinalizarChegada(${p.id})" style="background:var(--ok); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;">Já Cheguei!</button>`;
-                    btnAcoes += `<button onclick="sinalizarAtraso(${p.id})" style="background:var(--warn); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;"><i class="fas fa-clock"></i> Vou Atrasar</button>`;
+                    btnAcoes += `<button onclick="sinalizarAtraso(${p.id})" style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:11px; margin-left:5px;"><i class="fas fa-clock"></i> Vou Atrasar</button>`;
                 }
             }
 
@@ -970,31 +1053,30 @@
     }
 
     async function cancelarMeuPedido(id) {
-        if(confirm("Tem a certeza que deseja cancelar?")) {
+        mostrarConfirmacaoCustom("Tem a certeza que deseja cancelar esta reserva/encomenda?", async () => {
             await _sb.from('pedidos').update({ estado: 'cancelado' }).eq('id', id);
             abrirConta(); 
-        }
+        }, "Cancelar Pedido");
     }
 
     async function sinalizarChegada(id) {
         await _sb.from('pedidos').update({ status_presenca: 'no_local' }).eq('id', id);
-        alert("O restaurante foi notificado da sua chegada! Aguarde que um funcionário o venha receber à entrada.");
+        mostrarAlertaCustom("O restaurante foi notificado da sua chegada! Aguarde que um funcionário o venha receber à entrada.", "Chegada Notificada");
         abrirConta();
     }
 
     async function sinalizarAtraso(id) {
-        const minStr = prompt("Quantos minutos prevê chegar atrasado? (ex: 15 ou 30)");
-        if (minStr) {
+        mostrarPromptCustom(async (minStr) => {
             const min = parseInt(minStr);
             if (!isNaN(min)) {
                 await _sb.from('pedidos').update({ status_presenca: 'atrasado', minutos_atraso: min }).eq('id', id);
-                alert("O restaurante foi notificado do seu atraso. A sua mesa será guardada.");
+                mostrarAlertaCustom("O restaurante foi notificado do seu atraso. A sua mesa será guardada.", "Atraso Registado");
                 abrirConta();
             }
-        }
+        });
     }
 
-    // --- CORREÇÃO 2 E 3: URL SEGURO E MEMÓRIA DE ESTADO ---
+    // --- CORREÇÃO 2: URL SEGURO ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         if(!clienteAtual && !mesaAtual) return;
@@ -1012,38 +1094,37 @@
                 const alerta = document.getElementById('cliente-alert');
                 const msgEl = document.getElementById('cliente-alert-msg');
                 
-                // Limpeza e Salto Seguro (Quando Conta é Fechada)
                 if (mesaAtual && (novoEstado === 'finalizado' || novoEstado === 'cancelado')) {
                     localStorage.removeItem('pv_mesa_sessao');
                     if (novoEstado === 'finalizado') {
-                        alert("A sua conta foi finalizada. Obrigado pela visita e volte sempre!");
+                        mostrarAlertaCustom("A sua conta foi finalizada. Obrigado pela visita e volte sempre!", "Sessão Terminada");
                     } else {
-                        alert("O seu pedido/mesa foi cancelado pelo restaurante.");
+                        mostrarAlertaCustom("O seu pedido/mesa foi cancelado pelo restaurante.", "Sessão Cancelada");
                     }
-                    const novaUrl = new URL(window.location.href);
-                    novaUrl.searchParams.delete('mesa'); // Remove parâmetro sem matar a loja
-                    window.location.href = novaUrl.toString();
+                    setTimeout(() => {
+                        const novaUrl = new URL(window.location.href);
+                        novaUrl.searchParams.delete('mesa');
+                        window.location.href = novaUrl.toString();
+                    }, 3000);
                     return;
                 }
 
-                // Redirecionamento Seguro (Quando Mesa é Atribuída)
                 if (!mesaAtual && mesaAtribuida && payload.new.status_presenca === 'sentado' && (tipoPedido === 'reserva' || tipoPedido === 'mesa')) {
                     setTimeout(() => {
                         const novaUrl = new URL(window.location.href);
-                        novaUrl.searchParams.set('mesa', mesaAtribuida); // Adiciona parâmetro sem matar a loja
+                        novaUrl.searchParams.set('mesa', mesaAtribuida);
                         window.location.href = novaUrl.toString();
                     }, 500);
                     return; 
                 }
 
                 const modalConta = document.getElementById('contaModal');
-                if (modalConta && modalConta.style.display === 'block') {
+                if (modalConta && modalConta.style.display === 'flex') {
                     abrirConta();
                 }
 
-                // Prevenir Duplicação de Alertas
                 if (novoEstado !== ultimoEstadoConhecido) {
-                    ultimoEstadoConhecido = novoEstado; // Memoriza o estado para não apitar novamente
+                    ultimoEstadoConhecido = novoEstado;
 
                     if(novoEstado === 'pendente') {
                         try { new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3').play().catch(e=>{}); } catch(e) {}
@@ -1067,13 +1148,15 @@
             .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pedidos', filter: filtroStr }, payload => {
                 if (mesaAtual) {
                     localStorage.removeItem('pv_mesa_sessao');
-                    alert("A sua sessão de mesa foi encerrada pelo sistema.");
-                    const novaUrl = new URL(window.location.href);
-                    novaUrl.searchParams.delete('mesa');
-                    window.location.href = novaUrl.toString();
+                    mostrarAlertaCustom("A sua sessão de mesa foi encerrada pelo sistema.", "Sessão Terminada");
+                    setTimeout(() => {
+                        const novaUrl = new URL(window.location.href);
+                        novaUrl.searchParams.delete('mesa');
+                        window.location.href = novaUrl.toString();
+                    }, 3000);
                 } else {
                     const modalConta = document.getElementById('contaModal');
-                    if (modalConta && modalConta.style.display === 'block') abrirConta();
+                    if (modalConta && modalConta.style.display === 'flex') abrirConta();
                 }
             })
             .subscribe();
@@ -1260,7 +1343,7 @@
             root.style.setProperty('--text-color', '#78350f');
         } else {
             root.style.setProperty('--bg', '#fdfbf7');
-            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
             root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#2c3e50'); 
             root.style.setProperty('--s', '#a89f91');
@@ -1394,7 +1477,7 @@
                 document.getElementById('btn-chamar-empregado').style.display = 'flex';
                 document.getElementById('btn-pedir-conta').style.display = 'flex';
                 document.getElementById('cart-text-btn').innerText = ''; 
-                document.getElementById('btn-user-account').style.display = 'none'; 
+                document.getElementById('btn-user-account-top').style.display = 'none'; // CORREÇÃO FATAL DO BUG DO CADEADO
                 
                 iniciarOuvinteCliente();
             }
@@ -1545,8 +1628,8 @@
                 carrinho = [];
                 atualizarFloater();
                 fecharCarrinho();
-                alert("O tempo limite de reserva do stock expirou e o carrinho foi esvaziado. Por favor, adicione os produtos novamente.");
-                window.location.reload();
+                mostrarAlertaCustom("O tempo limite de reserva do stock expirou e o carrinho foi esvaziado. Por favor, adicione os produtos novamente.", "Aviso de Stock");
+                setTimeout(() => window.location.reload(), 3000);
             } else {
                 const minutos = Math.floor((distancia % (1000 * 60 * 60)) / (1000 * 60));
                 const segundos = Math.floor((distancia % (1000 * 60)) / 1000);
@@ -1560,7 +1643,7 @@
         
         if (prodNaBase && prodNaBase.stock !== null) {
             if (prodNaBase.stock <= 0) {
-                alert("Lamentamos, mas este artigo acabou de esgotar.");
+                mostrarAlertaCustom("Lamentamos, mas este artigo acabou de esgotar.", "Esgotado");
                 return;
             }
             prodNaBase.stock -= 1;
@@ -1658,7 +1741,7 @@
             atualizarHorariosDisponiveis(); 
         }
 
-        document.getElementById('cartModal').style.display = 'block';
+        document.getElementById('cartModal').style.display = 'flex';
     }
 
     function fecharCarrinho() { document.getElementById('cartModal').style.display = 'none'; }
@@ -1669,7 +1752,7 @@
             if(delta > 0) {
                 const prodNaBase = todosProdutos.find(p => String(p.id) === String(item.id));
                 if (prodNaBase && prodNaBase.stock !== null) {
-                    if (prodNaBase.stock <= 0) return alert("Sem stock disponível.");
+                    if (prodNaBase.stock <= 0) return mostrarAlertaCustom("Sem stock disponível.", "Aviso");
                     prodNaBase.stock -= 1;
                     await cativarStockBaseDados(item.id, 1);
                 }
@@ -1717,7 +1800,7 @@
                 }]);
 
                 if (error) throw error; 
-                alert(`Pedido registado!\nO empregado irá à sua mesa num instante para confirmar.`);
+                mostrarAlertaCustom(`Pedido registado!\nO empregado irá à sua mesa num instante para confirmar.`, "Sucesso");
             } else {
                 const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
                 const data = document.getElementById('cli-data').value;
@@ -1760,7 +1843,7 @@
                 }]);
                 if (error) throw error; 
 
-                alert("Pedido confirmado e enviado para o restaurante!\nPode acompanhar o estado na área 'Os Meus Pedidos'.");
+                mostrarAlertaCustom("Pedido confirmado e enviado para o restaurante!\nPode acompanhar o estado na área 'Os Meus Pedidos'.", "Sucesso");
             }
 
             if(temporizadorCarrinho) clearInterval(temporizadorCarrinho);
@@ -1776,7 +1859,7 @@
 
         } catch (e) {
             console.error("ERRO COMPLETO:", e);
-            alert("ERRO: " + (e.message || "Falha ao ligar à base de dados.")); 
+            mostrarAlertaCustom((e.message || "Falha ao ligar à base de dados."), "Erro"); 
         } finally {
             btnFinal.innerHTML = `<i class="fas fa-check"></i> ` + (dictIdiomas[userLang].confirm_order || "Confirmar e Enviar Pedido");
             btnFinal.disabled = false;
@@ -1824,7 +1907,7 @@
                 badgeDia = `<div style="font-size: 11px; color: var(--s); background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold;"><i class="fas fa-calendar-day"></i> <span data-i18n="exclusive_day">Exclusivo</span>: ${nomeDiasInt[p.dia_semana]}</div>`;
             }
 
-            let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--err); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> <span data-i18n="out_of_stock">Esgotado</span></div>` : '';
+            let badgeEsgotado = isEsgotado ? `<div style="position:absolute; top:10px; left:10px; background:var(--accent); color:white; padding:5px 10px; border-radius:8px; font-weight:bold; font-size:12px; z-index:10;"><i class="fas fa-ban"></i> <span data-i18n="out_of_stock">Esgotado</span></div>` : '';
             
             let btnAdicionar = isEsgotado 
                 ? `<button disabled style="background:rgba(0,0,0,0.1); color:inherit; padding:14px; border-radius:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; border:none; width:100%; margin-top:auto; cursor:not-allowed; opacity:0.6;"><i class="fas fa-ban"></i> <span data-i18n="product_out_stock">Produto Esgotado</span></button>`
