@@ -848,7 +848,6 @@
         let icone = tipo === 'cozinha' ? 'fa-bell-concierge' : (tipo === 'bar' ? 'fa-glass-water' : 'fa-hand-sparkles');
         let classeCor = tipo === 'cozinha' ? 'alerta-cozinha' : (tipo === 'bar' ? 'alerta-bar' : 'alerta-cliente');
         
-        // Adiciona atributo para identificar a quem pertence o Toast (para poder limpar depois)
         let attrId = idRelacionado ? `data-ref-id="${idRelacionado}"` : '';
         
         toast.className = `notificacao-toast no-print ${classeCor} toast-persistente`;
@@ -867,11 +866,8 @@
 
         document.body.appendChild(toast);
         setTimeout(() => toast.classList.add('mostrar'), 100);
-
-        // AQUI ESTÁ A MAGIA: O setTimeout foi removido. O Toast fica no ecrã até que o empregado o feche.
     }
 
-    // Função auxiliar para limpar Toasts de uma mesa específica quando a ação é resolvida
     function limparToastsMesa(idRelacionado) {
         if (!idRelacionado) return;
         const toasts = document.querySelectorAll(`.toast-persistente[data-ref-id="${idRelacionado}"]`);
@@ -902,7 +898,6 @@
                   const numMesa = payload.new.mesa;
                   const accaoStr = payload.new.tipo_chamada === 'conta' ? 'pediu a Conta.' : 'chamou Empregado.';
                   tocarSinoClienteChama();
-                  // Passamos a mesa como ID Relacionado para ancorar o Toast
                   dispararToast('Atenção à Sala', `A Mesa ${numMesa} ${accaoStr}`, 'cliente', numMesa);
               }
               carregarDados(); 
@@ -911,7 +906,6 @@
               if (payload.new.estado === 'pronto') {
                   const tagLocal = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : `Takeaway (${payload.new.nome_cliente || 'Anónimo'})`;
                   tocarSinoCozinhaPronta();
-                  // O Toast de pronto também fica persistente, mas ancora ao ID do pedido em vez da mesa
                   dispararToast('Prato Pronto!', `O pedido da ${tagLocal} está pronto a levantar na bancada.`, 'cozinha', `pedido-${payload.new.id}`);
               }
               carregarDados(); 
@@ -926,7 +920,7 @@
                   let precisaBar = false;
                   
                   if (payload.new.itens && Array.isArray(payload.new.itens)) {
-                      const regexBebidas = /água|agua|sumo|cerveja|fino|imperial|café|cafe|vinho|bebida|refrigerante|sangria|sobremesa|doce|bolo|bife/i; 
+                      const regexBebidas = /água|agua|sumo|cerveja|fino|imperial|café|cafe|vinho|bebida|refrigerante|sangria|sobremesa|doce|bolo/i; 
                       
                       for(let item of payload.new.itens) {
                           if (regexBebidas.test(item.nome.toLowerCase())) {
@@ -939,7 +933,6 @@
                   if (precisaBar) {
                       const nomeDestino = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : (payload.new.nome_cliente || 'Cliente');
                       tocarSinoBar();
-                      // Toast do bar ancorado ao ID do pedido
                       dispararToast('Ticket de Bar / Copa', `Retirar bebidas ou sobremesas para ${nomeDestino}.`, 'bar', `pedido-${payload.new.id}`);
                   }
               }
@@ -957,8 +950,6 @@
     }
 
     async function carregarDados() {
-        // INJEÇÃO DA SOLUÇÃO 2: MEMÓRIA DE CURTO PRAZO DAS CHAMADAS (Para recuperar o Método de Pagamento)
-        // Agora puxamos as chamadas pendentes E as chamadas recentes (últimas 4 horas) para extrair o pagamento mesmo depois de resolvido
         const dataLimite = new Date();
         dataLimite.setHours(dataLimite.getHours() - 4);
         
@@ -971,9 +962,8 @@
         const { data: pedidos } = await _sb.from('pedidos').select('*').eq('loja_id', minhaLojaId).neq('estado', 'finalizado').neq('estado', 'cancelado').order('created_at', { ascending: true });
         
         window.pedidosGlobais = pedidos || [];
-        window.chamadasGlobais = chamadas || []; // O array agora tem o histórico curto!
+        window.chamadasGlobais = chamadas || []; 
         
-        // Passamos as pendentes para a interface renderizar
         const chamadasPendentes = window.chamadasGlobais.filter(c => c.estado === 'pendente');
         renderizarInterface(window.pedidosGlobais, chamadasPendentes);
         
@@ -1114,16 +1104,13 @@
         let chamadasHtml = '';
         let metodoSelecionadoPeloCliente = ''; 
 
-        // INJEÇÃO DA SOLUÇÃO 2: Procurar no histórico recente para garantir que a memória do pagamento sobrevive ao botão "Feito"
         const chamadasRecentesDestaMesa = window.chamadasGlobais.filter(c => c.mesa === mesaNum);
         
-        // Pega no último método de pagamento validado para a mesa
         const ultimaChamadaConta = chamadasRecentesDestaMesa.slice().reverse().find(c => c.tipo_chamada === 'conta');
         if (ultimaChamadaConta) {
             metodoSelecionadoPeloCliente = ultimaChamadaConta.metodo_pagamento || "Dinheiro";
         }
 
-        // Renderiza apenas as chamadas que ainda estão PENDENTES para a UI
         const chamadasPendentesDestaMesa = chamadasRecentesDestaMesa.filter(c => c.estado === 'pendente');
         
         chamadasPendentesDestaMesa.forEach(c => {
@@ -1279,7 +1266,7 @@
 
     async function resolverChamada(id, mesaNum) { 
         await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id); 
-        limparToastsMesa(mesaNum); // Limpa o aviso visual associado a esta mesa
+        limparToastsMesa(mesaNum); 
         carregarDados(); 
     }
     
@@ -1433,17 +1420,19 @@
             htmlOpcoes += `<option value="Ticket Refeição">🎫 Ticket Refeição</option>`;
         }
         
-        selectMetodo.innerHTML = htmlOpcoes;
-
+        // A REGRA DE OURO: INJEÇÃO FORÇADA
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
-            let optionExists = false;
-            for (let i=0; i<selectMetodo.options.length; i++){
-                if (selectMetodo.options[i].value === metodoPreferido){
-                    optionExists = true; break;
-                }
+            // Se o método que o cliente escolheu não estiver no HTML que acabámos de gerar, injeta-o.
+            if (!htmlOpcoes.includes(`value="${metodoPreferido}"`)) {
+                htmlOpcoes += `<option value="${metodoPreferido}">💳 ${metodoPreferido} (Pedido do Cliente)</option>`;
             }
-            if(optionExists) selectMetodo.value = metodoPreferido;
-            else selectMetodo.value = "Dinheiro";
+        }
+        
+        selectMetodo.innerHTML = htmlOpcoes;
+        
+        // Define o método escolhido pelo cliente como pré-selecionado, caso contrário cai no Dinheiro
+        if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
+            selectMetodo.value = metodoPreferido;
         } else {
             selectMetodo.value = "Dinheiro";
         }
@@ -1464,14 +1453,12 @@
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             
-            // Limpa o toast persistente associado ao Fecho
             const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
             if(mesaSegura !== 'Takeaway' && mesaSegura !== 'Reserva') {
                 const numMesaLimpo = mesaSegura.replace('Mesa ', '').trim();
                 localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
                 limparToastsMesa(numMesaLimpo);
             } else {
-                // Se for takeaway/reserva limpa os toasts dos IDs envolvidos
                 for(let id of ids) limparToastsMesa(`pedido-${id}`);
             }
 
@@ -1531,6 +1518,29 @@
             fecharModal('modal-historico'); 
             carregarDados();
         }, "Confirmar Estorno");
+    }
+
+    function abrirFechoTurno() {
+        pedirPin(() => {
+            document.getElementById('modal-fecho').style.display = 'flex';
+        });
+    }
+
+    async function enviarTurnoLojista() {
+        const btn = document.querySelector('#modal-fecho .btn-success');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A enviar...';
+        btn.disabled = true;
+
+        try {
+            await registarAuditoria('Efetuou o Fecho de Turno e notificou a Gestão.');
+            mostrarAlertaCustom("Fecho de turno submetido com sucesso. Pode encerrar a aplicação.", "Sucesso");
+            fecharModal('modal-fecho');
+        } catch (e) {
+            mostrarAlertaCustom("Falha ao comunicar com o servidor. Verifique a internet.", "Erro");
+        } finally {
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Dados para Lojista';
+            btn.disabled = false;
+        }
     }
 
     function fecharModal(id) { 
