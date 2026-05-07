@@ -100,6 +100,7 @@
         .notificacao-toast.mostrar { bottom: 20px; }
         .notificacao-toast.alerta-cozinha { background: var(--success); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); }
         .notificacao-toast.alerta-cliente { background: var(--danger); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); }
+        .notificacao-toast.alerta-bar { background: #8b5cf6; box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); } /* NOVO: Cor Roxa para o Bar */
         .notificacao-icon { font-size: 24px; animation: pulse-ring 2s infinite; }
 
         .btn-mini-edit { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 5px; transition: 0.2s;}
@@ -295,10 +296,6 @@
             <h2 style="color: var(--primary); font-size: 2.5em; margin: 10px 0;"><span id="pagar-mesa-total">0.00</span>€</h2>
             <p style="color:#475569; margin-bottom: 15px;">Confirme o método de pagamento efetuado pelo cliente:</p>
             <select id="pagar-mesa-metodo" class="input-form">
-                <option value="Dinheiro">💵 Dinheiro</option>
-                <option value="Multibanco">💳 Multibanco</option>
-                <option value="MBWay">📱 MBWay</option>
-                <option value="Ticket Refeição">🎫 Ticket Refeição</option>
             </select>
             <input type="hidden" id="pagar-mesa-ids">
             <input type="hidden" id="pagar-mesa-id-seguro">
@@ -359,11 +356,14 @@
     let minhaLojaId = null; let lojaNome = ""; let nomeOperadorAtual = "";
     let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
     
+    // INJEÇÃO DA SOLUÇÃO 1: GLOBAL PARA DADOS DA LOJA
+    window.lojaDataAtual = null;
+    
     let timerAtualizacao = null; 
     let acaoSegurancaPendente = null; 
     let intervalCronometros = null;
     let canalSala = null;
-    let canalPedidosNovos = null; // NOVO CANAL DE WEBSOCKETS PARA PEDIDOS
+    let canalPedidosNovos = null; 
     
     // Globais para gerir o Modal e os Dados Vivos
     window.pedidosGlobais = [];
@@ -686,10 +686,12 @@
             return;
         }
 
-        const { data: loja } = await _sb.from('lojas').select('id, slug').eq('slug', inputSlug).maybeSingle();
+        const { data: loja } = await _sb.from('lojas').select('*').eq('slug', inputSlug).maybeSingle();
         
         if (loja) {
             minhaLojaId = loja.id;
+            window.lojaDataAtual = loja; // GUARDA A CONFIGURAÇÃO INTEIRA DA LOJA AQUI
+            
             const { data: equipa } = await _sb.from('empregados').select('*').eq('loja_id', minhaLojaId);
             
             if (equipa && equipa.length > 0) {
@@ -739,6 +741,13 @@
             sessionStorage.setItem('pv_sala_loja_id', minhaLojaId);
             sessionStorage.setItem('pv_sala_operador_id', empregado.id);
             sessionStorage.setItem('pv_sala_operador', nomeOperadorAtual);
+            
+            // Re-aproveita a loja que já está em window.lojaDataAtual ou vai buscar caso falhe
+            if (!window.lojaDataAtual) {
+                const { data: loja } = await _sb.from('lojas').select('*').eq('id', minhaLojaId).single();
+                window.lojaDataAtual = loja;
+            }
+            
             iniciarDashboard(minhaLojaId);
             registarAuditoria(`Iniciou o Turno`);
         } else {
@@ -748,11 +757,16 @@
         }
     }
 
-    function verificarSessao() {
+    async function verificarSessao() {
         const id = sessionStorage.getItem('pv_sala_loja_id');
         const op = sessionStorage.getItem('pv_sala_operador');
         if (id && op) {
-            minhaLojaId = id; nomeOperadorAtual = op; iniciarDashboard(id);
+            minhaLojaId = id; nomeOperadorAtual = op;
+            if (!window.lojaDataAtual) {
+                const { data: loja } = await _sb.from('lojas').select('*').eq('id', minhaLojaId).single();
+                window.lojaDataAtual = loja;
+            }
+            iniciarDashboard(id);
         }
     }
 
@@ -765,6 +779,8 @@
         if(intervalCronometros) clearInterval(intervalCronometros);
         if(canalSala) _sb.removeChannel(canalSala);
         if(canalPedidosNovos) _sb.removeChannel(canalPedidosNovos);
+        
+        window.lojaDataAtual = null; // Limpa os dados
         
         document.getElementById('select-empregado').value = ""; document.getElementById('pin-empregado').value = "";
         document.getElementById('pin-empregado').style.display = 'none'; document.getElementById('label-pin').style.display = 'none'; document.getElementById('btn-login-text').style.display = 'none';
@@ -803,10 +819,38 @@
         } catch(e) {}
     }
 
+    // NOVO SINO EXCLUSIVO PARA O BAR (Finos e Bebidas)
+    function tocarSinoBar() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = "square"; 
+            osc.frequency.setValueAtTime(1200, ctx.currentTime);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05); 
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
+            
+            setTimeout(() => {
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.connect(gain2); gain2.connect(ctx.destination);
+                osc2.type = "square"; 
+                osc2.frequency.setValueAtTime(1200, ctx.currentTime);
+                gain2.gain.setValueAtTime(0, ctx.currentTime);
+                gain2.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05); 
+                gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc2.start(ctx.currentTime); osc2.stop(ctx.currentTime + 0.2);
+            }, 150);
+        } catch(e) {}
+    }
+
     function dispararToast(titulo, mensagem, tipo) {
         const toast = document.createElement('div');
-        let icone = tipo === 'cozinha' ? 'fa-bell-concierge' : 'fa-hand-sparkles';
-        let classeCor = tipo === 'cozinha' ? 'alerta-cozinha' : 'alerta-cliente';
+        let icone = tipo === 'cozinha' ? 'fa-bell-concierge' : (tipo === 'bar' ? 'fa-glass-water' : 'fa-hand-sparkles');
+        let classeCor = tipo === 'cozinha' ? 'alerta-cozinha' : (tipo === 'bar' ? 'alerta-bar' : 'alerta-cliente');
         
         toast.className = `notificacao-toast no-print ${classeCor}`;
         toast.innerHTML = `
@@ -833,19 +877,16 @@
     // --- ESCUTAS SELECTIVAS PARA A SALA ---
     async function iniciarDashboard(idLoja) {
         document.getElementById('login-screen').style.display = 'none'; document.getElementById('dashboard-screen').style.display = 'flex';
-        const { data: loja } = await _sb.from('lojas').select('nome').eq('id', idLoja).single();
         
-        lojaNome = loja.nome;
-        document.getElementById('nome-restaurante').innerText = loja.nome + " - Sala";
+        lojaNome = window.lojaDataAtual.nome;
+        document.getElementById('nome-restaurante').innerText = window.lojaDataAtual.nome + " - Sala";
         document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${nomeOperadorAtual}`;
         
         const { data: prods } = await _sb.from('produtos').select('id, nome, preco, desconto_percent, imagem_url, stock, dia_semana').eq('loja_id', minhaLojaId).eq('oculto', false);
         if(prods) produtosCatalogo = prods;
 
         carregarDados();
-        iniciarCicloCronometros(); // Mantém o relógio local ativo para os cartões
-        
-        // Removemos o timerAtualizacao cego de 30s. A interface agora é 100% Reativa!
+        iniciarCicloCronometros(); 
         
         if(canalSala) _sb.removeChannel(canalSala);
         canalSala = _sb.channel('sala-updates')
@@ -868,11 +909,34 @@
           }) 
           .subscribe();
           
-        // INJEÇÃO DA SOLUÇÃO 1: RADAR DE NOVOS PEDIDOS (WEBSOCKETS)
+        // INJEÇÃO DA SOLUÇÃO 2: ROTEAMENTO FRACIONADO DE ESTAÇÃO (BAR vs COZINHA)
         if(canalPedidosNovos) _sb.removeChannel(canalPedidosNovos);
         canalPedidosNovos = _sb.channel('sala-pedidos-novos')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
-              carregarDados(); // Atualiza a sala instantaneamente quando cai um pedido novo!
+              
+              if (payload.new.estado === 'pendente' || payload.new.estado === 'aguarda_confirmacao') {
+                  // Faz um Raio-X ao carrinho do cliente em busca de bebidas/doces
+                  let precisaBar = false;
+                  
+                  if (payload.new.itens && Array.isArray(payload.new.itens)) {
+                      const regexBebidas = /água|agua|sumo|cerveja|fino|imperial|café|cafe|vinho|bebida|refrigerante|sangria|sobremesa|doce|bolo|bife/i; // Bife só para debug se quiseres testar
+                      
+                      for(let item of payload.new.itens) {
+                          if (regexBebidas.test(item.nome.toLowerCase())) {
+                              precisaBar = true;
+                              break;
+                          }
+                      }
+                  }
+
+                  if (precisaBar) {
+                      const nomeDestino = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : (payload.new.nome_cliente || 'Cliente');
+                      tocarSinoBar();
+                      dispararToast('Ticket de Bar / Copa', `Retirar bebidas ou sobremesas para ${nomeDestino}.`, 'bar');
+                  }
+              }
+              
+              carregarDados();
           })
           .subscribe();
     }
@@ -1031,12 +1095,11 @@
         let chamadasHtml = '';
         let metodoSelecionadoPeloCliente = ''; 
 
-        // INJEÇÃO DA SOLUÇÃO 2: LER A MEMÓRIA DO PEDIDO DE CONTA
         chamadasMesa.forEach(c => {
             const isC = c.tipo_chamada === 'conta'; 
             if(isC) {
                 const metodo = c.metodo_pagamento || "Dinheiro";
-                metodoSelecionadoPeloCliente = metodo; // AQUI GUARDA A ESCOLHA DO CLIENTE!
+                metodoSelecionadoPeloCliente = metodo; 
                 const nif = (c.quer_nif && c.nif_cliente) ? `<br><strong style="color: var(--danger);">NIF:</strong> ${c.nif_cliente}` : '';
                 chamadasHtml += `<div style="background:#fef2f2; border:1px solid #fecaca; padding:15px; border-radius:12px; margin-bottom:15px; font-size:1em; color:var(--danger);">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1081,7 +1144,6 @@
             btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${idConf}, 'pendente'); event.stopPropagation();"><i class="fas fa-fire"></i> Enviar p/ Cozinha</button>
                    <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedidoSeguro(${idConf}); event.stopPropagation();"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; 
         } else if (m.tudoPronto) { 
-            // INJEÇÃO DA SOLUÇÃO 2: PASSA O METODO AO FECHO
             btn = `<button class="btn-action btn-success" onclick="prepararFechoMesa('Mesa ${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar e Fechar (${m.totalAcumulado.toFixed(2)}€)</button>`; 
         } else {
             btn = `<button class="btn-action btn-resolve" style="opacity:0.5;">Mesa em Consumo (Fila/Cozinha)</button>`;
@@ -1322,11 +1384,38 @@
         document.getElementById('pagar-mesa-total').innerText = total.toFixed(2);
         document.getElementById('pagar-mesa-ids').value = idsStr;
         
-        // INJEÇÃO DA SOLUÇÃO 2: INJETAR O MÉTODO DO CLIENTE NO SELECT
+        // INJEÇÃO DA SOLUÇÃO 1: RENDERIZAR O SELECT COM BASE NAS OPÇÕES DA LOJA
+        const selectMetodo = document.getElementById('pagar-mesa-metodo');
+        selectMetodo.innerHTML = ''; // Limpa opções antigas
+        
+        // Sempre tem Dinheiro como base (podes ajustar a lógica se o lojista puder desligar o dinheiro também)
+        let htmlOpcoes = `<option value="Dinheiro">💵 Dinheiro</option>`;
+        
+        if (window.lojaDataAtual && window.lojaDataAtual.aceita_multibanco) {
+            htmlOpcoes += `<option value="Multibanco">💳 Multibanco</option>`;
+        }
+        
+        // No Takeaway o MBWay já é padrão, na Sala pode ser ligado
+        htmlOpcoes += `<option value="MBWay">📱 MBWay</option>`;
+        
+        if (window.lojaDataAtual && window.lojaDataAtual.aceita_ticket) {
+            htmlOpcoes += `<option value="Ticket Refeição">🎫 Ticket Refeição</option>`;
+        }
+        
+        selectMetodo.innerHTML = htmlOpcoes;
+
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
-            document.getElementById('pagar-mesa-metodo').value = metodoPreferido;
+            // Verifica se a opção do cliente existe no select gerado, se não cai pro default
+            let optionExists = false;
+            for (let i=0; i<selectMetodo.options.length; i++){
+                if (selectMetodo.options[i].value === metodoPreferido){
+                    optionExists = true; break;
+                }
+            }
+            if(optionExists) selectMetodo.value = metodoPreferido;
+            else selectMetodo.value = "Dinheiro";
         } else {
-            document.getElementById('pagar-mesa-metodo').value = "Dinheiro";
+            selectMetodo.value = "Dinheiro";
         }
         
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
