@@ -100,7 +100,7 @@
         .notificacao-toast.mostrar { bottom: 20px; }
         .notificacao-toast.alerta-cozinha { background: var(--success); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); }
         .notificacao-toast.alerta-cliente { background: var(--danger); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); }
-        .notificacao-toast.alerta-bar { background: #8b5cf6; box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); } /* NOVO: Cor Roxa para o Bar */
+        .notificacao-toast.alerta-bar { background: #8b5cf6; box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); }
         .notificacao-icon { font-size: 24px; animation: pulse-ring 2s infinite; }
 
         .btn-mini-edit { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 5px; transition: 0.2s;}
@@ -356,7 +356,6 @@
     let minhaLojaId = null; let lojaNome = ""; let nomeOperadorAtual = "";
     let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
     
-    // INJEÇÃO DA SOLUÇÃO 1: GLOBAL PARA DADOS DA LOJA
     window.lojaDataAtual = null;
     
     let timerAtualizacao = null; 
@@ -365,7 +364,6 @@
     let canalSala = null;
     let canalPedidosNovos = null; 
     
-    // Globais para gerir o Modal e os Dados Vivos
     window.pedidosGlobais = [];
     window.chamadasGlobais = [];
     window.mesasGlobais = {};
@@ -405,7 +403,6 @@
         
         document.getElementById('custom-alert-modal').style.display = 'flex';
     }
-    // --------------------------------------------------------------------------
 
     async function registarAuditoria(acaoDetalhe) {
         const empId = sessionStorage.getItem('pv_sala_operador_id') || '0';
@@ -690,7 +687,7 @@
         
         if (loja) {
             minhaLojaId = loja.id;
-            window.lojaDataAtual = loja; // GUARDA A CONFIGURAÇÃO INTEIRA DA LOJA AQUI
+            window.lojaDataAtual = loja; 
             
             const { data: equipa } = await _sb.from('empregados').select('*').eq('loja_id', minhaLojaId);
             
@@ -742,7 +739,6 @@
             sessionStorage.setItem('pv_sala_operador_id', empregado.id);
             sessionStorage.setItem('pv_sala_operador', nomeOperadorAtual);
             
-            // Re-aproveita a loja que já está em window.lojaDataAtual ou vai buscar caso falhe
             if (!window.lojaDataAtual) {
                 const { data: loja } = await _sb.from('lojas').select('*').eq('id', minhaLojaId).single();
                 window.lojaDataAtual = loja;
@@ -780,7 +776,7 @@
         if(canalSala) _sb.removeChannel(canalSala);
         if(canalPedidosNovos) _sb.removeChannel(canalPedidosNovos);
         
-        window.lojaDataAtual = null; // Limpa os dados
+        window.lojaDataAtual = null; 
         
         document.getElementById('select-empregado').value = ""; document.getElementById('pin-empregado').value = "";
         document.getElementById('pin-empregado').style.display = 'none'; document.getElementById('label-pin').style.display = 'none'; document.getElementById('btn-login-text').style.display = 'none';
@@ -819,7 +815,6 @@
         } catch(e) {}
     }
 
-    // NOVO SINO EXCLUSIVO PARA O BAR (Finos e Bebidas)
     function tocarSinoBar() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -847,12 +842,16 @@
         } catch(e) {}
     }
 
-    function dispararToast(titulo, mensagem, tipo) {
+    // INJEÇÃO DA SOLUÇÃO 1: TOASTS PERSISTENTES (Não morrem com o tempo)
+    function dispararToast(titulo, mensagem, tipo, idRelacionado = null) {
         const toast = document.createElement('div');
         let icone = tipo === 'cozinha' ? 'fa-bell-concierge' : (tipo === 'bar' ? 'fa-glass-water' : 'fa-hand-sparkles');
         let classeCor = tipo === 'cozinha' ? 'alerta-cozinha' : (tipo === 'bar' ? 'alerta-bar' : 'alerta-cliente');
         
-        toast.className = `notificacao-toast no-print ${classeCor}`;
+        // Adiciona atributo para identificar a quem pertence o Toast (para poder limpar depois)
+        let attrId = idRelacionado ? `data-ref-id="${idRelacionado}"` : '';
+        
+        toast.className = `notificacao-toast no-print ${classeCor} toast-persistente`;
         toast.innerHTML = `
             <i class="fas ${icone} notificacao-icon"></i>
             <div style="flex: 1;">
@@ -863,15 +862,23 @@
                 <i class="fas fa-times"></i>
             </button>
         `;
+        
+        if (idRelacionado) toast.setAttribute('data-ref-id', idRelacionado);
+
         document.body.appendChild(toast);
         setTimeout(() => toast.classList.add('mostrar'), 100);
 
-        setTimeout(() => {
-            if(document.body.contains(toast)) {
-                toast.classList.remove('mostrar');
-                setTimeout(() => toast.remove(), 500);
-            }
-        }, 8000);
+        // AQUI ESTÁ A MAGIA: O setTimeout foi removido. O Toast fica no ecrã até que o empregado o feche.
+    }
+
+    // Função auxiliar para limpar Toasts de uma mesa específica quando a ação é resolvida
+    function limparToastsMesa(idRelacionado) {
+        if (!idRelacionado) return;
+        const toasts = document.querySelectorAll(`.toast-persistente[data-ref-id="${idRelacionado}"]`);
+        toasts.forEach(t => {
+            t.classList.remove('mostrar');
+            setTimeout(() => t.remove(), 500);
+        });
     }
 
     // --- ESCUTAS SELECTIVAS PARA A SALA ---
@@ -895,7 +902,8 @@
                   const numMesa = payload.new.mesa;
                   const accaoStr = payload.new.tipo_chamada === 'conta' ? 'pediu a Conta.' : 'chamou Empregado.';
                   tocarSinoClienteChama();
-                  dispararToast('Atenção à Sala', `A Mesa ${numMesa} ${accaoStr}`, 'cliente');
+                  // Passamos a mesa como ID Relacionado para ancorar o Toast
+                  dispararToast('Atenção à Sala', `A Mesa ${numMesa} ${accaoStr}`, 'cliente', numMesa);
               }
               carregarDados(); 
           })
@@ -903,23 +911,22 @@
               if (payload.new.estado === 'pronto') {
                   const tagLocal = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : `Takeaway (${payload.new.nome_cliente || 'Anónimo'})`;
                   tocarSinoCozinhaPronta();
-                  dispararToast('Prato Pronto!', `O pedido da ${tagLocal} está pronto a levantar na bancada.`, 'cozinha');
+                  // O Toast de pronto também fica persistente, mas ancora ao ID do pedido em vez da mesa
+                  dispararToast('Prato Pronto!', `O pedido da ${tagLocal} está pronto a levantar na bancada.`, 'cozinha', `pedido-${payload.new.id}`);
               }
               carregarDados(); 
           }) 
           .subscribe();
           
-        // INJEÇÃO DA SOLUÇÃO 2: ROTEAMENTO FRACIONADO DE ESTAÇÃO (BAR vs COZINHA)
         if(canalPedidosNovos) _sb.removeChannel(canalPedidosNovos);
         canalPedidosNovos = _sb.channel('sala-pedidos-novos')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
               
               if (payload.new.estado === 'pendente' || payload.new.estado === 'aguarda_confirmacao') {
-                  // Faz um Raio-X ao carrinho do cliente em busca de bebidas/doces
                   let precisaBar = false;
                   
                   if (payload.new.itens && Array.isArray(payload.new.itens)) {
-                      const regexBebidas = /água|agua|sumo|cerveja|fino|imperial|café|cafe|vinho|bebida|refrigerante|sangria|sobremesa|doce|bolo|bife/i; // Bife só para debug se quiseres testar
+                      const regexBebidas = /água|agua|sumo|cerveja|fino|imperial|café|cafe|vinho|bebida|refrigerante|sangria|sobremesa|doce|bolo|bife/i; 
                       
                       for(let item of payload.new.itens) {
                           if (regexBebidas.test(item.nome.toLowerCase())) {
@@ -932,7 +939,8 @@
                   if (precisaBar) {
                       const nomeDestino = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : (payload.new.nome_cliente || 'Cliente');
                       tocarSinoBar();
-                      dispararToast('Ticket de Bar / Copa', `Retirar bebidas ou sobremesas para ${nomeDestino}.`, 'bar');
+                      // Toast do bar ancorado ao ID do pedido
+                      dispararToast('Ticket de Bar / Copa', `Retirar bebidas ou sobremesas para ${nomeDestino}.`, 'bar', `pedido-${payload.new.id}`);
                   }
               }
               
@@ -949,13 +957,25 @@
     }
 
     async function carregarDados() {
-        const { data: chamadas } = await _sb.from('chamadas_sala').select('*').eq('loja_id', minhaLojaId).eq('estado', 'pendente').order('created_at', { ascending: true });
+        // INJEÇÃO DA SOLUÇÃO 2: MEMÓRIA DE CURTO PRAZO DAS CHAMADAS (Para recuperar o Método de Pagamento)
+        // Agora puxamos as chamadas pendentes E as chamadas recentes (últimas 4 horas) para extrair o pagamento mesmo depois de resolvido
+        const dataLimite = new Date();
+        dataLimite.setHours(dataLimite.getHours() - 4);
+        
+        const { data: chamadas } = await _sb.from('chamadas_sala')
+            .select('*')
+            .eq('loja_id', minhaLojaId)
+            .gte('created_at', dataLimite.toISOString())
+            .order('created_at', { ascending: true });
+            
         const { data: pedidos } = await _sb.from('pedidos').select('*').eq('loja_id', minhaLojaId).neq('estado', 'finalizado').neq('estado', 'cancelado').order('created_at', { ascending: true });
         
         window.pedidosGlobais = pedidos || [];
-        window.chamadasGlobais = chamadas || [];
+        window.chamadasGlobais = chamadas || []; // O array agora tem o histórico curto!
         
-        renderizarInterface(window.pedidosGlobais, window.chamadasGlobais);
+        // Passamos as pendentes para a interface renderizar
+        const chamadasPendentes = window.chamadasGlobais.filter(c => c.estado === 'pendente');
+        renderizarInterface(window.pedidosGlobais, chamadasPendentes);
         
         if (modalDetalheAberto.tipo === 'mesa' && modalDetalheAberto.id) {
             abrirDetalhesMesa(modalDetalheAberto.id);
@@ -966,9 +986,9 @@
 
     function formatarHora(iso) { const d = new Date(iso); return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
 
-    function renderizarInterface(pedidos, chamadas) {
+    function renderizarInterface(pedidos, chamadasPendentes) {
         const chamadasAtivas = {};
-        chamadas.forEach(c => {
+        chamadasPendentes.forEach(c => {
             if (!chamadasAtivas[c.mesa]) chamadasAtivas[c.mesa] = [];
             chamadasAtivas[c.mesa].push(c);
         });
@@ -1091,27 +1111,37 @@
         const m = window.mesasGlobais[mesaNum];
         if(!m) { fecharModal('modal-detalhes-gerais'); return; }
 
-        let chamadasMesa = window.chamadasGlobais.filter(c => c.mesa === mesaNum) || [];
         let chamadasHtml = '';
         let metodoSelecionadoPeloCliente = ''; 
 
-        chamadasMesa.forEach(c => {
+        // INJEÇÃO DA SOLUÇÃO 2: Procurar no histórico recente para garantir que a memória do pagamento sobrevive ao botão "Feito"
+        const chamadasRecentesDestaMesa = window.chamadasGlobais.filter(c => c.mesa === mesaNum);
+        
+        // Pega no último método de pagamento validado para a mesa
+        const ultimaChamadaConta = chamadasRecentesDestaMesa.slice().reverse().find(c => c.tipo_chamada === 'conta');
+        if (ultimaChamadaConta) {
+            metodoSelecionadoPeloCliente = ultimaChamadaConta.metodo_pagamento || "Dinheiro";
+        }
+
+        // Renderiza apenas as chamadas que ainda estão PENDENTES para a UI
+        const chamadasPendentesDestaMesa = chamadasRecentesDestaMesa.filter(c => c.estado === 'pendente');
+        
+        chamadasPendentesDestaMesa.forEach(c => {
             const isC = c.tipo_chamada === 'conta'; 
             if(isC) {
                 const metodo = c.metodo_pagamento || "Dinheiro";
-                metodoSelecionadoPeloCliente = metodo; 
                 const nif = (c.quer_nif && c.nif_cliente) ? `<br><strong style="color: var(--danger);">NIF:</strong> ${c.nif_cliente}` : '';
                 chamadasHtml += `<div style="background:#fef2f2; border:1px solid #fecaca; padding:15px; border-radius:12px; margin-bottom:15px; font-size:1em; color:var(--danger);">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <strong><i class="fas fa-file-invoice-dollar"></i> Pediu a Conta</strong>
-                                        <button onclick="resolverChamada(${c.id}); event.stopPropagation();" class="btn-mini-edit" style="background:var(--danger); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
+                                        <button onclick="resolverChamada(${c.id}, '${mesaNum}'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--danger); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
                                     </div>
                                     <div style="margin-top:8px;"><strong>Paga com:</strong> ${metodo} ${nif}</div>
                                 </div>`;
             } else {
                 chamadasHtml += `<div style="background:#fffbeb; border:1px solid #fde68a; padding:15px; border-radius:12px; margin-bottom:15px; font-size:1em; color:#b45309; display:flex; justify-content:space-between; align-items:center;">
                                     <strong><i class="fas fa-bell"></i> Chamou Empregado</strong>
-                                    <button onclick="resolverChamada(${c.id}); event.stopPropagation();" class="btn-mini-edit" style="background:var(--warning); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
+                                    <button onclick="resolverChamada(${c.id}, '${mesaNum}'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--warning); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
                                 </div>`;
             }
         });
@@ -1123,7 +1153,7 @@
             if (r.estado === 'aguarda_confirmacao') { badge = `<span style="color:var(--warning);">⚠️ Confirmar</span>`; idConf = r.id; } 
             else if (r.estado === 'pendente') { badge = `<span style="color:var(--danger);">Na Fila</span> <button onclick="avancarPedido(${r.id}, 'pronto'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--success);"><i class="fas fa-check"></i> Pronto</button>`; } 
             else if (r.estado === 'preparacao') badge = `<span style="color:var(--primary);">Cozinha 🍳</span>`; 
-            else if (r.estado === 'pronto') badge = `<span style="color:var(--success);">Pronto 🔔</span>`;
+            else if (r.estado === 'pronto') { badge = `<span style="color:var(--success);">Pronto 🔔</span> <button onclick="limparToastsMesa('pedido-${r.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button>`; }
             
             rondasHtml += `<div class="ronda-box">
                             <div class="ronda-title">
@@ -1195,7 +1225,7 @@
             btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto');">Marcar Pronto</button>`; 
         } 
         else if(p.estado === 'pronto') { 
-            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto para Entregar! 🔔</div>`; 
+            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto para Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
             btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '${metodoTakeaway}');"><i class="fas fa-check-double"></i> Entregar e Fechar Conta</button>`; 
         }
         else if(p.estado === 'reserva_confirmada') {
@@ -1247,7 +1277,11 @@
         document.getElementById('modal-detalhes-gerais').style.display = 'flex';
     }
 
-    async function resolverChamada(id) { await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id); carregarDados(); }
+    async function resolverChamada(id, mesaNum) { 
+        await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('id', id); 
+        limparToastsMesa(mesaNum); // Limpa o aviso visual associado a esta mesa
+        carregarDados(); 
+    }
     
     async function avancarPedido(id, est) { 
         await _sb.from('pedidos').update({ estado: est }).eq('id', id); 
@@ -1384,18 +1418,15 @@
         document.getElementById('pagar-mesa-total').innerText = total.toFixed(2);
         document.getElementById('pagar-mesa-ids').value = idsStr;
         
-        // INJEÇÃO DA SOLUÇÃO 1: RENDERIZAR O SELECT COM BASE NAS OPÇÕES DA LOJA
         const selectMetodo = document.getElementById('pagar-mesa-metodo');
-        selectMetodo.innerHTML = ''; // Limpa opções antigas
+        selectMetodo.innerHTML = ''; 
         
-        // Sempre tem Dinheiro como base (podes ajustar a lógica se o lojista puder desligar o dinheiro também)
         let htmlOpcoes = `<option value="Dinheiro">💵 Dinheiro</option>`;
         
         if (window.lojaDataAtual && window.lojaDataAtual.aceita_multibanco) {
             htmlOpcoes += `<option value="Multibanco">💳 Multibanco</option>`;
         }
         
-        // No Takeaway o MBWay já é padrão, na Sala pode ser ligado
         htmlOpcoes += `<option value="MBWay">📱 MBWay</option>`;
         
         if (window.lojaDataAtual && window.lojaDataAtual.aceita_ticket) {
@@ -1405,7 +1436,6 @@
         selectMetodo.innerHTML = htmlOpcoes;
 
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
-            // Verifica se a opção do cliente existe no select gerado, se não cai pro default
             let optionExists = false;
             for (let i=0; i<selectMetodo.options.length; i++){
                 if (selectMetodo.options[i].value === metodoPreferido){
@@ -1434,10 +1464,15 @@
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             
+            // Limpa o toast persistente associado ao Fecho
             const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
             if(mesaSegura !== 'Takeaway' && mesaSegura !== 'Reserva') {
                 const numMesaLimpo = mesaSegura.replace('Mesa ', '').trim();
                 localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
+                limparToastsMesa(numMesaLimpo);
+            } else {
+                // Se for takeaway/reserva limpa os toasts dos IDs envolvidos
+                for(let id of ids) limparToastsMesa(`pedido-${id}`);
             }
 
             registarAuditoria(`Fechou a conta (Pagamento por ${metodo}) das encomendas: ${idsStr}`);
