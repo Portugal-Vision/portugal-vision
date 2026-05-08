@@ -23,9 +23,11 @@
         .status-dot { width: 12px; height: 12px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
         
-        .header-actions { display: flex; gap: 15px; align-items: center; }
-        .btn-header { background: #e2e8f0; color: var(--text); border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn-header { background: #e2e8f0; color: var(--text); border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
         .btn-header:hover { background: #cbd5e1; }
+        .btn-header.btn-action-primary { background: var(--primary); color: white; }
+        .btn-header.btn-action-primary:hover { opacity: 0.9; background: var(--primary); }
 
         .main-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; flex-grow: 1; overflow: hidden; height: calc(100vh - 80px); transition: 0.3s; }
         @media (max-width: 1024px) { .main-content { grid-template-columns: 1fr 1fr; } }
@@ -42,7 +44,7 @@
         .coluna-header:hover { background: #f8fafc; transform: translateY(-2px); }
         .btn-expandir { background: #e2e8f0; color: #475569; border: none; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1em; transition: 0.2s; margin-right: 10px; }
         .btn-expandir:hover { background: #cbd5e1; color: var(--primary); }
-        .coluna.is-expanded .btn-expandir i::before { content: "\f066"; } /* ícone contrair (fa-compress-arrows-alt) */
+        .coluna.is-expanded .btn-expandir i::before { content: "\f066"; } /* ícone contrair */
         
         .badge { background: #e2e8f0; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold;}
         
@@ -70,14 +72,6 @@
         .btn-resolve { background: #f1f5f9; color: var(--text); } .btn-resolve:hover { background: #e2e8f0; }
         .btn-success { background: var(--success); color: white; } .btn-warning { background: var(--warning); color: white; }
         .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; } .empty-state i { font-size: 3em; margin-bottom: 15px; opacity: 0.5; }
-
-        .fab-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 100; }
-        .fab-pos { background: var(--primary); color: white; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5); cursor: pointer; transition: 0.3s; border: none;}
-        .fab-pos:hover { transform: scale(1.1); }
-        .fab-refresh { background: #94a3b8; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; transition: 0.3s; border: none; align-self: flex-end;}
-        .fab-refresh:hover { transform: scale(1.1); background: #64748b; }
-        .fab-refresh i { transition: transform 0.5s; }
-        .fab-refresh:active i { transform: rotate(180deg); }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px); z-index: 9999; padding: 20px; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 100%; max-width: 900px; max-height: 90vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
@@ -121,27 +115,32 @@
         .custom-alert-text { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 1em; }
         .custom-alert-actions { display: flex; gap: 10px; justify-content: center; }
 
+        /* IMPRESSÃO DO TALÃO TÉRMICO 80mm */
         @media print {
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: monospace; }
+            #print-area { 
+                position: absolute; left: 0; top: 0; 
+                width: 80mm; 
+                font-family: 'Courier New', Courier, monospace; 
+                color: #000; background: #fff; padding: 10px; font-size: 12px; 
+            }
             .no-print { display: none !important; }
         }
     </style>
 </head>
 <body>
 
-<div id="custom-alert-modal" class="custom-alert-overlay">
+<div id="custom-alert-modal" class="custom-alert-overlay no-print">
     <div class="custom-alert-box">
         <div id="custom-alert-icon" style="font-size: 3em; margin-bottom: 15px; color: var(--primary);"><i class="fas fa-info-circle"></i></div>
         <div id="custom-alert-title" class="custom-alert-title">Aviso</div>
         <div id="custom-alert-text" class="custom-alert-text">Mensagem...</div>
-        <div id="custom-alert-actions" class="custom-alert-actions">
-            </div>
+        <div id="custom-alert-actions" class="custom-alert-actions"></div>
     </div>
 </div>
 
-<div id="login-screen">
+<div id="login-screen" class="no-print">
     <div class="login-box">
         <h2 style="margin-top:0; color: var(--primary);"><i class="fas fa-tablet-alt"></i> Painel de Sala</h2>
         <p style="color: #64748b; margin-bottom: 25px;">Acesso restrito a colaboradores.</p>
@@ -161,13 +160,15 @@
     </div>
 </div>
 
-<div id="dashboard-screen" style="display: none; height: 100%; flex-direction: column;">
+<div id="dashboard-screen" class="no-print" style="display: none; height: 100%; flex-direction: column;">
     <header>
         <div class="logo-area">
             <h1><span class="status-dot"></span> <span id="nome-restaurante">A carregar...</span></h1>
             <span style="font-size: 12px; color: #64748b; margin-left: 15px;" id="nome-operador"></span>
         </div>
         <div class="header-actions">
+            <button class="btn-header" onclick="forcarAtualizacaoManual()" title="Sincronizar Manualmente"><i class="fas fa-sync-alt" id="icon-sync"></i> Atualizar</button>
+            <button class="btn-header btn-action-primary" onclick="abrirPOS()" title="Novo Pedido Manual"><i class="fas fa-plus"></i> Novo Pedido</button>
             <button class="btn-header" onclick="abrirHistorico()"><i class="fas fa-history"></i> Histórico</button>
             <button class="btn-header" onclick="abrirFechoTurno()"><i class="fas fa-archive"></i> Fecho Diário</button>
             <button onclick="logout()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 1.5em;"><i class="fas fa-power-off"></i></button>
@@ -208,14 +209,9 @@
             <div id="lista-sala"><div class="empty-state"><i class="fas fa-utensils"></i><p>Nenhuma mesa a consumir.</p></div></div>
         </div>
     </div>
-    
-    <div class="fab-container">
-        <button class="fab-refresh" onclick="forcarAtualizacaoManual()" title="Forçar Sincronização (Atualizar)"><i class="fas fa-sync-alt"></i></button>
-        <button class="fab-pos" onclick="abrirPOS()" title="Novo Pedido Manual"><i class="fas fa-plus"></i></button>
-    </div>
 </div>
 
-<div id="modal-detalhes-gerais" class="modal">
+<div id="modal-detalhes-gerais" class="modal no-print">
     <div class="modal-content" style="max-width: 650px;">
         <div class="modal-header">
             <h3 id="detalhes-gerais-titulo" style="margin:0; font-size: 1.5em; display:flex; align-items:center; gap:10px;">Detalhes</h3>
@@ -226,7 +222,7 @@
     </div>
 </div>
 
-<div id="modal-pin-seguranca" class="modal" style="z-index: 10000;">
+<div id="modal-pin-seguranca" class="modal no-print" style="z-index: 10000;">
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header" style="background: #fffbeb;">
             <h3 style="margin:0; color: var(--warning);"><i class="fas fa-user-shield"></i> Autorização</h3>
@@ -240,7 +236,7 @@
     </div>
 </div>
 
-<div id="modal-historico" class="modal">
+<div id="modal-historico" class="modal no-print">
     <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-history"></i> Histórico de Turno (Hoje)</h3>
@@ -252,7 +248,7 @@
     </div>
 </div>
 
-<div id="modal-pos" class="modal">
+<div id="modal-pos" class="modal no-print">
     <div class="modal-content">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-cash-register"></i> Novo Pedido Manual</h3>
@@ -271,7 +267,7 @@
     </div>
 </div>
 
-<div id="modal-mesa-reserva" class="modal">
+<div id="modal-mesa-reserva" class="modal no-print">
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header">
             <h3 style="margin:0;">Atribuir Mesa</h3>
@@ -286,7 +282,7 @@
     </div>
 </div>
 
-<div id="modal-pagar-mesa" class="modal">
+<div id="modal-pagar-mesa" class="modal no-print">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header">
             <h3 id="modal-pagar-mesa-title" style="margin:0;">Fechar Pedido</h3>
@@ -295,8 +291,13 @@
         <div class="modal-body">
             <h2 style="color: var(--primary); font-size: 2.5em; margin: 10px 0;"><span id="pagar-mesa-total">0.00</span>€</h2>
             <p style="color:#475569; margin-bottom: 15px;">Confirme o método de pagamento efetuado pelo cliente:</p>
-            <select id="pagar-mesa-metodo" class="input-form">
-            </select>
+            <select id="pagar-mesa-metodo" class="input-form"></select>
+            
+            <label style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; color: #475569;">
+                <input type="checkbox" id="imprimir-talao-check" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                Imprimir Talão de Consulta
+            </label>
+
             <input type="hidden" id="pagar-mesa-ids">
             <input type="hidden" id="pagar-mesa-id-seguro">
             <button class="btn-login btn-success" style="background: var(--success); margin-top: 15px;" onclick="confirmarFechoMesa()">
@@ -306,7 +307,7 @@
     </div>
 </div>
 
-<div id="modal-edicao" class="modal">
+<div id="modal-edicao" class="modal no-print">
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-edit"></i> Editar Pedido <span id="edit-pedido-id" style="color:var(--primary);"></span></h3>
@@ -331,9 +332,9 @@
     </div>
 </div>
 
-<div id="modal-fecho" class="modal">
+<div id="modal-fecho" class="modal no-print">
     <div class="modal-content">
-        <div class="modal-header no-print">
+        <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-lock"></i> Fim de Turno</h3>
             <div class="close-modal" onclick="fecharModal('modal-fecho')"><i class="fas fa-times"></i></div> 
         </div>
@@ -345,18 +346,20 @@
                 <p>Verifique o Histórico de Turno para conferir as faturas antes de fechar o dia.</p>
             </div>
         </div>
-        <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; gap:10px;" class="no-print">
+        <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; gap:10px;">
             <button class="btn-action btn-resolve" onclick="fecharModal('modal-fecho')">Cancelar</button>
             <button class="btn-action btn-success" onclick="enviarTurnoLojista()"><i class="fas fa-paper-plane"></i> Enviar Dados para Lojista</button>
         </div>
     </div>
 </div>
+
+<div id="print-area" class="no-print"></div>
+
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     let minhaLojaId = null; let lojaNome = ""; let nomeOperadorAtual = "";
     let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
     
-    // INJEÇÃO DA SOLUÇÃO 1: GLOBAL PARA DADOS DA LOJA
     window.lojaDataAtual = null;
     
     let timerAtualizacao = null; 
@@ -365,7 +368,6 @@
     let canalSala = null;
     let canalPedidosNovos = null; 
     
-    // Globais para gerir o Modal e os Dados Vivos
     window.pedidosGlobais = [];
     window.chamadasGlobais = [];
     window.mesasGlobais = {};
@@ -844,7 +846,6 @@
         } catch(e) {}
     }
 
-    // INJEÇÃO DA SOLUÇÃO 1: TOASTS PERSISTENTES (Não morrem com o tempo)
     function dispararToast(titulo, mensagem, tipo, idRelacionado = null) {
         const toast = document.createElement('div');
         let icone = tipo === 'cozinha' ? 'fa-bell-concierge' : (tipo === 'bar' ? 'fa-glass-water' : 'fa-hand-sparkles');
@@ -879,7 +880,6 @@
         });
     }
 
-    // --- ESCUTAS SELECTIVAS PARA A SALA ---
     async function iniciarDashboard(idLoja) {
         document.getElementById('login-screen').style.display = 'none'; document.getElementById('dashboard-screen').style.display = 'flex';
         
@@ -945,10 +945,10 @@
     }
 
     async function forcarAtualizacaoManual() {
-        const btn = document.querySelector('.fab-refresh');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; 
+        const icon = document.getElementById('icon-sync');
+        if(icon) icon.classList.add('fa-spin'); 
         await carregarDados(); 
-        setTimeout(() => { btn.innerHTML = '<i class="fas fa-sync-alt"></i>'; }, 500);
+        if(icon) setTimeout(() => { icon.classList.remove('fa-spin'); }, 500);
     }
 
     async function carregarDados() {
@@ -1416,7 +1416,9 @@
             htmlOpcoes += `<option value="Multibanco">💳 Multibanco</option>`;
         }
         
-        htmlOpcoes += `<option value="MBWay">📱 MBWay</option>`;
+        if (window.lojaDataAtual && window.lojaDataAtual.mbway_ativo) {
+            htmlOpcoes += `<option value="MBWay">📱 MBWay</option>`;
+        }
         
         if (window.lojaDataAtual && window.lojaDataAtual.pag_ticket) {
             htmlOpcoes += `<option value="Ticket Refeição">🎫 Ticket Refeição</option>`;
@@ -1424,7 +1426,6 @@
         
         // A REGRA DE OURO: INJEÇÃO FORÇADA
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
-            // Se o método que o cliente escolheu não estiver no HTML que acabámos de gerar, injeta-o.
             if (!htmlOpcoes.includes(`value="${metodoPreferido}"`)) {
                 htmlOpcoes += `<option value="${metodoPreferido}">💳 ${metodoPreferido} (Pedido do Cliente)</option>`;
             }
@@ -1432,7 +1433,6 @@
         
         selectMetodo.innerHTML = htmlOpcoes;
         
-        // Define o método escolhido pelo cliente como pré-selecionado, caso contrário cai no Dinheiro
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
             selectMetodo.value = metodoPreferido;
         } else {
@@ -1442,20 +1442,83 @@
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
     }
 
+    function gerarTalaoImpressao(mesa, total, metodo) {
+        let nomeLoja = window.lojaDataAtual ? window.lojaDataAtual.nome : "Restaurante";
+        let nifLoja = window.lojaDataAtual ? (window.lojaDataAtual.nif || "Consumidor Final") : "Consumidor Final";
+        
+        let html = `
+            <div style="text-align:center; margin-bottom: 15px;">
+                <h2 style="margin:0; font-size:18px;">${nomeLoja}</h2>
+                <div style="font-size:12px;">NIF: ${nifLoja}</div>
+                <div style="margin-top:5px; font-weight:bold; font-size:14px;">Mesa: ${mesa}</div>
+            </div>
+            <hr style="border:1px dashed #000; margin:10px 0;">
+            <table style="width:100%; font-size:12px; text-align:left; border-collapse: collapse;">
+                <thead><tr><th>Qtd</th><th>Artigo</th><th style="text-align:right;">Preço</th></tr></thead>
+                <tbody>
+        `;
+        
+        let itensPrint = [];
+        const numMesaLimpo = mesa.replace('Mesa ', '').trim();
+        
+        if (window.mesasGlobais[numMesaLimpo]) {
+            window.mesasGlobais[numMesaLimpo].rondas.forEach(r => {
+                if(r.itens) r.itens.forEach(it => itensPrint.push(it));
+            });
+        } else {
+            const idsStr = document.getElementById('pagar-mesa-ids').value;
+            if(idsStr) {
+                try {
+                    const ids = JSON.parse(idsStr);
+                    ids.forEach(id => {
+                        let p = window.pedidosGlobais.find(x => x.id === id);
+                        if(p && p.itens) p.itens.forEach(it => itensPrint.push(it));
+                    });
+                } catch(e){}
+            }
+        }
+        
+        itensPrint.forEach(it => {
+            html += `<tr>
+                <td style="padding:3px 0; border-bottom:1px dashed #eee;">${it.qtde}</td>
+                <td style="padding:3px 0; border-bottom:1px dashed #eee;">${it.nome}</td>
+                <td style="text-align:right; padding:3px 0; border-bottom:1px dashed #eee;">${(it.preco * it.qtde).toFixed(2)}€</td>
+            </tr>`;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+            <hr style="border:1px dashed #000; margin:10px 0;">
+            <div style="text-align:right; font-size:16px; font-weight:bold;">Total: ${parseFloat(total).toFixed(2)}€</div>
+            <div style="text-align:right; font-size:12px; margin-top:5px;">Pago com: ${metodo}</div>
+            <div style="text-align:center; margin-top:20px; font-size:11px;">Obrigado pela sua visita!</div>
+        `;
+        
+        document.getElementById('print-area').innerHTML = html;
+    }
+
     async function confirmarFechoMesa() {
         const idsStr = document.getElementById('pagar-mesa-ids').value;
         const ids = JSON.parse(idsStr);
         const metodo = document.getElementById('pagar-mesa-metodo').value;
+        const querImprimir = document.getElementById('imprimir-talao-check').checked;
+        const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
+        const totalPagamento = document.getElementById('pagar-mesa-total').innerText.replace('€','');
         
         const btn = document.querySelector('#modal-pagar-mesa .btn-success');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...'; btn.disabled = true;
 
         try {
+            if (querImprimir) {
+                gerarTalaoImpressao(mesaSegura, totalPagamento, metodo);
+                window.print();
+            }
+
             for(let id of ids) {
                 await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
             }
             
-            const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
             if(mesaSegura !== 'Takeaway' && mesaSegura !== 'Reserva') {
                 const numMesaLimpo = mesaSegura.replace('Mesa ', '').trim();
                 localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
