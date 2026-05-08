@@ -156,19 +156,16 @@
     </header>
 
     <div class="workspace-container">
-        <!-- LINHA DE FOGO -->
         <div class="linha-fogo" id="linha-producao">
         </div>
         
-        <!-- RADAR DE RESERVAS (PRÓXIMAS 2 HORAS) -->
         <div class="radar-zone">
             <div class="radar-header">
                 <span><i class="fas fa-satellite-dish"></i> Radar de Reservas</span>
                 <i class="fas fa-clock" title="Para as próximas 2 horas"></i>
             </div>
             <div class="radar-body" id="radar-corpo">
-                <!-- Preenchido via JS -->
-            </div>
+                </div>
         </div>
     </div>
 </div>
@@ -329,13 +326,25 @@
         _sb.channel('cozinha-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
                 
-                // OS 3 GATILHOS DA COZINHA CORRIGIDOS
                 const isNovoPOS = payload.eventType === 'INSERT';
                 const isConfirmadoMBWay = payload.eventType === 'UPDATE' && payload.old.estado !== 'pendente' && payload.new.estado === 'pendente';
                 const isClienteSentado = payload.eventType === 'UPDATE' && payload.old.estado !== 'preparacao' && payload.new.estado === 'preparacao';
 
+                // INJEÇÃO DA SOLUÇÃO 3: SILENCIADOR ACÚSTICO (A Cozinha só apita se houver comida!)
                 if(isNovoPOS || isConfirmadoMBWay || isClienteSentado) {
-                    tocarSinoCozinha();
+                    let temComidaParaCozinhar = false;
+                    if (payload.new.itens && Array.isArray(payload.new.itens)) {
+                        for(let item of payload.new.itens) {
+                            if (!ignorarNaCozinha(item)) {
+                                temComidaParaCozinhar = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (temComidaParaCozinhar) {
+                        tocarSinoCozinha();
+                    }
                 }
                 
                 carregarPedidosFogo();
@@ -347,12 +356,17 @@
     }
 
     // --- FILTRO INTELIGENTE PARA IGNORAR BEBIDAS E SOBREMESAS ---
+    // INJEÇÃO DA SOLUÇÃO 1: LISTA NEGRA EXPANDIDA
     function ignorarNaCozinha(item) {
         if (item.categoria) {
             const cat = item.categoria.toLowerCase();
-            if (cat === 'bebidas' || cat === 'sobremesas') return true;
+            if (cat === 'bebidas' || cat === 'sobremesas' || cat === 'cafetaria' || cat === 'bar') return true;
         }
-        const palavrasBloqueadas = ['água', 'agua', 'sumo', 'coca-cola', 'cerveja', 'vinho', 'fanta', 'sprite', 'café', 'cafe', 'ice tea', 'nestea', 'refrigerante', 'doce', 'pudim', 'mousse', 'torta', 'tarte', 'gelado', 'gelatina'];
+        const palavrasBloqueadas = [
+            'água', 'agua', 'sumo', 'coca-cola', 'cerveja', 'vinho', 'fanta', 'sprite', 'café', 'cafe', 
+            'ice tea', 'nestea', 'refrigerante', 'doce', 'pudim', 'mousse', 'torta', 'tarte', 'gelado', 
+            'gelatina', 'bolo', 'creme', 'fino', 'imperial', 'bica', 'galão', 'galao', 'garrafa', 'copo'
+        ];
         const nomeLower = item.nome.toLowerCase();
         return palavrasBloqueadas.some(palavra => nomeLower.includes(palavra));
     }
@@ -372,8 +386,10 @@
         
         if (pedidos) {
             pedidos.forEach(p => {
+                // INJEÇÃO DA SOLUÇÃO 2: APLICAÇÃO DO FILTRO AOS CARTÕES DE FOGO
                 const itensComida = p.itens.filter(item => !ignorarNaCozinha(item));
                 
+                // Só adiciona à linha de fogo se tiver pelo menos 1 item que não seja bebida/sobremesa
                 if (itensComida.length > 0) {
                     const pedidoApenasComida = { ...p, itens: itensComida };
                     pedidosCozinha.push(pedidoApenasComida);
