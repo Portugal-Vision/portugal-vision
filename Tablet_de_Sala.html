@@ -844,6 +844,7 @@
         document.getElementById('dashboard-screen').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex';
     }
 
+    // --- SONS DE NOTIFICAÇÃO DA SALA ---
     function tocarSinoCozinhaPronta() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1121,8 +1122,23 @@
             }
         });
         
+        // INJEÇÃO DA SOLUÇÃO FINAL: O BOTÃO MÁGICO DE ADICIONAR MESA (+)
+        htmlSala += `
+        <div class="mesa-box mesa-livre" onclick="adicionarNovaMesa()" style="border-style: solid; background: #e2e8f0; color: #475569;">
+            <div class="mesa-numero-grid"><i class="fas fa-plus"></i></div>
+            <div class="mesa-total-grid" style="font-weight:normal;">Nova Mesa</div>
+        </div>`;
+        
         htmlSala += '</div>';
         document.getElementById('lista-sala').innerHTML = htmlSala;
+    }
+
+    // FUNÇÃO DO BOTÃO [+]
+    function adicionarNovaMesa() {
+        const mesaNome = prompt("Indique o número ou nome da nova mesa (ex: 25, Esplanada VIP):");
+        if (mesaNome && mesaNome.trim() !== "") {
+            abrirPOSMesaLivre(mesaNome.trim());
+        }
     }
 
     function formatarHora(iso) { const d = new Date(iso); return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
@@ -1227,7 +1243,6 @@
             btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${idConf}, 'pendente'); event.stopPropagation();"><i class="fas fa-fire"></i> Enviar p/ Cozinha</button>
                    <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedidoSeguro(${idConf}); event.stopPropagation();"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; 
         } else {
-            // FASE 2: BOTÕES TRANSFERIR E DIVIDIR CONTA
             btn = `
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalTransferir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-exchange-alt"></i> Transferir</button>
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalDividir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-cut"></i> Dividir</button>
@@ -1344,11 +1359,10 @@
         if (subtotal > 0) {
             btnAvancar.style.opacity = '1';
             btnAvancar.disabled = false;
-            // Configura o evento do botão para chamar prepararFechoMesa, passando o subtotal e marcando que é Split
             btnAvancar.onclick = () => {
                 window.splitEmCurso = true;
                 fecharModal('modal-dividir-conta');
-                prepararFechoMesa('Mesa ' + mesaNum, subtotal, '[]', ''); // Array de IDs vazio pois a lógica é processada internamente no confirmarFechoMesa
+                prepararFechoMesa('Mesa ' + mesaNum, subtotal, '[]', ''); 
             };
         } else {
             btnAvancar.style.opacity = '0.5';
@@ -1585,7 +1599,6 @@
         
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
-            document.getElementById('pagar-mesa-title').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
         } else {
             let label = window.splitEmCurso ? 'Pagamento Parcial - Mesa ' : 'Fechar Mesa ';
             document.querySelector('#modal-pagar-mesa h3').innerHTML = `<i class="fas fa-utensils"></i> ${label} ${mesa.replace('Mesa ', '')}`;
@@ -1633,7 +1646,6 @@
         
         let itensPrint = [];
         
-        // FASE 2: TALÃO INTELIGENTE PARA DIVISÃO DE CONTAS
         if (window.splitEmCurso && window.splitBillData) {
             window.splitBillData.forEach(op => {
                 if (op.payQtde > 0) {
@@ -1696,7 +1708,6 @@
                 window.print();
             }
 
-            // FASE 2: MOTOR DE DIVISÃO DE CONTA NA BASE DE DADOS
             if (window.splitEmCurso) {
                 const gruposPorPedido = {};
                 window.splitBillData.forEach(op => {
@@ -1745,7 +1756,6 @@
                 registarAuditoria(`Fechou a conta PARCIALMENTE na Mesa ${numMesaLimpo} (Pagamento por ${metodo}) no valor de ${totalPagamento}€`);
 
             } else {
-                // FLUXO NORMAL (PAGAR TUDO)
                 const idsStr = document.getElementById('pagar-mesa-ids').value;
                 if(idsStr && idsStr !== '[]') {
                     const ids = JSON.parse(idsStr);
