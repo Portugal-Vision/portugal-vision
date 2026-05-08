@@ -356,6 +356,7 @@
     let minhaLojaId = null; let lojaNome = ""; let nomeOperadorAtual = "";
     let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
     
+    // INJEÇÃO DA SOLUÇÃO 1: GLOBAL PARA DADOS DA LOJA
     window.lojaDataAtual = null;
     
     let timerAtualizacao = null; 
@@ -364,6 +365,7 @@
     let canalSala = null;
     let canalPedidosNovos = null; 
     
+    // Globais para gerir o Modal e os Dados Vivos
     window.pedidosGlobais = [];
     window.chamadasGlobais = [];
     window.mesasGlobais = {};
@@ -1410,13 +1412,13 @@
         
         let htmlOpcoes = `<option value="Dinheiro">💵 Dinheiro</option>`;
         
-        if (window.lojaDataAtual && window.lojaDataAtual.aceita_multibanco) {
+        if (window.lojaDataAtual && window.lojaDataAtual.pag_mb) {
             htmlOpcoes += `<option value="Multibanco">💳 Multibanco</option>`;
         }
         
         htmlOpcoes += `<option value="MBWay">📱 MBWay</option>`;
         
-        if (window.lojaDataAtual && window.lojaDataAtual.aceita_ticket) {
+        if (window.lojaDataAtual && window.lojaDataAtual.pag_ticket) {
             htmlOpcoes += `<option value="Ticket Refeição">🎫 Ticket Refeição</option>`;
         }
         
