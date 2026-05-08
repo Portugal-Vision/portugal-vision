@@ -274,6 +274,20 @@
     </div>
 </div>
 
+<div id="modal-adicionar-mesa" class="modal no-print">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-header" style="background: #f8fafc;">
+            <h3 style="margin:0; color: var(--text);"><i class="fas fa-plus-circle" style="color: var(--primary);"></i> Adicionar Mesa</h3>
+            <div class="close-modal" onclick="fecharModal('modal-adicionar-mesa')"><i class="fas fa-times"></i></div> 
+        </div>
+        <div class="modal-body">
+            <p style="color:#64748b; margin-bottom: 15px; font-size: 0.9em;">Indique o número ou nome da nova mesa ou área de serviço para abrir um pedido direto.</p>
+            <input type="text" id="input-adicionar-mesa" class="input-form" placeholder="Ex: 25, Esplanada VIP, Balcão">
+            <button class="btn-login" style="background: var(--success); margin-top: 10px;" onclick="confirmarNovaMesaModal()"><i class="fas fa-door-open"></i> Abrir Pedido</button>
+        </div>
+    </div>
+</div>
+
 <div id="modal-pin-seguranca" class="modal no-print" style="z-index: 10000;">
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header" style="background: #fffbeb;">
@@ -1069,7 +1083,6 @@
 
         document.getElementById('count-sala').innerText = Object.keys(mesasAgrupadas).length;
         
-        // FASE 2: GRELHA VISUAL (MAPA DE MESAS)
         const defaultTables = Array.from({length: 20}, (_, i) => (i + 1).toString());
         const activeTables = Object.keys(mesasAgrupadas);
         const allTables = [...new Set([...defaultTables, ...activeTables])].sort((a, b) => {
@@ -1122,9 +1135,9 @@
             }
         });
         
-        // INJEÇÃO DA SOLUÇÃO FINAL: O BOTÃO MÁGICO DE ADICIONAR MESA (+)
+        // BOTÃO [ + ] CUSTOMIZADO
         htmlSala += `
-        <div class="mesa-box mesa-livre" onclick="adicionarNovaMesa()" style="border-style: solid; background: #e2e8f0; color: #475569;">
+        <div class="mesa-box mesa-livre" onclick="abrirModalAdicionarMesa()" style="border-style: solid; background: #e2e8f0; color: #475569;">
             <div class="mesa-numero-grid"><i class="fas fa-plus"></i></div>
             <div class="mesa-total-grid" style="font-weight:normal;">Nova Mesa</div>
         </div>`;
@@ -1133,13 +1146,30 @@
         document.getElementById('lista-sala').innerHTML = htmlSala;
     }
 
-    // FUNÇÃO DO BOTÃO [+]
-    function adicionarNovaMesa() {
-        const mesaNome = prompt("Indique o número ou nome da nova mesa (ex: 25, Esplanada VIP):");
+    // --- NOVA FUNÇÃO PARA ABRIR O MODAL DE NOVA MESA ---
+    function abrirModalAdicionarMesa() {
+        document.getElementById('input-adicionar-mesa').value = '';
+        document.getElementById('modal-adicionar-mesa').style.display = 'flex';
+        setTimeout(() => document.getElementById('input-adicionar-mesa').focus(), 100);
+    }
+
+    // --- NOVA FUNÇÃO PARA CONFIRMAR NOVA MESA ---
+    function confirmarNovaMesaModal() {
+        const mesaNome = document.getElementById('input-adicionar-mesa').value;
         if (mesaNome && mesaNome.trim() !== "") {
+            fecharModal('modal-adicionar-mesa');
             abrirPOSMesaLivre(mesaNome.trim());
+        } else {
+            mostrarAlertaCustom("Por favor, introduza um nome ou número válido para a mesa.");
         }
     }
+    
+    // Suporte para a tecla "Enter" no input de adicionar mesa
+    document.getElementById('input-adicionar-mesa').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            confirmarNovaMesaModal();
+        }
+    });
 
     function formatarHora(iso) { const d = new Date(iso); return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); }
 
@@ -1261,7 +1291,6 @@
         document.getElementById('modal-detalhes-gerais').style.display = 'flex';
     }
 
-    // --- FASE 2: TRANSFERIR MESA ---
     function abrirModalTransferir(mesaOrigem) {
         document.getElementById('transfer-mesa-origem').value = mesaOrigem;
         document.getElementById('input-nova-mesa-transfer').value = '';
@@ -1307,7 +1336,6 @@
         }
     }
 
-    // --- FASE 2: DIVIDIR CONTA (SPLIT BILL) ---
     function abrirModalDividir(mesaNum) {
         const m = window.mesasGlobais[mesaNum];
         if(!m || m.rondas.length === 0) return;
@@ -1862,6 +1890,10 @@
         if (id === 'modal-dividir-conta') {
             window.splitEmCurso = false;
             window.splitBillData = [];
+        }
+        // Limpar os campos ao fechar o modal de adicionar mesa
+        if (id === 'modal-adicionar-mesa') {
+            document.getElementById('input-adicionar-mesa').value = '';
         }
     }
 
