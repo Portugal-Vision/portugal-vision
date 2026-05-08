@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ecrã do Bar | Portugal Vision</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* TEMA DARK PARA O BAR (Tons Roxo/Índigo para distinguir da Cozinha) */
+        :root { 
+            --bg-dark: #0f172a; 
+            --bg-card: #1e1b4b; /* Fundo mais arroxeado escuro */
+            --bg-radar: #2e1065;
+            --text-light: #f8fafc; 
+            --text-muted: #a5b4fc;
+            --primary: #8b5cf6; /* Roxo vibrante em vez do Azul */
+            --warning: #f43f5e; /* Rosa escuro para avisos */
+            --success: #10b981; 
+            --danger: #e11d48;
+            --border-color: #4c1d95;
+            --border-radar: #5b21b6;
+        }
+        
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-light); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* ECRÃ DE LOGIN / AUTORIZAÇÃO */
+        .full-screen-modal { position: fixed; inset: 0; background: var(--bg-dark); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: var(--bg-card); padding: 40px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        .input-form { width: 100%; padding: 15px; margin-bottom: 15px; background: var(--bg-dark); border: 1px solid var(--border-color); color: var(--text-light); border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        .input-form:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+        .btn-login { background: var(--primary); color: white; width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-login:hover { background: #7c3aed; }
+
+        /* CABEÇALHO */
+        header { background: #09090b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); z-index: 10; flex-shrink: 0; }
+        .logo-area h1 { margin: 0; font-size: 1.8em; font-weight: 900; color: #e2e8f0; display: flex; align-items: center; gap: 15px; }
+        .status-dot { width: 14px; height: 14px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
+
+        /* GRELHA PRINCIPAL (DIVIDIDA EM DOIS) */
+        .workspace-container { display: flex; flex-grow: 1; overflow: hidden; height: calc(100vh - 75px); }
+
+        .linha-fogo { display: flex; gap: 20px; padding: 20px; flex-grow: 1; overflow-x: auto; overflow-y: hidden; align-items: flex-start; scroll-behavior: smooth; }
+        .linha-fogo::-webkit-scrollbar { height: 12px; } .linha-fogo::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 10px; }
+        
+        .radar-zone { width: 380px; min-width: 380px; background: var(--bg-radar); border-left: 2px solid var(--border-radar); display: flex; flex-direction: column; flex-shrink: 0; box-shadow: -10px 0 25px rgba(0,0,0,0.3); z-index: 5;}
+        .radar-header { padding: 20px; border-bottom: 2px solid var(--border-radar); font-weight: 900; font-size: 1.1em; color: #c4b5fd; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);}
+        .radar-body { flex-grow: 1; overflow-y: auto; padding: 15px; }
+        .radar-body::-webkit-scrollbar { width: 6px; } .radar-body::-webkit-scrollbar-thumb { background: var(--border-radar); border-radius: 10px; }
+        
+        /* BLOCOS DE TEMPO NO RADAR */
+        .radar-hora-block { background: rgba(0, 0, 0, 0.4); color: var(--warning); padding: 8px 15px; border-radius: 8px; font-weight: 900; font-size: 1.1em; margin: 15px 0 10px 0; border: 1px solid rgba(244, 63, 94, 0.3); display: flex; align-items: center; gap: 8px; }
+        .radar-hora-block:first-child { margin-top: 0; }
+        
+        .radar-item { background: rgba(76, 29, 149, 0.4); border: 1px solid var(--border-radar); padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; margin-left: 10px; border-left: 4px solid var(--primary);}
+        .radar-item .qtde { font-weight: 900; color: #a78bfa; font-size: 1.3em; background: rgba(139, 92, 246, 0.1); padding: 5px 12px; border-radius: 6px;}
+        .radar-item .nome { font-weight: 600; font-size: 1.05em; line-height: 1.2; text-align: right; flex-grow: 1; padding-left: 15px; color: #e0e7ff;}
+
+        /* CARTÃO DE PEDIDO (TICKET) */
+        .ticket { background: var(--bg-card); border-radius: 12px; width: 350px; min-width: 350px; display: flex; flex-direction: column; overflow: hidden; border: 2px solid var(--border-color); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; max-height: 100%; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* ESTADO: PENDENTE */
+        .ticket.estado-pendente { border-top: 6px solid var(--danger); }
+        .ticket.estado-pendente .ticket-header { background: rgba(225, 29, 72, 0.1); }
+        
+        /* ESTADO: PREPARAÇÃO */
+        .ticket.estado-preparacao { border-top: 6px solid var(--warning); border-color: var(--warning); transform: scale(1.02); box-shadow: 0 0 20px rgba(244, 63, 94, 0.2); }
+        .ticket.estado-preparacao .ticket-header { background: rgba(244, 63, 94, 0.15); }
+
+        .ticket-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .mesa-numero { font-size: 1.8em; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+        .tempo-espera { font-size: 1.2em; font-weight: 800; padding: 5px 10px; border-radius: 8px; background: rgba(255,255,255,0.1); }
+        
+        .ticket-body { padding: 20px; flex-grow: 1; overflow-y: auto; }
+        .ticket-body::-webkit-scrollbar { width: 6px; } .ticket-body::-webkit-scrollbar-thumb { background: #4c1d95; border-radius: 10px; }
+        
+        .item-row { display: flex; gap: 15px; font-size: 1.3em; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .item-row:last-child { border: none; }
+        .item-qtde { font-weight: 900; color: var(--primary); min-width: 40px; }
+        .item-nome { font-weight: 600; line-height: 1.2; }
+        .item-obs { display: block; font-size: 0.7em; color: var(--text-muted); font-style: italic; margin-top: 4px; } 
+
+        .ticket-footer { padding: 15px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.2); flex-shrink: 0;}
+        .btn-kds { width: 100%; padding: 20px; font-size: 1.2em; font-weight: 900; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        
+        .btn-start { background: var(--bg-dark); color: white; border: 2px solid var(--border-color); }
+        .btn-start:hover { background: #4c1d95; }
+        
+        .btn-finish { background: var(--success); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+        .btn-finish:hover { background: #059669; }
+
+        /* ESTADO VAZIO */
+        .empty-kds { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center;}
+        .empty-kds i { font-size: 5em; margin-bottom: 20px; opacity: 0.2; }
+        .empty-kds h2 { font-size: 2em; font-weight: 400; }
+        
+        /* SISTEMA DE NOTIFICAÇÕES */
+        .notificacao-toast {
+            position: fixed; bottom: -100px; right: 20px;
+            background: var(--warning); color: white; padding: 16px 20px;
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4);
+            display: flex; align-items: center; gap: 15px; z-index: 9999;
+            transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 350px;
+        }
+        .notificacao-toast.mostrar { bottom: 20px; }
+        .notificacao-icon { font-size: 24px; animation: pulse-ring 2s infinite; }
+        .piscar-ecra { animation: flash-border 1s infinite; }
+        @keyframes flash-border { 0% { box-shadow: inset 0 0 0px var(--warning); } 50% { box-shadow: inset 0 0 40px var(--danger); } 100% { box-shadow: inset 0 0 0px var(--warning); } }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen" class="full-screen-modal">
+    <div class="login-box">
+        <h2 style="margin-top:0; color: white;"><i class="fas fa-lock"></i> Segurança</h2>
+        <p style="color: var(--warning); margin-bottom: 25px; font-size: 0.9em;">Este dispositivo não está autorizado. Faça login com a conta de Lojista para registar este terminal.</p>
+        <input type="email" id="auth-email" class="input-form" placeholder="Email do Lojista">
+        <input type="password" id="auth-password" class="input-form" placeholder="Password">
+        <button onclick="autorizarEquipamento()" class="btn-login" id="btn-auth-text"><i class="fas fa-shield-alt"></i> Autorizar Dispositivo</button>
+    </div>
+</div>
+
+<div id="login-screen" class="full-screen-modal">
+    <div class="login-box">
+        <h2 style="margin-top:0; color: white;"><i class="fas fa-glass-water"></i> Ecrã do Bar / Copa</h2>
+        <p style="color: var(--text-muted); margin-bottom: 25px;">Acesso restrito a barmans e copa.</p>
+        
+        <div style="text-align: left; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: var(--text-muted);">Nome do Colaborador</div>
+        <select id="select-empregado" class="input-form" onchange="mostrarPin()">
+            <option value="">A carregar equipa...</option>
+        </select>
+        
+        <div id="label-pin" style="display: none; text-align: left; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: var(--text-muted);">PIN de Acesso</div>
+        <input type="password" id="pin-empregado" class="input-form" placeholder="******" maxlength="6" style="display: none; text-align: center; letter-spacing: 10px; font-size: 24px;">
+        
+        <button onclick="fazerLoginEmpregado()" class="btn-login" id="btn-login-text" style="display: none; margin-top: 15px;"><i class="fas fa-sign-in-alt"></i> Iniciar Turno</button>
+    </div>
+</div>
+
+<div id="kds-screen" style="display: none; height: 100%; flex-direction: column;">
+    <header>
+        <div class="logo-area">
+            <h1><span class="status-dot"></span> <span id="nome-restaurante">A carregar Bar...</span></h1>
+            <span style="font-size: 12px; color: var(--text-muted); margin-left: 15px;" id="nome-operador"></span>
+        </div>
+        <div style="display:flex; gap: 15px; align-items: center;">
+            <div style="color: var(--text-muted); font-size: 1.2em; font-weight: bold; background: var(--bg-card); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                Balcão: <span id="contador-pendentes" style="color: white;">0</span>
+            </div>
+            <button onclick="logoutEmpregado()" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5em;" title="Sair do Turno"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <div class="workspace-container">
+        <div class="linha-fogo" id="linha-producao">
+        </div>
+        
+        <div class="radar-zone">
+            <div class="radar-header">
+                <span><i class="fas fa-glass-cheers"></i> Radar de Bebidas</span>
+                <i class="fas fa-clock" title="Para as próximas 2 horas"></i>
+            </div>
+            <div class="radar-body" id="radar-corpo">
+                </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
+    
+    let minhaLojaId = null;
+    let nomeLojaAtual = "Bar";
+    let nomeOperadorAtual = "";
+    let timerAtualizacao = null; 
+    let canalNotificacoesBar = null;
+
+    // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO CORRIGIDA) ---
+    async function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('loja');
+
+        if (!slug) {
+            alert("Erro: Falta o identificador da loja no link (ex: ?loja=restaurante-santos).");
+            return;
+        }
+
+        const { data: { session } } = await _sb.auth.getSession();
+        
+        if (session) {
+            const { data: loja } = await _sb.from('lojas').select('id, nome').eq('slug', slug).limit(1).maybeSingle();
+            
+            if (loja) {
+                minhaLojaId = loja.id;
+                nomeLojaAtual = loja.nome;
+                
+                const op = sessionStorage.getItem('pv_bar_operador');
+                if (op) {
+                    nomeOperadorAtual = op;
+                    arrancarBar();
+                } else {
+                    carregarEquipaParaLogin();
+                }
+            } else {
+                alert(`Erro: Não foi encontrada nenhuma loja com o slug '${slug}'.`);
+            }
+        } else {
+            document.getElementById('auth-screen').style.display = 'flex';
+        }
+    }
+
+    async function autorizarEquipamento() {
+        const e = document.getElementById('auth-email').value;
+        const p = document.getElementById('auth-password').value;
+        const btn = document.getElementById('btn-auth-text');
+        
+        if(!e || !p) return alert("Preencha todos os campos.");
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A validar...';
+        btn.disabled = true;
+
+        const { data, error } = await _sb.auth.signInWithPassword({ email: e, password: p });
+        
+        if (error) { 
+            alert("Erro de Autorização: " + error.message); 
+            btn.innerHTML = '<i class="fas fa-shield-alt"></i> Autorizar Dispositivo';
+            btn.disabled = false;
+        } else { 
+            document.getElementById('auth-screen').style.display = 'none';
+            init(); 
+        }
+    }
+
+    // --- CAMADA 2 (LOGIN DO EMPREGADO POR PIN) ---
+    async function carregarEquipaParaLogin() {
+        document.getElementById('login-screen').style.display = 'flex';
+        const selectEmp = document.getElementById('select-empregado');
+        
+        const { data: equipa } = await _sb.from('empregados').select('*').eq('loja_id', minhaLojaId);
+        
+        if (equipa && equipa.length > 0) {
+            selectEmp.innerHTML = '<option value="" disabled selected>Selecione o seu nome...</option>' + 
+                                  equipa.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+        } else {
+            selectEmp.innerHTML = '<option value="" disabled selected>Nenhum colaborador configurado.</option>';
+        }
+    }
+
+    function mostrarPin() {
+        if (document.getElementById('select-empregado').value) {
+            document.getElementById('pin-empregado').style.display = 'block';
+            document.getElementById('label-pin').style.display = 'block';
+            document.getElementById('btn-login-text').style.display = 'block';
+            document.getElementById('pin-empregado').focus(); 
+        }
+    }
+
+    async function fazerLoginEmpregado() {
+        const empId = document.getElementById('select-empregado').value;
+        const pinDigitado = document.getElementById('pin-empregado').value;
+
+        if (!empId || !pinDigitado) return alert("Selecione o seu nome e insira o PIN.");
+
+        const btn = document.getElementById('btn-login-text');
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A validar...`; 
+        btn.disabled = true;
+
+        try {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Erro ao tentar ecrã inteiro: ${err.message}`);
+                });
+            }
+        } catch (e) {
+            console.log("O dispositivo não suporta Ecrã Inteiro automático.");
+        }
+
+        const { data: empregado } = await _sb.from('empregados').select('nome').eq('id', empId).eq('pin_acesso', pinDigitado).maybeSingle();
+
+        if (empregado) {
+            nomeOperadorAtual = empregado.nome;
+            sessionStorage.setItem('pv_bar_operador', nomeOperadorAtual);
+            
+            document.getElementById('login-screen').style.display = 'none';
+            arrancarBar();
+        } else {
+            alert("❌ PIN incorreto.");
+            document.getElementById('pin-empregado').value = "";
+            btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Iniciar Turno`; 
+            btn.disabled = false;
+        }
+    }
+
+    function logoutEmpregado() { 
+        sessionStorage.removeItem('pv_bar_operador');
+        document.getElementById('kds-screen').style.display = 'none';
+        
+        document.getElementById('select-empregado').value = "";
+        document.getElementById('pin-empregado').value = "";
+        document.getElementById('pin-empregado').style.display = 'none';
+        document.getElementById('label-pin').style.display = 'none';
+        document.getElementById('btn-login-text').style.display = 'none';
+        
+        document.getElementById('login-screen').style.display = 'flex';
+    }
+
+
+    // --- ARRANQUE E FUNCIONAMENTO DO BAR ---
+    function arrancarBar() {
+        document.getElementById('kds-screen').style.display = 'flex';
+        document.getElementById('nome-restaurante').innerText = "Bar - " + nomeLojaAtual;
+        document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${nomeOperadorAtual}`;
+
+        carregarPedidosBar();
+        carregarRadarReservas();
+
+        if(timerAtualizacao) clearInterval(timerAtualizacao);
+        timerAtualizacao = setInterval(() => {
+            carregarPedidosBar();
+            carregarRadarReservas();
+        }, 30000);
+
+        _sb.channel('bar-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => {
+                
+                const isNovoPOS = payload.eventType === 'INSERT';
+                const isConfirmadoMBWay = payload.eventType === 'UPDATE' && payload.old.estado !== 'pendente' && payload.new.estado === 'pendente';
+                const isClienteSentado = payload.eventType === 'UPDATE' && payload.old.estado !== 'preparacao' && payload.new.estado === 'preparacao';
+
+                if(isNovoPOS || isConfirmadoMBWay || isClienteSentado) {
+                    let temBebida = false;
+                    if (payload.new.itens && Array.isArray(payload.new.itens)) {
+                        for(let item of payload.new.itens) {
+                            if (isItemDeBar(item)) {
+                                temBebida = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (temBebida) {
+                        tocarSinoBar();
+                    }
+                }
+                
+                carregarPedidosBar();
+                carregarRadarReservas();
+            })
+            .subscribe();
+            
+        iniciarEscutaNotificacoes();
+    }
+
+    // --- FILTRO INVERTIDO (ACEITA APENAS BEBIDAS E SOBREMESAS) ---
+    function isItemDeBar(item) {
+        if (item.categoria) {
+            const cat = item.categoria.toLowerCase();
+            if (cat === 'bebidas' || cat === 'sobremesas' || cat === 'cafetaria' || cat === 'bar') return true;
+        }
+        const palavrasBar = [
+            'água', 'agua', 'sumo', 'coca-cola', 'cerveja', 'vinho', 'fanta', 'sprite', 'café', 'cafe', 
+            'ice tea', 'nestea', 'refrigerante', 'doce', 'pudim', 'mousse', 'torta', 'tarte', 'gelado', 
+            'gelatina', 'bolo', 'creme', 'fino', 'imperial', 'bica', 'galão', 'galao', 'garrafa', 'copo'
+        ];
+        const nomeLower = item.nome.toLowerCase();
+        return palavrasBar.some(palavra => nomeLower.includes(palavra));
+    }
+
+    // --- CARREGAR TICKETS (BALCÃO) ---
+    async function carregarPedidosBar() {
+        const { data: pedidos } = await _sb.from('pedidos')
+            .select('*')
+            .eq('loja_id', minhaLojaId)
+            .in('estado', ['pendente', 'preparacao'])
+            .order('estado', { ascending: false }) 
+            .order('created_at', { ascending: true });
+
+        const div = document.getElementById('linha-producao');
+        
+        let pedidosBar = [];
+        
+        if (pedidos) {
+            pedidos.forEach(p => {
+                const itensBar = p.itens.filter(item => isItemDeBar(item));
+                
+                // Só adiciona ao ecrã do bar se tiver bebidas ou sobremesas
+                if (itensBar.length > 0) {
+                    const pedidoApenasBar = { ...p, itens: itensBar };
+                    pedidosBar.push(pedidoApenasBar);
+                }
+            });
+        }
+
+        document.getElementById('contador-pendentes').innerText = pedidosBar.length;
+        
+        if (pedidosBar.length === 0) {
+            div.innerHTML = `
+                <div class="empty-kds">
+                    <i class="fas fa-glass-water"></i>
+                    <h2>O Balcão está limpo!</h2>
+                    <p>Sem pedidos pendentes no momento...</p>
+                </div>`;
+            return;
+        }
+
+        div.innerHTML = pedidosBar.map(p => {
+            const horaPedido = new Date(p.created_at);
+            const agora = new Date();
+            const diffMinutos = Math.floor((agora - horaPedido) / 60000);
+            
+            let corTempo = diffMinutos > 15 ? 'color: var(--danger);' : '';
+
+            let localTag = '';
+            if (p.tipo_pedido === 'mesa') {
+                localTag = `<i class="fas fa-utensils"></i> Mesa ${p.mesa}`;
+            } else if (p.tipo_pedido === 'levantamento' || p.tipo_pedido === 'takeaway') {
+                localTag = `<i class="fas fa-shopping-bag"></i> Takeaway`;
+            } else {
+                localTag = `<i class="far fa-calendar-alt"></i> Reserva`;
+            }
+
+            let itensHtml = p.itens.map(item => {
+                let obsHtml = item.obs ? `<span class="item-obs"><i class="fas fa-comment-alt"></i> ${item.obs}</span>` : '';
+                return `
+                <div class="item-row">
+                    <div class="item-qtde">${item.qtde}x</div>
+                    <div style="flex: 1;">
+                        <div class="item-nome">${item.nome}</div>
+                        ${obsHtml}
+                    </div>
+                </div>
+            `}).join('');
+
+            let btnAcao = '';
+            let classeEstado = '';
+
+            if (p.estado === 'pendente') {
+                classeEstado = 'estado-pendente';
+                btnAcao = `<button class="btn-kds btn-start" onclick="mudarEstado(${p.id}, 'preparacao')"><i class="fas fa-blender"></i> Preparar Bebida</button>`;
+            } else if (p.estado === 'preparacao') {
+                classeEstado = 'estado-preparacao';
+                btnAcao = `<button class="btn-kds btn-finish" onclick="mudarEstado(${p.id}, 'pronto')"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
+            }
+
+            return `
+                <div class="ticket ${classeEstado}">
+                    <div class="ticket-header">
+                        <div class="mesa-numero">${localTag}</div>
+                        <div class="tempo-espera" style="${corTempo}">${diffMinutos}m</div>
+                    </div>
+                    <div class="ticket-body">
+                        ${itensHtml}
+                    </div>
+                    <div class="ticket-footer">
+                        ${btnAcao}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // --- RADAR DE RESERVAS (BAR) ---
+    async function carregarRadarReservas() {
+        const agora = new Date();
+        const limiteFuturo = new Date(agora.getTime() + (2 * 60 * 60 * 1000));
+        
+        const { data: reservas } = await _sb.from('pedidos')
+            .select('*')
+            .eq('loja_id', minhaLojaId)
+            .in('estado', ['aguarda_confirmacao', 'reserva_confirmada']);
+            
+        const divRadar = document.getElementById('radar-corpo');
+        
+        if (!reservas || reservas.length === 0) {
+            divRadar.innerHTML = `<div class="empty-kds" style="height: 100%;"><i class="fas fa-wine-glass" style="font-size: 3em; margin-bottom: 10px;"></i><h3 style="margin:0; font-size: 1.2em;">Sem reservas</h3><p style="font-size: 0.8em;">Radar limpo</p></div>`;
+            return;
+        }
+
+        let blocosTempo = {};
+        let temBebida = false;
+
+        reservas.forEach(p => {
+            if (!p.data_agendada) return;
+            const dataAgendada = new Date(p.data_agendada);
+            
+            if (dataAgendada > agora && dataAgendada <= limiteFuturo) {
+                const horaStr = dataAgendada.getHours().toString().padStart(2, '0') + ':' + dataAgendada.getMinutes().toString().padStart(2, '0');
+                
+                p.itens.forEach(item => {
+                    if (isItemDeBar(item)) {
+                        temBebida = true;
+                        
+                        if (!blocosTempo[horaStr]) blocosTempo[horaStr] = {};
+                        if (!blocosTempo[horaStr][item.nome]) blocosTempo[horaStr][item.nome] = 0;
+                        
+                        blocosTempo[horaStr][item.nome] += item.qtde;
+                    }
+                });
+            }
+        });
+
+        if (!temBebida) {
+            divRadar.innerHTML = `<div class="empty-kds" style="height: 100%;"><i class="fas fa-wine-glass" style="font-size: 3em; margin-bottom: 10px;"></i><h3 style="margin:0; font-size: 1.2em;">Sem Previsões</h3><p style="font-size: 0.8em;">(Próximas 2 Horas)</p></div>`;
+            return;
+        }
+
+        const horasOrdenadas = Object.keys(blocosTempo).sort();
+        
+        let htmlRadarFinal = '';
+
+        horasOrdenadas.forEach(hora => {
+            htmlRadarFinal += `<div class="radar-hora-block"><i class="fas fa-clock"></i> Para as ${hora}</div>`;
+            
+            const pratosDestaHora = Object.entries(blocosTempo[hora]).sort((a, b) => b[1] - a[1]);
+            
+            pratosDestaHora.forEach(([nome, qtde]) => {
+                htmlRadarFinal += `
+                    <div class="radar-item">
+                        <div class="qtde">${qtde}x</div>
+                        <div class="nome">${nome}</div>
+                    </div>
+                `;
+            });
+        });
+
+        divRadar.innerHTML = htmlRadarFinal;
+    }
+
+    async function mudarEstado(id, novoEstado) {
+        await _sb.from('pedidos').update({ estado: novoEstado }).eq('id', id);
+    }
+
+    // Som específico do Bar
+    function tocarSinoBar() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = "square"; 
+            osc.frequency.setValueAtTime(1200, ctx.currentTime);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05); 
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
+            
+            setTimeout(() => {
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.connect(gain2); gain2.connect(ctx.destination);
+                osc2.type = "square"; 
+                osc2.frequency.setValueAtTime(1200, ctx.currentTime);
+                gain2.gain.setValueAtTime(0, ctx.currentTime);
+                gain2.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05); 
+                gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc2.start(ctx.currentTime); osc2.stop(ctx.currentTime + 0.2);
+            }, 150);
+        } catch(e) {}
+    }
+
+    function iniciarEscutaNotificacoes() {
+        if (canalNotificacoesBar) _sb.removeChannel(canalNotificacoesBar);
+        canalNotificacoesBar = _sb.channel('alertas-bar')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: 'loja_id=eq.' + minhaLojaId }, 
+                (payload) => {
+                    dispararAlertaMensagemBar(payload.new.mensagem);
+                }
+            ).subscribe();
+    }
+
+    function dispararAlertaMensagemBar(mensagem) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.0);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 2.0);
+        } catch(e) {}
+
+        document.body.classList.add('piscar-ecra');
+        setTimeout(() => document.body.classList.remove('piscar-ecra'), 8000);
+
+        const toast = document.createElement('div');
+        toast.className = 'notificacao-toast no-print';
+        toast.innerHTML = `
+            <i class="fas fa-bullhorn notificacao-icon"></i>
+            <div style="flex: 1;">
+                <b style="display:block; font-size:14px; margin-bottom:4px;">Aviso da Sala:</b>
+                <span style="font-size:13px; line-height:1.4;">${mensagem}</span>
+            </div>
+            <button onclick="this.parentElement.classList.remove('mostrar'); setTimeout(() => this.parentElement.remove(), 500); document.body.classList.remove('piscar-ecra');" style="background:transparent; color:white; border:none; width:auto; padding:5px; font-size:18px; cursor:pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('mostrar'), 100);
+
+        setTimeout(() => {
+            if(document.body.contains(toast)) {
+                toast.classList.remove('mostrar');
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 10000);
+    }
+
+    init();
+</script>
+</body>
+</html>
