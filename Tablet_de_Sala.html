@@ -858,7 +858,6 @@
         document.getElementById('dashboard-screen').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex';
     }
 
-    // --- SONS DE NOTIFICAÇÃO DA SALA ---
     function tocarSinoCozinhaPronta() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -975,12 +974,27 @@
               }
               carregarDados(); 
           })
+          // INJEÇÃO DA SOLUÇÃO 1: ALARME DE CHEGADA/ATRASO DO CLIENTE
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => { 
-              if (payload.new.estado === 'pronto') {
+              
+              if (payload.new.estado === 'pronto' && payload.old.estado !== 'pronto') {
                   const tagLocal = payload.new.tipo_pedido === 'mesa' ? `Mesa ${payload.new.mesa}` : `Takeaway (${payload.new.nome_cliente || 'Anónimo'})`;
                   tocarSinoCozinhaPronta();
                   dispararToast('Prato Pronto!', `O pedido da ${tagLocal} está pronto a levantar na bancada.`, 'cozinha', `pedido-${payload.new.id}`);
               }
+              
+              if (payload.old.status_presenca !== payload.new.status_presenca) {
+                  const nomeCliente = payload.new.nome_cliente || 'Anónimo';
+                  if (payload.new.status_presenca === 'no_local') {
+                      tocarSinoClienteChama();
+                      dispararToast('Cliente à Porta', `O cliente da Reserva (${nomeCliente}) informou que já chegou.`, 'cozinha', `reserva-${payload.new.id}`);
+                  } else if (payload.new.status_presenca === 'atrasado') {
+                      tocarSinoClienteChama();
+                      const minAtraso = payload.new.minutos_atraso ? `em ${payload.new.minutos_atraso}m` : '';
+                      dispararToast('Atraso na Reserva', `O cliente da Reserva (${nomeCliente}) informou que vai chegar atrasado ${minAtraso}.`, 'cliente', `reserva-${payload.new.id}`);
+                  }
+              }
+
               carregarDados(); 
           }) 
           .subscribe();
@@ -1135,7 +1149,6 @@
             }
         });
         
-        // BOTÃO [ + ] CUSTOMIZADO
         htmlSala += `
         <div class="mesa-box mesa-livre" onclick="abrirModalAdicionarMesa()" style="border-style: solid; background: #e2e8f0; color: #475569;">
             <div class="mesa-numero-grid"><i class="fas fa-plus"></i></div>
@@ -1146,14 +1159,12 @@
         document.getElementById('lista-sala').innerHTML = htmlSala;
     }
 
-    // --- NOVA FUNÇÃO PARA ABRIR O MODAL DE NOVA MESA ---
     function abrirModalAdicionarMesa() {
         document.getElementById('input-adicionar-mesa').value = '';
         document.getElementById('modal-adicionar-mesa').style.display = 'flex';
         setTimeout(() => document.getElementById('input-adicionar-mesa').focus(), 100);
     }
 
-    // --- NOVA FUNÇÃO PARA CONFIRMAR NOVA MESA ---
     function confirmarNovaMesaModal() {
         const mesaNome = document.getElementById('input-adicionar-mesa').value;
         if (mesaNome && mesaNome.trim() !== "") {
@@ -1164,7 +1175,6 @@
         }
     }
     
-    // Suporte para a tecla "Enter" no input de adicionar mesa
     document.getElementById('input-adicionar-mesa').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             confirmarNovaMesaModal();
@@ -1627,6 +1637,7 @@
         
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
+            document.getElementById('pagar-mesa-title').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
         } else {
             let label = window.splitEmCurso ? 'Pagamento Parcial - Mesa ' : 'Fechar Mesa ';
             document.querySelector('#modal-pagar-mesa h3').innerHTML = `<i class="fas fa-utensils"></i> ${label} ${mesa.replace('Mesa ', '')}`;
