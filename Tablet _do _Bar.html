@@ -178,6 +178,7 @@
     let nomeOperadorAtual = "";
     let timerAtualizacao = null; 
     let canalNotificacoesBar = null;
+    let cachePedidosBar = [];
 
     // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO CORRIGIDA) ---
     async function init() {
@@ -384,10 +385,11 @@
         let pedidosBar = [];
         
         if (pedidos) {
+            cachePedidosBar = pedidos;
             pedidos.forEach(p => {
-                const itensBar = p.itens.filter(item => isItemDeBar(item));
+                // FILTRO: Só mostra itens não-bloqueados E que ainda não estejam marcados como prontos no bar
+                const itensBar = p.itens.filter(item => isItemDeBar(item) && !item._barPronto);
                 
-                // Só adiciona ao ecrã do bar se tiver bebidas ou sobremesas
                 if (itensBar.length > 0) {
                     const pedidoApenasBar = { ...p, itens: itensBar };
                     pedidosBar.push(pedidoApenasBar);
@@ -440,10 +442,10 @@
 
             if (p.estado === 'pendente') {
                 classeEstado = 'estado-pendente';
-                btnAcao = `<button class="btn-kds btn-start" onclick="mudarEstado(${p.id}, 'preparacao')"><i class="fas fa-blender"></i> Preparar Bebida</button>`;
+                btnAcao = `<button class="btn-kds btn-start" onclick="iniciarPreparacao(${p.id})"><i class="fas fa-blender"></i> Preparar Bebida</button>`;
             } else if (p.estado === 'preparacao') {
                 classeEstado = 'estado-preparacao';
-                btnAcao = `<button class="btn-kds btn-finish" onclick="mudarEstado(${p.id}, 'pronto')"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
+                btnAcao = `<button class="btn-kds btn-finish" onclick="marcarProntoBar(${p.id})"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
             }
 
             return `
@@ -461,6 +463,47 @@
                 </div>
             `;
         }).join('');
+    }
+
+    // --- NOVA LOGICA DE ESTADOS PARCIAIS (BAR) ---
+    async function iniciarPreparacao(id) {
+        await _sb.from('pedidos').update({ estado: 'preparacao' }).eq('id', id);
+        carregarPedidosBar();
+    }
+
+    async function marcarProntoBar(id) {
+        const p = cachePedidosBar.find(x => x.id === id);
+        if(!p) return;
+
+        let todosProntos = true;
+        let novoItens = [...p.itens];
+
+        // Marca a bebida/sobremesa como pronta
+        novoItens.forEach(item => {
+            if (isItemDeBar(item)) {
+                item._barPronto = true;
+            }
+        });
+
+        // Verifica se ainda há comida no pedido que precise de ser feita pela cozinha
+        novoItens.forEach(item => {
+            if (!isItemDeBar(item) && !item._cozinhaPronto) {
+                todosProntos = false;
+            }
+        });
+
+        if (todosProntos) {
+            await _sb.from('pedidos').update({ 
+                estado: 'pronto',
+                itens: novoItens
+            }).eq('id', id);
+        } else {
+            await _sb.from('pedidos').update({ 
+                itens: novoItens
+            }).eq('id', id);
+        }
+        
+        carregarPedidosBar();
     }
 
     // --- RADAR DE RESERVAS (BAR) ---
@@ -528,10 +571,6 @@
         });
 
         divRadar.innerHTML = htmlRadarFinal;
-    }
-
-    async function mudarEstado(id, novoEstado) {
-        await _sb.from('pedidos').update({ estado: novoEstado }).eq('id', id);
     }
 
     // Som específico do Bar
