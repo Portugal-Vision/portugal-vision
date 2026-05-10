@@ -130,7 +130,7 @@
         .custom-alert-text { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 1em; }
         .custom-alert-actions { display: flex; gap: 10px; justify-content: center; }
 
-        /* IMPRESSÃO DO TALÃO TÉRMICO 80mm */
+        /* IMPRESSÃO DO TALÃO TÉRMICO 80mm e RELATÓRIO Z */
         @media print {
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
@@ -322,6 +322,12 @@
         </div>
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
             <input type="text" id="pos-mesa" class="input-form" placeholder="Nº da Mesa ou Nome do Cliente (Takeaway)" style="margin:0;">
+            
+            <div style="display:flex; gap: 10px;">
+                <input type="tel" id="pos-telemovel" class="input-form" placeholder="Telemóvel (Pesquisa Automática)" style="margin:0; flex: 1;" oninput="pesquisarClienteCRM(this.value)">
+                <input type="text" id="pos-nif" class="input-form" placeholder="NIF" style="margin:0; width: 150px;">
+            </div>
+            
             <div class="pos-grid" id="pos-produtos"></div>
             <div class="pos-cart">
                 <h4 style="margin:0 0 10px 0;">Resumo do Pedido</h4>
@@ -401,20 +407,20 @@
 <div id="modal-fecho" class="modal no-print">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 style="margin:0;"><i class="fas fa-lock"></i> Fim de Turno</h3>
+            <h3 style="margin:0;"><i class="fas fa-lock"></i> Fecho Diário (Relatório Z)</h3>
             <div class="close-modal" onclick="fecharModal('modal-fecho')"><i class="fas fa-times"></i></div> 
         </div>
         <div class="modal-body">
             <div style="background: #e0f2fe; color: #0369a1; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.95em; border: 1px solid #bae6fd;">
-                <i class="fas fa-info-circle"></i> O fecho de turno tranca as contas e notifica o Lojista.
+                <i class="fas fa-info-circle"></i> O fecho de turno tranca as contas e imprime o Relatório Z para conferência de caixa.
             </div>
             <div style="text-align:center; padding:20px; border: 1px dashed #cbd5e1; border-radius:10px; margin-bottom:20px;">
-                <p>Verifique o Histórico de Turno para conferir as faturas antes de fechar o dia.</p>
+                <p>Verifique o Histórico de Turno para garantir que não há mesas por cobrar.</p>
             </div>
         </div>
         <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; gap:10px;">
             <button class="btn-action btn-resolve" onclick="fecharModal('modal-fecho')">Cancelar</button>
-            <button class="btn-action btn-success" onclick="enviarTurnoLojista()"><i class="fas fa-paper-plane"></i> Enviar Dados para Lojista</button>
+            <button class="btn-action btn-success" onclick="gerarRelatorioZ()"><i class="fas fa-print"></i> Imprimir Fecho (Relatório Z)</button>
         </div>
     </div>
 </div>
@@ -439,7 +445,6 @@
     window.mesasGlobais = {};
     let modalDetalheAberto = { tipo: null, id: null }; 
     
-    // Globais para Split Bill
     window.splitBillData = [];
     window.splitEmCurso = false;
 
@@ -550,6 +555,8 @@
     function abrirPOS() {
         posCarrinho = []; posTotal = 0;
         document.getElementById('pos-mesa').value = '';
+        document.getElementById('pos-telemovel').value = '';
+        document.getElementById('pos-nif').value = '';
         renderizarPOS(); atualizarCarrinhoPOS();
         document.getElementById('modal-pos').style.display = 'flex';
     }
@@ -557,6 +564,28 @@
     function abrirPOSMesaLivre(num) {
         abrirPOS();
         document.getElementById('pos-mesa').value = num;
+    }
+
+    // INJEÇÃO DA SOLUÇÃO CRM (Pesquisa de Clientes por Telemóvel)
+    let timeoutPesquisa = null;
+    async function pesquisarClienteCRM(telefone) {
+        if (timeoutPesquisa) clearTimeout(timeoutPesquisa);
+        if (!telefone || telefone.length < 9) {
+            document.getElementById('pos-nif').value = '';
+            document.getElementById('pos-mesa').placeholder = 'Nº da Mesa ou Nome do Cliente';
+            return;
+        }
+
+        timeoutPesquisa = setTimeout(async () => {
+            const { data } = await _sb.from('clientes_app').select('nome, nif').eq('telefone', telefone).maybeSingle();
+            if (data) {
+                if (data.nif) document.getElementById('pos-nif').value = data.nif;
+                if (data.nome && !document.getElementById('pos-mesa').value) {
+                    document.getElementById('pos-mesa').value = data.nome;
+                }
+                dispararToast('Cliente Encontrado', `Dados de ${data.nome || 'Cliente VIP'} preenchidos.`, 'cozinha');
+            }
+        }, 500); // 500ms de debounce para não rebentar a BD enquanto escreve
     }
 
     function renderizarPOS() {
@@ -668,6 +697,9 @@
         }
         
         const mesaInput = document.getElementById('pos-mesa').value.trim();
+        const nifInput = document.getElementById('pos-nif').value.trim();
+        const telefoneInput = document.getElementById('pos-telemovel').value.trim();
+
         if (!mesaInput) {
             mostrarAlertaCustom("Indique o número da mesa ou o nome para o Takeaway.");
             return;
@@ -688,6 +720,9 @@
                 tipo_pedido: tipoPedido,
                 mesa: isMesa ? mesaInput : null,
                 nome_cliente: !isMesa ? mesaInput : 'Cliente Sala',
+                nif_cliente: nifInput || null,
+                telefone: telefoneInput || null,
+                quer_nif: !!nifInput,
                 itens: posCarrinho,
                 total: posTotal,
                 estado: 'pendente',
@@ -974,7 +1009,6 @@
               }
               carregarDados(); 
           })
-          // INJEÇÃO DA SOLUÇÃO 1: ALARME DE CHEGADA/ATRASO DO CLIENTE
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${minhaLojaId}` }, payload => { 
               
               if (payload.new.estado === 'pronto' && payload.old.estado !== 'pronto') {
@@ -1637,7 +1671,6 @@
         
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
-            document.getElementById('pagar-mesa-title').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
         } else {
             let label = window.splitEmCurso ? 'Pagamento Parcial - Mesa ' : 'Fechar Mesa ';
             document.querySelector('#modal-pagar-mesa h3').innerHTML = `<i class="fas fa-utensils"></i> ${label} ${mesa.replace('Mesa ', '')}`;
@@ -1870,25 +1903,117 @@
         }, "Confirmar Estorno");
     }
 
-    function abrirFechoTurno() {
-        pedirPin(() => {
-            document.getElementById('modal-fecho').style.display = 'flex';
-        });
-    }
-
-    async function enviarTurnoLojista() {
+    // NOVA FUNÇÃO: GERAR O RELATÓRIO Z DE FECHO DE CAIXA
+    async function gerarRelatorioZ() {
         const btn = document.querySelector('#modal-fecho .btn-success');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A enviar...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A calcular...';
         btn.disabled = true;
 
         try {
-            await registarAuditoria('Efetuou o Fecho de Turno e notificou a Gestão.');
-            mostrarAlertaCustom("Fecho de turno submetido com sucesso. Pode encerrar a aplicação.", "Sucesso");
-            fecharModal('modal-fecho');
+            const hoje = new Date().toISOString().split('T')[0];
+            const { data: pedidosHoje } = await _sb.from('pedidos')
+                .select('*')
+                .eq('loja_id', minhaLojaId)
+                .eq('estado', 'finalizado')
+                .gte('created_at', hoje + 'T00:00:00')
+                .lte('created_at', hoje + 'T23:59:59');
+
+            let totalGlobal = 0;
+            let totalDinheiro = 0;
+            let totalMB = 0;
+            let totalMBWay = 0;
+            let totalTicket = 0;
+            
+            let iva23 = 0, iva13 = 0, iva6 = 0, iva0 = 0;
+            
+            let htmlDocs = '';
+
+            if (pedidosHoje && pedidosHoje.length > 0) {
+                pedidosHoje.forEach(p => {
+                    totalGlobal += p.total;
+                    
+                    if (p.metodo_pagamento === 'Dinheiro') totalDinheiro += p.total;
+                    else if (p.metodo_pagamento === 'Multibanco') totalMB += p.total;
+                    else if (p.metodo_pagamento === 'MBWay') totalMBWay += p.total;
+                    else if (p.metodo_pagamento === 'Ticket Refeição') totalTicket += p.total;
+
+                    // Calcular IVAs baseados nos itens (assumindo que tens essa info no array, senão mapeia para a BD)
+                    if (p.itens && Array.isArray(p.itens)) {
+                        p.itens.forEach(item => {
+                            // Aproximação do IVA se não estiver no item JSON, busca ao catalogo
+                            const prodRef = produtosCatalogo.find(c => c.nome === item.nome);
+                            const taxa = prodRef && prodRef.taxa_iva ? parseFloat(prodRef.taxa_iva) : 23;
+                            const valorBase = item.preco * item.qtde;
+                            const valorIva = valorBase - (valorBase / (1 + (taxa/100)));
+                            
+                            if (taxa === 23) iva23 += valorIva;
+                            else if (taxa === 13) iva13 += valorIva;
+                            else if (taxa === 6) iva6 += valorIva;
+                            else iva0 += valorIva;
+                        });
+                    }
+                    
+                    htmlDocs += `<tr><td style="padding:2px 0;">#${p.id}</td><td style="text-align:right;">${p.total.toFixed(2)}€</td></tr>`;
+                });
+            }
+
+            let nomeLoja = window.lojaDataAtual ? window.lojaDataAtual.nome : "Restaurante";
+            let dataHoje = new Date().toLocaleDateString('pt-PT');
+            let horaFecho = new Date().toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
+
+            let htmlZ = `
+                <div style="text-align:center; margin-bottom: 10px;">
+                    <h2 style="margin:0; font-size:18px;">${nomeLoja}</h2>
+                    <h3 style="margin:5px 0 0 0; font-size:16px;">RELATÓRIO Z</h3>
+                    <div style="font-size:12px; margin-top:5px;">Data: ${dataHoje} | Hora: ${horaFecho}</div>
+                    <div style="font-size:12px;">Operador: ${nomeOperadorAtual}</div>
+                </div>
+                
+                <hr style="border:1px dashed #000; margin:10px 0;">
+                
+                <div style="font-size:14px; margin-bottom:10px; font-weight:bold;">VENDAS POR PAGAMENTO</div>
+                <table style="width:100%; font-size:12px; text-align:left; border-collapse: collapse;">
+                    <tr><td style="padding:2px 0;">Dinheiro:</td><td style="text-align:right;">${totalDinheiro.toFixed(2)}€</td></tr>
+                    <tr><td style="padding:2px 0;">Multibanco:</td><td style="text-align:right;">${totalMB.toFixed(2)}€</td></tr>
+                    <tr><td style="padding:2px 0;">MBWay:</td><td style="text-align:right;">${totalMBWay.toFixed(2)}€</td></tr>
+                    <tr><td style="padding:2px 0;">Ticket Refeição:</td><td style="text-align:right;">${totalTicket.toFixed(2)}€</td></tr>
+                </table>
+
+                <hr style="border:1px dashed #000; margin:10px 0;">
+                
+                <div style="font-size:20px; font-weight:bold; text-align:center; margin: 15px 0;">
+                    TOTAL: ${totalGlobal.toFixed(2)}€
+                </div>
+
+                <hr style="border:1px dashed #000; margin:10px 0;">
+
+                <div style="font-size:12px; margin-bottom:10px; font-weight:bold;">RESUMO DE IVA</div>
+                <table style="width:100%; font-size:11px; text-align:left; border-collapse: collapse;">
+                    <tr><td style="padding:2px 0;">IVA 23%:</td><td style="text-align:right;">${iva23.toFixed(2)}€</td></tr>
+                    <tr><td style="padding:2px 0;">IVA 13%:</td><td style="text-align:right;">${iva13.toFixed(2)}€</td></tr>
+                    <tr><td style="padding:2px 0;">IVA 6%:</td><td style="text-align:right;">${iva6.toFixed(2)}€</td></tr>
+                </table>
+
+                <hr style="border:1px dashed #000; margin:10px 0;">
+                
+                <div style="font-size:12px; margin-top:20px; margin-bottom:30px;">
+                    Assinatura / Visto do Operador:
+                    <div style="border-bottom: 1px solid #000; margin-top: 25px;"></div>
+                </div>
+            `;
+
+            document.getElementById('print-area').innerHTML = htmlZ;
+            window.print();
+            
+            await registarAuditoria('Imprimiu o Relatório Z (Fecho de Caixa).');
+            
+            // Depois de imprimir, fecha e avisa o lojista
+            enviarTurnoLojista();
+            
         } catch (e) {
-            mostrarAlertaCustom("Falha ao comunicar com o servidor. Verifique a internet.", "Erro");
+            mostrarAlertaCustom("Erro ao gerar Relatório Z: " + e.message, "Erro");
         } finally {
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Dados para Lojista';
+            btn.innerHTML = '<i class="fas fa-print"></i> Imprimir Fecho (Relatório Z)';
             btn.disabled = false;
         }
     }
@@ -1902,7 +2027,6 @@
             window.splitEmCurso = false;
             window.splitBillData = [];
         }
-        // Limpar os campos ao fechar o modal de adicionar mesa
         if (id === 'modal-adicionar-mesa') {
             document.getElementById('input-adicionar-mesa').value = '';
         }
