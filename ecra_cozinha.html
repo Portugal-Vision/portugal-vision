@@ -177,8 +177,8 @@
     let nomeOperadorAtual = "";
     let timerAtualizacao = null; 
     let canalNotificacoesCozinha = null;
+    let cachePedidosFogo = [];
 
-    // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO CORRIGIDA) ---
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('loja');
@@ -234,7 +234,6 @@
         }
     }
 
-    // --- CAMADA 2 (LOGIN DO EMPREGADO POR PIN) ---
     async function carregarEquipaParaLogin() {
         document.getElementById('login-screen').style.display = 'flex';
         const selectEmp = document.getElementById('select-empregado');
@@ -308,7 +307,6 @@
     }
 
 
-    // --- ARRANQUE E FUNCIONAMENTO DA COZINHA ---
     function arrancarCozinha() {
         document.getElementById('kds-screen').style.display = 'flex';
         document.getElementById('nome-restaurante').innerText = "Cozinha - " + nomeLojaAtual;
@@ -330,7 +328,6 @@
                 const isConfirmadoMBWay = payload.eventType === 'UPDATE' && payload.old.estado !== 'pendente' && payload.new.estado === 'pendente';
                 const isClienteSentado = payload.eventType === 'UPDATE' && payload.old.estado !== 'preparacao' && payload.new.estado === 'preparacao';
 
-                // INJEÇÃO DA SOLUÇÃO 3: SILENCIADOR ACÚSTICO (A Cozinha só apita se houver comida!)
                 if(isNovoPOS || isConfirmadoMBWay || isClienteSentado) {
                     let temComidaParaCozinhar = false;
                     if (payload.new.itens && Array.isArray(payload.new.itens)) {
@@ -341,7 +338,6 @@
                             }
                         }
                     }
-                    
                     if (temComidaParaCozinhar) {
                         tocarSinoCozinha();
                     }
@@ -355,8 +351,6 @@
         iniciarEscutaNotificacoes();
     }
 
-    // --- FILTRO INTELIGENTE PARA IGNORAR BEBIDAS E SOBREMESAS ---
-    // INJEÇÃO DA SOLUÇÃO 1: LISTA NEGRA EXPANDIDA
     function ignorarNaCozinha(item) {
         if (item.categoria) {
             const cat = item.categoria.toLowerCase();
@@ -371,7 +365,6 @@
         return palavrasBloqueadas.some(palavra => nomeLower.includes(palavra));
     }
 
-    // --- CARREGAR TICKETS (LINHA DE FOGO) ---
     async function carregarPedidosFogo() {
         const { data: pedidos } = await _sb.from('pedidos')
             .select('*')
@@ -385,11 +378,11 @@
         let pedidosCozinha = [];
         
         if (pedidos) {
+            cachePedidosFogo = pedidos;
             pedidos.forEach(p => {
-                // INJEÇÃO DA SOLUÇÃO 2: APLICAÇÃO DO FILTRO AOS CARTÕES DE FOGO
-                const itensComida = p.itens.filter(item => !ignorarNaCozinha(item));
+                // FILTRO: Só mostra itens não-bloqueados E que ainda não estejam marcados como prontos na cozinha
+                const itensComida = p.itens.filter(item => !ignorarNaCozinha(item) && !item._cozinhaPronto);
                 
-                // Só adiciona à linha de fogo se tiver pelo menos 1 item que não seja bebida/sobremesa
                 if (itensComida.length > 0) {
                     const pedidoApenasComida = { ...p, itens: itensComida };
                     pedidosCozinha.push(pedidoApenasComida);
@@ -442,10 +435,10 @@
 
             if (p.estado === 'pendente') {
                 classeEstado = 'estado-pendente';
-                btnAcao = `<button class="btn-kds btn-start" onclick="mudarEstado(${p.id}, 'preparacao')"><i class="fas fa-fire"></i> Iniciar Preparação</button>`;
+                btnAcao = `<button class="btn-kds btn-start" onclick="iniciarPreparacao(${p.id})"><i class="fas fa-fire"></i> Iniciar Preparação</button>`;
             } else if (p.estado === 'preparacao') {
                 classeEstado = 'estado-preparacao';
-                btnAcao = `<button class="btn-kds btn-finish" onclick="mudarEstado(${p.id}, 'pronto')"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
+                btnAcao = `<button class="btn-kds btn-finish" onclick="marcarProntoCozinha(${p.id})"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
             }
 
             return `
@@ -465,12 +458,57 @@
         }).join('');
     }
 
-    // --- NOVO MOTOR: RADAR DE RESERVAS POR BLOCOS DE TEMPO ---
+    // --- NOVA LOGICA DE ESTADOS PARCIAIS ---
+    
+    async function iniciarPreparacao(id) {
+        // Se a cozinha iniciou, passa a encomenda inteira para "preparacao" (o Bar também verá que começou).
+        await _sb.from('pedidos').update({ estado: 'preparacao' }).eq('id', id);
+        carregarPedidosFogo();
+    }
+
+    async function marcarProntoCozinha(id) {
+        // Encontra o pedido original na cache local
+        const p = cachePedidosFogo.find(x => x.id === id);
+        if(!p) return;
+
+        let todosProntos = true;
+        let novoItens = [...p.itens];
+
+        // Marca a comida como pronta
+        novoItens.forEach(item => {
+            if (!ignorarNaCozinha(item)) {
+                item._cozinhaPronto = true;
+            }
+        });
+
+        // Verifica se ainda há bebidas no pedido que precisem de ser feitas pelo bar
+        novoItens.forEach(item => {
+            if (ignorarNaCozinha(item) && !item._barPronto) {
+                todosProntos = false;
+            }
+        });
+
+        // Se estiver tudo pronto (comida e bebida), atualiza o estado global para notificar a sala
+        if (todosProntos) {
+            await _sb.from('pedidos').update({ 
+                estado: 'pronto',
+                itens: novoItens
+            }).eq('id', id);
+        } else {
+            // Se as bebidas ainda estão pendentes, guarda os itens com o carimbo mas mantém em "preparação"
+            await _sb.from('pedidos').update({ 
+                itens: novoItens
+            }).eq('id', id);
+        }
+        
+        carregarPedidosFogo();
+    }
+
+    // --- RADAR DE RESERVAS (PRÓXIMAS 2 HORAS) ---
     async function carregarRadarReservas() {
         const agora = new Date();
         const limiteFuturo = new Date(agora.getTime() + (2 * 60 * 60 * 1000));
         
-        // Puxa as reservas (aguarda_confirmacao ou reserva_confirmada)
         const { data: reservas } = await _sb.from('pedidos')
             .select('*')
             .eq('loja_id', minhaLojaId)
@@ -533,9 +571,6 @@
         divRadar.innerHTML = htmlRadarFinal;
     }
 
-    async function mudarEstado(id, novoEstado) {
-        await _sb.from('pedidos').update({ estado: novoEstado }).eq('id', id);
-    }
 
     // Som de Alta Intensidade
     function tocarSinoCozinha() {
