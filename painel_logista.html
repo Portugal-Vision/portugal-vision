@@ -436,7 +436,8 @@
         <div class="card">
             <h3 class="toggle-titulo" onclick="toggleTesouraria()" style="margin: 0;">
                 <span><i class="fas fa-chart-line"></i> Tesouraria e Análises</span>
-                <span id="seta-tesouraria">▲</span> </h3>
+                <span id="seta-tesouraria">▲</span>
+            </h3>
             
             <div id="painel-tesouraria" style="margin-top: 15px;">
                 <div class="metrics-section">
@@ -513,7 +514,8 @@
         <div class="card">
             <h3 class="toggle-titulo" onclick="toggleConfigLoja()" style="margin: 0;">
                 <span><i class="fas fa-cogs"></i> Configurações e Integrações da Loja</span>
-                <span id="seta-config-loja">▼</span> </h3>
+                <span id="seta-config-loja">▼</span>
+            </h3>
             
             <div id="painel-config-loja" class="hidden" style="margin-top: 15px;">
                 <div class="config-takeaway" style="background: #f0f9ff; border-color: #bae6fd; border-left-color: var(--s);">
@@ -583,7 +585,7 @@
                 <span id="seta-armazem">▼</span>
             </h3>
             <div id="config-armazem" class="hidden" style="margin-top: 15px;">
-                <p style="font-size: 0.9em; color: #64748b;">Registe as matérias-primas e os stocks mínimos para automatizar a Lista de Compras.</p>
+                <p style="font-size: 0.9em; color: #64748b;">Registe as matérias-primas e o sistema gera o Extrato de Consumo automaticamente.</p>
                 <div id="armazem-lista"></div>
             </div>
         </div>
@@ -856,6 +858,17 @@
     </div>
 </div>
 
+<div id="modal-extrato" class="hidden no-print" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);">
+    <div style="background: white; padding: 0; border-radius: 24px; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; max-height: 85vh;">
+        <div style="background: var(--p); padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="extrato-titulo" style="margin:0;">Extrato de Movimento</h3>
+            <button onclick="fecharExtrato()" style="background:rgba(255,255,255,0.1); color:white; border:none; border-radius:50%; width:35px; height:35px; cursor:pointer; display:flex; align-items:center; justify-content:center;"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="extrato-corpo" style="padding: 20px; overflow-y: auto; flex: 1; background: #f8fafc;">
+            </div>
+    </div>
+</div>
+
 <div id="pv-dialog-overlay" class="no-print">
     <div id="pv-dialog-box">
         <div id="pv-dialog-icon" style="font-size: 48px; margin-bottom: 15px;"></div>
@@ -913,6 +926,13 @@
     function togglePublicarArtigo() {
         const div = document.getElementById('painel-publicar');
         const seta = document.getElementById('seta-publicar');
+        if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
+        else { div.classList.add('hidden'); seta.innerText = '▼'; }
+    }
+
+    function toggleArmazem() {
+        const div = document.getElementById('config-armazem');
+        const seta = document.getElementById('seta-armazem');
         if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
@@ -1147,13 +1167,6 @@
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
 
-    function toggleArmazem() {
-        const div = document.getElementById('config-armazem');
-        const seta = document.getElementById('seta-armazem');
-        if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
-        else { div.classList.add('hidden'); seta.innerText = '▼'; }
-    }
-
     document.getElementById('horarios-lista').innerHTML = diasSemana.map((dia, i) => `
         <div class="dia-config" id="card-${i}">
             <div class="dia-header">
@@ -1375,6 +1388,7 @@
         iniciarEscutaRealtime();
     }
 
+    // ARMAZÉM E EXTRATO
     async function carregarIngredientes() {
         if(!lojaAtiva) return;
         const { data } = await _sb.from('ingredientes')
@@ -1416,7 +1430,8 @@
                     <td>${i.unidade}</td>
                     <td><b style="font-size:14px;">${i.stock_atual}</b></td>
                     <td>${i.stock_minimo}</td>
-                    <td>
+                    <td style="display:flex; gap:5px;">
+                        <button class="btn-edit-staff" onclick="abrirExtrato('${i.id}', '${i.nome}')" title="Ver Histórico de Movimentos" style="color:var(--ia);"><i class="fas fa-history"></i></button>
                         <button class="btn-edit-staff" onclick="prepararEdicaoIngrediente('${i.id}')" title="Editar"><i class="fas fa-edit"></i></button>
                         <button class="btn-del-staff" onclick="apagarIngrediente('${i.id}')" title="Remover do Armazém"><i class="fas fa-trash"></i></button>
                     </td>
@@ -1426,6 +1441,41 @@
         html += `</tbody></table>`;
         document.getElementById('armazem-lista').innerHTML = html;
     }
+
+    async function abrirExtrato(id, nome) {
+        document.getElementById('extrato-titulo').innerText = "Histórico: " + nome;
+        document.getElementById('extrato-corpo').innerHTML = '<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> A carregar movimentos...</div>';
+        document.getElementById('modal-extrato').classList.remove('hidden');
+
+        const { data, error } = await _sb.from('movimentos_stock')
+            .select('*')
+            .eq('ingrediente_id', id)
+            .order('created_at', { ascending: false })
+            .limit(50); // Mostra os últimos 50 movimentos
+
+        if(!data || data.length === 0) {
+            document.getElementById('extrato-corpo').innerHTML = '<p style="text-align:center; color:#94a3b8;">Nenhum movimento registado para esta matéria-prima.</p>';
+            return;
+        }
+
+        document.getElementById('extrato-corpo').innerHTML = data.map(m => {
+            const isSaida = m.quantidade < 0;
+            const dataF = new Date(m.created_at).toLocaleString('pt-PT', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px; background:white; border-radius:12px; margin-bottom:8px; border-left: 4px solid ${isSaida ? 'var(--err)' : 'var(--ok)'}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div>
+                        <small style="color:#94a3b8; display:block; font-weight:600;"><i class="fas fa-clock"></i> ${dataF}</small>
+                        <b style="font-size:13px; color:var(--p);">${m.motivo}</b>
+                    </div>
+                    <div style="color:${isSaida ? 'var(--err)' : 'var(--ok)'}; font-weight:800; font-size:16px;">
+                        ${isSaida ? '' : '+'}${m.quantidade}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function fecharExtrato() { document.getElementById('modal-extrato').classList.add('hidden'); }
 
     async function salvarIngrediente() {
         const id = document.getElementById('ing-id').value;
@@ -1442,9 +1492,17 @@
         if (id) {
             const { error } = await _sb.from('ingredientes').update(dados).eq('id', id);
             if(error) erroMsg = error.message;
+            else {
+                // Regista o movimento manual
+                await _sb.from('movimentos_stock').insert([{ loja_id: lojaAtiva.id, ingrediente_id: id, quantidade: 0, motivo: 'Ajuste Manual de Inventário pelo Lojista' }]);
+            }
         } else {
-            const { error } = await _sb.from('ingredientes').insert([dados]);
+            const { data, error } = await _sb.from('ingredientes').insert([dados]).select().single();
             if(error) erroMsg = error.message;
+            else if(data) {
+                // Regista a entrada inicial
+                await _sb.from('movimentos_stock').insert([{ loja_id: lojaAtiva.id, ingrediente_id: data.id, quantidade: stockAtual, motivo: 'Stock Inicial / Abertura de Registo' }]);
+            }
         }
 
         if(erroMsg) { mostrarAlertaPro("Erro", "Erro ao guardar ingrediente: " + erroMsg, "erro"); return; }
