@@ -259,6 +259,19 @@
         .btn-add-row { background: #e0f2fe; color: #0284c7; border: 1px dashed #7dd3fc; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: block; margin-top: 8px; width: fit-content;}
         .btn-add-row:hover { background: #bae6fd; }
 
+        /* CUSTOM ALERTS PRO */
+        #pv-dialog-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; backdrop-filter: blur(4px); }
+        #pv-dialog-overlay.ativo { opacity: 1; pointer-events: all; }
+        #pv-dialog-box { background: white; padding: 30px; border-radius: 24px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); transform: scale(0.9); transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        #pv-dialog-overlay.ativo #pv-dialog-box { transform: scale(1); }
+        .pv-dialog-btn { padding: 12px 20px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; font-size: 14px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .pv-dialog-btn-ok { background: var(--p); color: white; }
+        .pv-dialog-btn-ok:hover { background: #1e293b; }
+        .pv-dialog-btn-cancel { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .pv-dialog-btn-cancel:hover { background: #e2e8f0; }
+        .pv-dialog-btn-danger { background: var(--err); color: white; }
+        .pv-dialog-btn-danger:hover { background: #dc2626; }
+
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body { background: white; margin: 0; padding: 0; }
@@ -552,7 +565,6 @@
             
         </div>
 
-        <!-- MÓDULO ARMAZÉM / MATÉRIAS PRIMAS -->
         <div class="card" style="margin-top: 25px;">
             <h3 class="toggle-titulo" onclick="toggleArmazem()" style="margin: 0;">
                 <span><i class="fas fa-boxes"></i> Inventário Base & Armazém</span>
@@ -679,7 +691,6 @@
                 <textarea id="p-ficha-texto" placeholder="Notas exclusivas para os cozinheiros..." style="width:100%; height: 80px; resize: vertical; margin-top: 0;"></textarea>
             </div>
 
-            <!-- NOVO MÓDULO: RECEITA MATEMÁTICA -->
             <div style="background: #eff6ff; padding: 15px; border-radius: 12px; border: 1px solid #bfdbfe; margin-top: 15px; margin-bottom: 15px;">
                 <h5 style="margin: 0 0 10px 0; color: #1e3a8a; display: flex; align-items: center; gap: 5px;">
                     <i class="fas fa-calculator"></i> Receita Matemática (Bill of Materials)
@@ -753,14 +764,14 @@
             <h4 style="margin-top: 0;"><i class="fas fa-qrcode"></i> O seu Website Público</h4>
             <div style="display:flex; gap:10px; margin-bottom:15px; width: 100%; max-width: 400px;">
                 <input type="text" id="link-catalogo" readonly style="font-size:12px; background: #f8fafc; margin: 0;">
-                <button onclick="navigator.clipboard.writeText(document.getElementById('link-catalogo').value); alert('Link copiado para a área de transferência!')" style="width:90px; background:var(--s); margin: 0;"><i class="fas fa-copy"></i></button>
+                <button onclick="navigator.clipboard.writeText(document.getElementById('link-catalogo').value); mostrarAlertaPro('Copiado', 'Link copiado para a área de transferência!', 'sucesso');" style="width:90px; background:var(--s); margin: 0;"><i class="fas fa-copy"></i></button>
             </div>
             <img id="img-qrcode" style="width:160px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 5px; background: white;">
         </div>
     </div>
 </div>
 
-<div id="modal-alergenios" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+<div id="modal-alergenios" class="hidden no-print" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: white; padding: 25px; border-radius: 16px; max-width: 500px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         <h3 style="margin-top:0; color:var(--p);"><i class="fas fa-info-circle" style="color:var(--s);"></i> Guia de Alergénios</h3>
         <div style="font-size: 14px; color: #475569; max-height: 60vh; overflow-y: auto;">
@@ -827,6 +838,15 @@
     </div>
 </div>
 
+<div id="pv-dialog-overlay" class="no-print">
+    <div id="pv-dialog-box">
+        <div id="pv-dialog-icon" style="font-size: 48px; margin-bottom: 15px;"></div>
+        <h3 id="pv-dialog-title" style="margin: 0 0 10px 0; color: var(--p); font-size: 1.4rem; font-weight: 800;"></h3>
+        <p id="pv-dialog-msg" style="color: #475569; font-size: 14px; margin-bottom: 25px; line-height: 1.6;"></p>
+        <div id="pv-dialog-btns" style="display: flex; gap: 10px; justify-content: center;"></div>
+    </div>
+</div>
+
 <div id="print-area"></div>
 
 <div id="print-area-wrapper" class="hidden">
@@ -851,11 +871,69 @@
     let lojaAtiva = null;
     let produtosLocais = []; 
     let empregadosLocais = [];
-    let ingredientesLocais = []; // NOVO
+    let ingredientesLocais = [];
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
     const nomeDiasInt = {1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado", 0: "Domingo"};
 
     let canalNotificacoes = null;
+
+    // ----- NOVO: FUNÇÕES DO MOTOR DE ALERTAS PRO -----
+    function mostrarAlertaPro(titulo, mensagem, tipo = 'info') {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('pv-dialog-overlay');
+            const icon = document.getElementById('pv-dialog-icon');
+            const title = document.getElementById('pv-dialog-title');
+            const msg = document.getElementById('pv-dialog-msg');
+            const btns = document.getElementById('pv-dialog-btns');
+
+            title.innerText = titulo;
+            msg.innerText = mensagem;
+
+            if(tipo === 'erro') icon.innerHTML = '<i class="fas fa-times-circle" style="color: var(--err);"></i>';
+            else if(tipo === 'sucesso') icon.innerHTML = '<i class="fas fa-check-circle" style="color: var(--ok);"></i>';
+            else if(tipo === 'aviso') icon.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: var(--warn);"></i>';
+            else icon.innerHTML = '<i class="fas fa-info-circle" style="color: var(--s);"></i>';
+
+            btns.innerHTML = `<button class="pv-dialog-btn pv-dialog-btn-ok" id="btn-dialog-ok">Entendido</button>`;
+
+            overlay.classList.add('ativo');
+
+            document.getElementById('btn-dialog-ok').onclick = () => {
+                overlay.classList.remove('ativo');
+                setTimeout(() => resolve(true), 200);
+            };
+        });
+    }
+
+    function mostrarConfirmPro(titulo, mensagem) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('pv-dialog-overlay');
+            const icon = document.getElementById('pv-dialog-icon');
+            const title = document.getElementById('pv-dialog-title');
+            const msg = document.getElementById('pv-dialog-msg');
+            const btns = document.getElementById('pv-dialog-btns');
+
+            title.innerText = titulo;
+            msg.innerText = mensagem;
+            icon.innerHTML = '<i class="fas fa-question-circle" style="color: var(--s);"></i>';
+
+            btns.innerHTML = `
+                <button class="pv-dialog-btn pv-dialog-btn-cancel" id="btn-dialog-cancel">Cancelar</button>
+                <button class="pv-dialog-btn pv-dialog-btn-danger" id="btn-dialog-confirm">Confirmar</button>
+            `;
+
+            overlay.classList.add('ativo');
+
+            const closeDialog = (result) => {
+                overlay.classList.remove('ativo');
+                setTimeout(() => resolve(result), 200);
+            };
+
+            document.getElementById('btn-dialog-cancel').onclick = () => closeDialog(false);
+            document.getElementById('btn-dialog-confirm').onclick = () => closeDialog(true);
+        });
+    }
+    // --------------------------------------------------
 
     const configNegocios = {
         restaurante: {
@@ -1029,7 +1107,6 @@
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
 
-    // NOVO: Toggle Armazém
     function toggleArmazem() {
         const div = document.getElementById('config-armazem');
         const seta = document.getElementById('seta-armazem');
@@ -1096,7 +1173,7 @@
 
     async function recuperarEmail() {
         const nif = document.getElementById('reset-nif').value;
-        if(!nif) return alert("Insira o NIF da loja.");
+        if(!nif) { mostrarAlertaPro("Aviso", "Insira o NIF da loja.", "aviso"); return; }
         
         const btn = document.querySelector('#f-reset-email button');
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A PROCURAR...`;
@@ -1106,7 +1183,7 @@
             const { data, error } = await _sb.from('lojas').select('email').eq('nif', nif).maybeSingle();
             
             if(error || !data) {
-                alert("Nenhuma loja encontrada com esse NIF no nosso sistema.");
+                mostrarAlertaPro("Erro", "Nenhuma loja encontrada com esse NIF no nosso sistema.", "erro");
             } else {
                 const parts = data.email.split('@');
                 const masked = parts[0].substring(0, 3) + "***@" + parts[1];
@@ -1120,21 +1197,21 @@
 
     async function recuperarSenha() {
         const email = document.getElementById('reset-email').value;
-        if(!email) return alert("Insira o seu e-mail.");
+        if(!email) { mostrarAlertaPro("Aviso", "Insira o seu e-mail.", "aviso"); return; }
         const { error } = await _sb.auth.resetPasswordForEmail(email);
-        if(error) alert("Erro: " + error.message);
-        else alert("Se o e-mail existir na nossa base, receberá link de recuperação na sua caixa de entrada.");
+        if(error) mostrarAlertaPro("Erro", "Erro: " + error.message, "erro");
+        else mostrarAlertaPro("Verifique a sua caixa", "Se o e-mail existir na nossa base, receberá link de recuperação na sua caixa de entrada.", "sucesso");
     }
 
     async function registar() {
         const termos = document.getElementById('r-termos').checked;
-        if(!termos) return alert("É obrigatório aceitar os Termos e Condições e a Política de Privacidade.");
+        if(!termos) { mostrarAlertaPro("Termos e Privacidade", "É obrigatório aceitar os Termos e Condições e a Política de Privacidade.", "aviso"); return; }
 
         const nomeInput = document.getElementById('r-nome').value;
         const emailInput = document.getElementById('r-email').value;
         const passInput = document.getElementById('r-pass').value;
 
-        if(!nomeInput || !emailInput || !passInput) return alert("Preencha todos os campos obrigatórios (Nome, E-mail e Password).");
+        if(!nomeInput || !emailInput || !passInput) { mostrarAlertaPro("Aviso", "Preencha todos os campos obrigatórios (Nome, E-mail e Password).", "aviso"); return; }
 
         const btn = document.querySelector('#f-reg button');
         btn.disabled = true; btn.innerText = "A CRIAR CONTA...";
@@ -1157,13 +1234,13 @@
 
             lojaAtiva = lojaData; abrirPainel();
 
-        } catch (err) { alert(err.message); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-user-plus"></i> CRIAR CONTA`; }
+        } catch (err) { mostrarAlertaPro("Erro", err.message, "erro"); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-user-plus"></i> CRIAR CONTA`; }
     }
 
     async function login() {
         const emailInput = document.getElementById('l-email').value;
         const passInput = document.getElementById('l-pass').value;
-        if(!emailInput || !passInput) return alert("Preencha o e-mail e a password.");
+        if(!emailInput || !passInput) { mostrarAlertaPro("Aviso", "Preencha o e-mail e a password.", "aviso"); return; }
 
         const btn = document.querySelector('#f-login button');
         btn.disabled = true; btn.innerText = "A ENTRAR...";
@@ -1186,7 +1263,7 @@
 
             abrirPainel();
 
-        } catch (err) { alert(err.message); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> ENTRAR`; }
+        } catch (err) { mostrarAlertaPro("Erro no Login", err.message, "erro"); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> ENTRAR`; }
     }
 
     async function abrirPainel() {
@@ -1250,7 +1327,7 @@
         document.getElementById('data-export').value = new Date().toISOString().split('T')[0];
 
         verificarPlano();
-        await carregarIngredientes(); // NOVO: Carregar Armazém primeiro
+        await carregarIngredientes();
         carregarDados();
         carregarMetricasHoje(); 
         carregarStaff(); 
@@ -1258,7 +1335,6 @@
         iniciarEscutaRealtime();
     }
 
-    // NOVO: Funções de Armazém e Receita Matemática
     async function carregarIngredientes() {
         if(!lojaAtiva) return;
         const { data } = await _sb.from('ingredientes')
@@ -1318,7 +1394,7 @@
         const stockAtual = parseFloat(document.getElementById('ing-stock').value) || 0;
         const stockMin = parseFloat(document.getElementById('ing-min').value) || 0;
 
-        if(!nome) return alert("Defina um nome para o ingrediente.");
+        if(!nome) { mostrarAlertaPro("Aviso", "Defina um nome para o ingrediente.", "aviso"); return; }
 
         const dados = { loja_id: lojaAtiva.id, nome: nome, unidade: unidade, stock_atual: stockAtual, stock_minimo: stockMin };
 
@@ -1331,7 +1407,7 @@
             if(error) erroMsg = error.message;
         }
 
-        if(erroMsg) return alert("Erro ao guardar ingrediente: " + erroMsg);
+        if(erroMsg) { mostrarAlertaPro("Erro", "Erro ao guardar ingrediente: " + erroMsg, "erro"); return; }
         
         cancelarEdicaoIngrediente();
         await carregarIngredientes();
@@ -1357,7 +1433,7 @@
     }
 
     async function apagarIngrediente(id) {
-        if(confirm("Apagar este ingrediente do armazém? Pode afetar as receitas que o utilizam.")) {
+        if(await mostrarConfirmPro("Aviso", "Apagar este ingrediente do armazém? Pode afetar as receitas que o utilizam.")) {
             await _sb.from('ingredientes').delete().eq('id', id);
             await carregarIngredientes();
         }
@@ -1492,7 +1568,7 @@
         const nome = document.getElementById('staff-nome').value;
         const pin = document.getElementById('staff-pin').value;
         
-        if(!nome || pin.length < 4) return alert("Preencha o Nome e um PIN de acesso (mínimo 4 dígitos).");
+        if(!nome || pin.length < 4) { mostrarAlertaPro("Aviso", "Preencha o Nome e um PIN de acesso (mínimo 4 dígitos).", "aviso"); return; }
         
         let error;
         if(id) {
@@ -1505,11 +1581,11 @@
             registarAuditoriaLojista(`Adicionou novo Empregado: ${nome}`);
         }
 
-        if(error) return alert("Erro ao guardar empregado: " + error.message);
+        if(error) { mostrarAlertaPro("Erro", "Erro ao guardar empregado: " + error.message, "erro"); return; }
 
         cancelarEdicaoStaff();
         carregarStaff();
-        alert("Empregado guardado com sucesso!");
+        mostrarAlertaPro("Sucesso", "Empregado guardado com sucesso!", "sucesso");
     }
 
     function prepararEdicaoStaff(id) {
@@ -1533,7 +1609,7 @@
     }
 
     async function removerStaff(id) {
-        if(confirm("Tem a certeza que deseja remover o acesso a este empregado?")) {
+        if(await mostrarConfirmPro("Aviso", "Tem a certeza que deseja remover o acesso a este empregado?")) {
             const emp = empregadosLocais.find(e => e.id === id);
             await _sb.from('empregados').delete().eq('id', id);
             if(emp) registarAuditoriaLojista(`Removeu o Empregado: ${emp.nome}`);
@@ -1580,7 +1656,8 @@
 
     function imprimirAvisoFerias() {
         if(!lojaAtiva.ferias_inicio || !lojaAtiva.ferias_fim) {
-            return alert("Defina primeiro as datas de início e fim das férias antes de imprimir.");
+            mostrarAlertaPro("Aviso", "Defina primeiro as datas de início e fim das férias antes de imprimir.", "aviso");
+            return;
         }
 
         const dataInicioArr = lojaAtiva.ferias_inicio.split('-');
@@ -1629,7 +1706,7 @@
 
     async function gerarRelatorioPDF() {
         const dataSelecionada = document.getElementById('data-export').value;
-        if(!dataSelecionada) return alert("Selecione uma data para exportar.");
+        if(!dataSelecionada) { mostrarAlertaPro("Aviso", "Selecione uma data para exportar.", "aviso"); return; }
         
         const [ano, mes, dia] = dataSelecionada.split('-');
         const dataPt = `${dia}/${mes}/${ano}`;
@@ -1649,7 +1726,7 @@
             .order('created_at', { ascending: true });
 
         if(!pedidos || pedidos.length === 0) {
-            alert(`Não existem pedidos finalizados no dia ${dataPt}.`);
+            mostrarAlertaPro("Aviso", `Não existem pedidos finalizados no dia ${dataPt}.`, "aviso");
             return;
         }
 
@@ -1782,7 +1859,6 @@
         tbody.appendChild(novaLinha);
     };
 
-    // NOVO MOTOR DE COMPRAS INTELIGENTE
     function gerarTemplateCompras() {
         const dataPt = new Date().toLocaleDateString('pt-PT');
         const nomeLoja = lojaAtiva.nome || "Portugal Vision";
@@ -1796,7 +1872,6 @@
             <div style="width: 100%;">
         `;
 
-        // Motor: Identifica Matérias Primas em Rutura de Stock
         const criticos = ingredientesLocais.filter(i => parseFloat(i.stock_atual) <= parseFloat(i.stock_minimo));
         if(criticos.length > 0) {
             html += `
@@ -1876,7 +1951,7 @@
         const nomeLoja = lojaAtiva.nome || "O Nosso Menu";
         
         const produtosParaImprimir = produtosLocais.filter(p => !p.oculto);
-        if(produtosParaImprimir.length === 0) return alert("Não existem artigos visíveis para imprimir.");
+        if(produtosParaImprimir.length === 0) { mostrarAlertaPro("Aviso", "Não existem artigos visíveis para imprimir.", "aviso"); return; }
 
         let categorias = [...new Set(produtosParaImprimir.map(p => p.categoria || ''))];
         const ordemMestra = ["entradas", "marisco", "mariscos", "pratos de carne", "carne", "pratos de peixe", "peixe", "sobremesas", "bebidas"];
@@ -1990,19 +2065,19 @@
         const moradaRaw = document.getElementById('v-morada-edit').value;
 
         if (nifRaw && !validarNIF(nifRaw)) {
-            alert("⚠️ O NIF introduzido não é válido (Erro de Módulo 11). Corrija antes de guardar.");
+            mostrarAlertaPro("Erro de Validação", "⚠️ O NIF introduzido não é válido (Erro de Módulo 11). Corrija antes de guardar.", "erro");
             document.getElementById('v-nif-edit').focus();
             return;
         }
 
         if (telRaw && !validarTelefonePT(telRaw)) {
-            alert("⚠️ O Número de Contacto é inválido. Introduza um número português correto (9 dígitos).");
+            mostrarAlertaPro("Erro de Validação", "⚠️ O Número de Contacto é inválido. Introduza um número português correto (9 dígitos).", "erro");
             document.getElementById('v-tel-edit').focus();
             return;
         }
 
         if (moradaRaw && !validarMorada(moradaRaw)) {
-            alert("⚠️ A morada está incompleta. Precisa de mais de 10 caracteres e um número (porta ou código postal).");
+            mostrarAlertaPro("Erro de Validação", "⚠️ A morada está incompleta. Precisa de mais de 10 caracteres e um número (porta ou código postal).", "erro");
             document.getElementById('v-morada-edit').focus();
             return;
         }
@@ -2033,9 +2108,9 @@
             lojaAtiva = {...lojaAtiva, ...dados};
             btn.classList.remove('pendente'); 
             registarAuditoriaLojista(`Alterou as configurações globais da loja.`);
-            alert("Perfil e configurações atualizados com sucesso!"); 
+            mostrarAlertaPro("Sucesso", "Perfil e configurações atualizados com sucesso!", "sucesso"); 
         } else {
-            alert("Erro ao guardar: " + error.message);
+            mostrarAlertaPro("Erro", "Erro ao guardar: " + error.message, "erro");
         }
     }
 
@@ -2054,8 +2129,8 @@
             document.getElementById('dynamic-apple-icon').href = data.publicUrl;
             
             registarAuditoriaLojista(`Atualizou o Logotipo da loja`);
-            alert("Logótipo atualizado! Reabra a app no telemóvel para ver o novo ícone.");
-        } catch (e) { alert("Erro ao fazer upload do logo."); }
+            mostrarAlertaPro("Sucesso", "Logótipo atualizado! Reabra a app no telemóvel para ver o novo ícone.", "sucesso");
+        } catch (e) { mostrarAlertaPro("Erro", "Erro ao fazer upload do logo.", "erro"); }
     }
 
     async function salvarHorarios() {
@@ -2093,9 +2168,9 @@
             
             btn.classList.remove('pendente'); 
             registarAuditoriaLojista(`Atualizou o horário de funcionamento/férias.`);
-            alert("Horários e Férias atualizados com sucesso!"); 
+            mostrarAlertaPro("Sucesso", "Horários e Férias atualizados com sucesso!", "sucesso"); 
         } else {
-            alert("Erro ao guardar horários: " + error.message);
+            mostrarAlertaPro("Erro", "Erro ao guardar horários: " + error.message, "erro");
         }
     }
 
@@ -2226,7 +2301,7 @@
         const btn = document.getElementById('btn-ia');
         const fichaFileInput = document.getElementById('p-ficha-file');
         
-        if (!nomeProd) return alert("Escreve o nome do produto primeiro.");
+        if (!nomeProd) { mostrarAlertaPro("Aviso", "Escreve o nome do produto primeiro.", "aviso"); return; }
         
         btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A analisar...`; 
         btn.disabled = true;
@@ -2275,7 +2350,7 @@
                 const notasAtuais = campoNotas.value.trim();
                 
                 if(notasAtuais !== "" && notasAtuais !== respostaIA.notas_internas) {
-                    if(confirm("A IA extraiu novas Notas Técnicas do documento.\n\nDeseja substituir o texto que já tem escrito pelas novas notas?")) {
+                    if(await mostrarConfirmPro("Novas Notas da IA", "A IA extraiu novas Notas Técnicas do documento.\n\nDeseja substituir o texto que já tem escrito pelas novas notas?")) {
                         campoNotas.value = respostaIA.notas_internas;
                     }
                 } else {
@@ -2287,7 +2362,7 @@
             registarAuditoriaLojista(`Usou IA para extrair dados do artigo ${nomeProd}`);
 
         } catch (e) { 
-            alert(e.message); 
+            mostrarAlertaPro("Erro", e.message, "erro"); 
         } finally { 
             btn.innerHTML = `<i class="fas fa-magic"></i> Extrair com IA`; 
             btn.disabled = false; 
@@ -2309,7 +2384,7 @@
         
         const precoVal = parseFloat(document.getElementById('p-preco').value);
         const nomeProd = document.getElementById('p-nome').value;
-        if(!nomeProd || isNaN(precoVal)) return alert("Nome e preço são obrigatórios.");
+        if(!nomeProd || isNaN(precoVal)) { mostrarAlertaPro("Aviso", "Nome e preço são obrigatórios.", "aviso"); return; }
 
         const taxaIvaVal = parseFloat(document.getElementById('p-taxa-iva').value) || 0;
 
@@ -2322,7 +2397,6 @@
         const ocultarProduto = !document.getElementById('p-visibilidade').checked;
         const pedePontoCarne = document.getElementById('p-pede-ponto').checked;
 
-        // NOVO: COMPILA A RECEITA JSON
         const receitaRows = document.querySelectorAll('#receita-container .linha-receita');
         let receitaJson = [];
         receitaRows.forEach(row => {
@@ -2352,7 +2426,7 @@
             disponivel_almoco: document.getElementById('p-almoco').checked,
             disponivel_jantar: document.getElementById('p-jantar').checked,
             ficha_tecnica_texto: document.getElementById('p-ficha-texto').value,
-            receita: receitaJson // JSONB INJECTADO
+            receita: receitaJson
         };
 
         btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A GUARDAR...`;
@@ -2401,8 +2475,8 @@
 
             cancelarEdicao(); 
             carregarDados();
-            alert("Artigo e Fórmula Matemática guardados com sucesso!");
-        } catch (err) { alert("Erro ao guardar: " + err.message); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-check"></i> GUARDAR ARTIGO`; }
+            mostrarAlertaPro("Sucesso", "Artigo e Fórmula Matemática guardados com sucesso!", "sucesso");
+        } catch (err) { mostrarAlertaPro("Erro", "Erro ao guardar: " + err.message, "erro"); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-check"></i> GUARDAR ARTIGO`; }
     }
 
     async function alternarOculto(id, estadoAtual) {
@@ -2411,7 +2485,7 @@
         if (!error) { 
             carregarDados(); 
         } else { 
-            alert("Erro ao alterar visibilidade: " + error.message); 
+            mostrarAlertaPro("Erro", "Erro ao alterar visibilidade: " + error.message, "erro"); 
         }
     }
 
@@ -2433,7 +2507,7 @@
     }
     
     async function apagarProd(id) { 
-        if(confirm("Tem a certeza que deseja apagar este artigo?")) { 
+        if(await mostrarConfirmPro("Atenção", "Tem a certeza que deseja apagar este artigo?")) { 
             const p = produtosLocais.find(item => item.id === id);
             const { error } = await _sb.from('produtos').delete().eq('id', id); 
             if(!error) {
@@ -2458,7 +2532,7 @@
         document.getElementById('p-almoco').checked = true;
         document.getElementById('p-jantar').checked = true;
 
-        document.getElementById('receita-container').innerHTML = ''; // Limpa Ficha de Custo
+        document.getElementById('receita-container').innerHTML = ''; 
 
         document.getElementById('form-title').innerHTML = `<i class="fas fa-box-open"></i> Publicar Artigo`;
         document.getElementById('btn-cancel').classList.add('hidden');
@@ -2494,7 +2568,6 @@
         const alergenios = p.alergenios || [];
         document.querySelectorAll('#p-alergenios-container input').forEach(c => c.checked = alergenios.includes(c.value));
 
-        // NOVO: Renderiza a Ficha de Custo Existente
         document.getElementById('receita-container').innerHTML = '';
         if(p.receita && Array.isArray(p.receita)) {
             p.receita.forEach(r => adicionarLinhaReceita(r.ingrediente_id, r.quantidade));
