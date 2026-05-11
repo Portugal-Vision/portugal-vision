@@ -252,7 +252,7 @@
         
         .compras-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
         .compras-table th { background: #f1f5f9; padding: 12px; font-size: 14px; color: #475569; border: 1px solid #cbd5e1; border-top: none; }
-        .compras-table td { padding: 8px 12px; border: 1px solid #cbd5e1; vertical-align: top; }
+        .compras-table td { padding: 8px 12px; border: 1px solid #cbd5e1; vertical-align: middle; }
         .compras-cat-title { font-weight: bold; font-size: 16px; background: #e2e8f0; padding: 10px; margin-top: 30px; margin-bottom: 0; color: #0f172a; border: 1px solid #cbd5e1; border-bottom: none; border-radius: 8px 8px 0 0;}
         .compras-table-wrapper { overflow-x: auto; width: 100%; border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; border-radius: 0 0 8px 8px; }
         
@@ -552,6 +552,18 @@
             
         </div>
 
+        <!-- MÓDULO ARMAZÉM / MATÉRIAS PRIMAS -->
+        <div class="card" style="margin-top: 25px;">
+            <h3 class="toggle-titulo" onclick="toggleArmazem()" style="margin: 0;">
+                <span><i class="fas fa-boxes"></i> Inventário Base & Armazém</span>
+                <span id="seta-armazem">▼</span>
+            </h3>
+            <div id="config-armazem" class="hidden" style="margin-top: 15px;">
+                <p style="font-size: 0.9em; color: #64748b;">Registe as matérias-primas e os stocks mínimos para automatizar a Lista de Compras.</p>
+                <div id="armazem-lista"></div>
+            </div>
+        </div>
+
         <div class="card">
             <h3 id="form-title" style="margin-top:0"><i class="fas fa-box-open"></i> Publicar Artigo</h3>
             <input type="hidden" id="edit-id">
@@ -565,7 +577,7 @@
                         Mostrar no Website Público
                     </label>
                     
-                    <label style="font-weight: bold; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 8px; background: #fef2f2; padding: 5px 10px; border-radius: 6px; border: 1px solid #fecaca;">
+                    <label style="font-weight: bold; color: var(--err); cursor: pointer; display: flex; align-items: center; gap: 8px; background: #fef2f2; padding: 5px 10px; border-radius: 6px; border: 1px solid #fecaca;">
                         <input type="checkbox" id="p-pede-ponto" style="width: 16px; height: 16px; margin: 0;">
                         🥩 Perguntar Ponto da Carne?
                     </label>
@@ -665,6 +677,16 @@
                 
                 <label style="font-size: 12px; color: #64748b; font-weight: 600; display: block; margin-top: 10px; margin-bottom: 5px;">Notas de Confeção (Ex: Custos, tempo de forno, gramagens):</label>
                 <textarea id="p-ficha-texto" placeholder="Notas exclusivas para os cozinheiros..." style="width:100%; height: 80px; resize: vertical; margin-top: 0;"></textarea>
+            </div>
+
+            <!-- NOVO MÓDULO: RECEITA MATEMÁTICA -->
+            <div style="background: #eff6ff; padding: 15px; border-radius: 12px; border: 1px solid #bfdbfe; margin-top: 15px; margin-bottom: 15px;">
+                <h5 style="margin: 0 0 10px 0; color: #1e3a8a; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-calculator"></i> Receita Matemática (Bill of Materials)
+                </h5>
+                <p style="font-size: 12px; color: #3b82f6; margin-top:0;">Adicione os ingredientes do Armazém que compõem este artigo para abater ao stock automaticamente.</p>
+                <div id="receita-container"></div>
+                <button class="btn-add-row" onclick="adicionarLinhaReceita()"><i class="fas fa-plus"></i> Adicionar Ingrediente à Receita</button>
             </div>
 
             <input type="file" id="p-media" accept="image/*,video/*" capture="environment">
@@ -776,7 +798,6 @@
     </div>
 </div>
 
-<!-- NOVO: MODAL DA AUDITORIA / FIREWALL -->
 <div id="modal-auditoria" class="hidden no-print" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: white; padding: 0; border-radius: 16px; max-width: 800px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
         <div style="background: #f8fafc; padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
@@ -821,6 +842,7 @@
     </div>
     <div id="print-preview-content"></div>
 </div>
+
 <script>
     const _URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
@@ -829,6 +851,7 @@
     let lojaAtiva = null;
     let produtosLocais = []; 
     let empregadosLocais = [];
+    let ingredientesLocais = []; // NOVO
     const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
     const nomeDiasInt = {1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado", 0: "Domingo"};
 
@@ -869,7 +892,6 @@
         }
     };
 
-    // --- NOVA LÓGICA DE AUDITORIA DO LOJISTA ---
     async function registarAuditoriaLojista(acaoDetalhe) {
         if(!lojaAtiva) return;
         try {
@@ -887,7 +909,6 @@
         const tbody = document.getElementById('tabela-auditoria-body');
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">A carregar registos da Firewall...</td></tr>';
         
-        // Puxar os ultimos 50 registos de auditoria
         const { data: logs, error } = await _sb.from('auditoria_logs')
             .select('*')
             .eq('loja_id', lojaAtiva.id)
@@ -909,14 +930,8 @@
         }).join('');
     }
 
-    function abrirAuditoria() {
-        document.getElementById('modal-auditoria').classList.remove('hidden');
-        carregarAuditoria();
-    }
-
-    function fecharAuditoria() {
-        document.getElementById('modal-auditoria').classList.add('hidden');
-    }
+    function abrirAuditoria() { document.getElementById('modal-auditoria').classList.remove('hidden'); carregarAuditoria(); }
+    function fecharAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
 
     function validarTelefonePT(telefone) {
         if (!telefone) return false;
@@ -937,7 +952,6 @@
         let total = limpo[0] * 9 + limpo[1] * 8 + limpo[2] * 7 + limpo[3] * 6 + limpo[4] * 5 + limpo[5] * 4 + limpo[6] * 3 + limpo[7] * 2;
         let modulo11 = total - parseInt(total / 11) * 11;
         let comparador = modulo11 === 1 || modulo11 === 0 ? 0 : 11 - modulo11;
-        
         return limpo[8] == comparador;
     }
 
@@ -974,9 +988,7 @@
         document.getElementById('modal-ficha-tecnica').classList.remove('hidden');
     }
 
-    function fecharModalFicha() {
-        document.getElementById('modal-ficha-tecnica').classList.add('hidden');
-    }
+    function fecharModalFicha() { document.getElementById('modal-ficha-tecnica').classList.add('hidden'); }
 
     function atualizarLayoutNegocio() {
         const tipo = document.getElementById('v-tipo-negocio').value || 'restaurante';
@@ -1013,6 +1025,14 @@
     function toggleStaff() {
         const div = document.getElementById('config-staff');
         const seta = document.getElementById('seta-staff');
+        if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
+        else { div.classList.add('hidden'); seta.innerText = '▼'; }
+    }
+
+    // NOVO: Toggle Armazém
+    function toggleArmazem() {
+        const div = document.getElementById('config-armazem');
+        const seta = document.getElementById('seta-armazem');
         if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
@@ -1092,9 +1112,7 @@
                 const masked = parts[0].substring(0, 3) + "***@" + parts[1];
                 document.getElementById('rec-email-result').innerHTML = `E-mail associado:<br><span style="font-size:16px;">${masked}</span>`;
             }
-        } catch (err) {
-            console.error(err);
-        } finally {
+        } catch (err) { console.error(err); } finally {
             btn.innerHTML = `<i class="fas fa-search"></i> RECUPERAR E-MAIL`;
             btn.disabled = false;
         }
@@ -1232,11 +1250,144 @@
         document.getElementById('data-export').value = new Date().toISOString().split('T')[0];
 
         verificarPlano();
+        await carregarIngredientes(); // NOVO: Carregar Armazém primeiro
         carregarDados();
         carregarMetricasHoje(); 
         carregarStaff(); 
         
         iniciarEscutaRealtime();
+    }
+
+    // NOVO: Funções de Armazém e Receita Matemática
+    async function carregarIngredientes() {
+        if(!lojaAtiva) return;
+        const { data } = await _sb.from('ingredientes')
+            .select('*')
+            .eq('loja_id', lojaAtiva.id)
+            .order('nome', {ascending: true});
+        ingredientesLocais = data || [];
+        renderizarArmazem();
+    }
+
+    function renderizarArmazem() {
+        let html = `
+        <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center; flex-wrap:wrap;">
+            <input type="hidden" id="ing-id">
+            <input type="text" id="ing-nome" placeholder="Nome (Ex: Bife da Vazia)" style="flex:2; margin:0;">
+            <select id="ing-unidade" style="flex:1; margin:0;">
+                <option value="Kg">Kg</option>
+                <option value="Litros">Litros</option>
+                <option value="Unidade">Unidade</option>
+                <option value="Gramas">Gramas</option>
+            </select>
+            <input type="number" step="0.001" id="ing-stock" placeholder="Stock Atual" style="flex:1; margin:0;">
+            <input type="number" step="0.001" id="ing-min" placeholder="Min. Crítico" style="flex:1; margin:0;">
+            <button onclick="salvarIngrediente()" style="background:var(--ok); width:auto; margin:0;"><i class="fas fa-save"></i></button>
+            <button onclick="cancelarEdicaoIngrediente()" id="btn-canc-ing" class="hidden" style="background:var(--err); width:auto; margin:0;"><i class="fas fa-times"></i></button>
+        </div>
+        <table class="compras-table" style="width:100%; font-size:13px;">
+            <thead><tr><th>Matéria-Prima</th><th>Unidade</th><th>Stock Real</th><th>Min. Alerta</th><th>Ações</th></tr></thead>
+            <tbody>
+        `;
+        
+        if (ingredientesLocais.length === 0) {
+            html += `<tr><td colspan="5" style="text-align:center; color:#94a3b8;">Armazém vazio. Registe os seus primeiros ingredientes.</td></tr>`;
+        } else {
+            ingredientesLocais.forEach(i => {
+                const critico = parseFloat(i.stock_atual) <= parseFloat(i.stock_minimo);
+                html += `<tr style="${critico ? 'background:#fef2f2; color:#991b1b;' : ''}">
+                    <td>${critico ? '<i class="fas fa-exclamation-triangle" title="Baixo Stock"></i> ' : ''}${i.nome}</td>
+                    <td>${i.unidade}</td>
+                    <td><b style="font-size:14px;">${i.stock_atual}</b></td>
+                    <td>${i.stock_minimo}</td>
+                    <td>
+                        <button class="btn-edit-staff" onclick="prepararEdicaoIngrediente('${i.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-del-staff" onclick="apagarIngrediente('${i.id}')" title="Remover do Armazém"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+        html += `</tbody></table>`;
+        document.getElementById('armazem-lista').innerHTML = html;
+    }
+
+    async function salvarIngrediente() {
+        const id = document.getElementById('ing-id').value;
+        const nome = document.getElementById('ing-nome').value;
+        const unidade = document.getElementById('ing-unidade').value;
+        const stockAtual = parseFloat(document.getElementById('ing-stock').value) || 0;
+        const stockMin = parseFloat(document.getElementById('ing-min').value) || 0;
+
+        if(!nome) return alert("Defina um nome para o ingrediente.");
+
+        const dados = { loja_id: lojaAtiva.id, nome: nome, unidade: unidade, stock_atual: stockAtual, stock_minimo: stockMin };
+
+        let erroMsg = "";
+        if (id) {
+            const { error } = await _sb.from('ingredientes').update(dados).eq('id', id);
+            if(error) erroMsg = error.message;
+        } else {
+            const { error } = await _sb.from('ingredientes').insert([dados]);
+            if(error) erroMsg = error.message;
+        }
+
+        if(erroMsg) return alert("Erro ao guardar ingrediente: " + erroMsg);
+        
+        cancelarEdicaoIngrediente();
+        await carregarIngredientes();
+    }
+
+    function prepararEdicaoIngrediente(id) {
+        const ing = ingredientesLocais.find(i => i.id === id);
+        if(!ing) return;
+        document.getElementById('ing-id').value = ing.id;
+        document.getElementById('ing-nome').value = ing.nome;
+        document.getElementById('ing-unidade').value = ing.unidade;
+        document.getElementById('ing-stock').value = ing.stock_atual;
+        document.getElementById('ing-min').value = ing.stock_minimo;
+        document.getElementById('btn-canc-ing').classList.remove('hidden');
+    }
+
+    function cancelarEdicaoIngrediente() {
+        document.getElementById('ing-id').value = '';
+        document.getElementById('ing-nome').value = '';
+        document.getElementById('ing-stock').value = '';
+        document.getElementById('ing-min').value = '';
+        document.getElementById('btn-canc-ing').classList.add('hidden');
+    }
+
+    async function apagarIngrediente(id) {
+        if(confirm("Apagar este ingrediente do armazém? Pode afetar as receitas que o utilizam.")) {
+            await _sb.from('ingredientes').delete().eq('id', id);
+            await carregarIngredientes();
+        }
+    }
+
+    function adicionarLinhaReceita(ingId = '', qtd = '') {
+        const container = document.getElementById('receita-container');
+        const div = document.createElement('div');
+        div.className = 'linha-receita';
+        div.style.cssText = 'display:flex; gap:10px; margin-bottom:10px; align-items:center; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #bfdbfe;';
+        
+        let options = '<option value="">Selecione a Matéria-Prima...</option>';
+        ingredientesLocais.forEach(i => {
+            options += `<option value="${i.id}" ${i.id === ingId ? 'selected' : ''} data-un="${i.unidade}">${i.nome}</option>`;
+        });
+
+        div.innerHTML = `
+            <select class="rec-ing" style="flex:2; margin:0;" onchange="atualizarUnidadeReceita(this)">${options}</select>
+            <input type="number" step="0.001" class="rec-qtd" placeholder="Dedução por venda" value="${qtd}" style="flex:1; margin:0;">
+            <span class="rec-un" style="font-size:12px; font-weight:bold; color:#64748b; width: 60px; text-align: center;">-</span>
+            <button onclick="this.parentElement.remove()" style="background:var(--err); width:auto; padding:8px 12px; margin:0;"><i class="fas fa-trash"></i></button>
+        `;
+        container.appendChild(div);
+        if(ingId) atualizarUnidadeReceita(div.querySelector('.rec-ing'));
+    }
+
+    function atualizarUnidadeReceita(select) {
+        if(select.selectedIndex <= 0) return select.parentElement.querySelector('.rec-un').innerText = '-';
+        const opt = select.options[select.selectedIndex];
+        select.parentElement.querySelector('.rec-un').innerText = opt.dataset.un || '-';
     }
 
     function iniciarEscutaRealtime() {
@@ -1390,7 +1541,6 @@
         }
     }
 
-    // IMPRIMIR HORÁRIO NORMAL
     function imprimirAvisoHorario() {
         let html = `<div style="text-align:center; padding: 20px; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; box-sizing: border-box;">
             <div>
@@ -1428,7 +1578,6 @@
         document.body.classList.remove('is-printing-horario');
     }
 
-    // IMPRIMIR AVISO DE FÉRIAS
     function imprimirAvisoFerias() {
         if(!lojaAtiva.ferias_inicio || !lojaAtiva.ferias_fim) {
             return alert("Defina primeiro as datas de início e fim das férias antes de imprimir.");
@@ -1633,10 +1782,48 @@
         tbody.appendChild(novaLinha);
     };
 
+    // NOVO MOTOR DE COMPRAS INTELIGENTE
     function gerarTemplateCompras() {
         const dataPt = new Date().toLocaleDateString('pt-PT');
         const nomeLoja = lojaAtiva.nome || "Portugal Vision";
         
+        let html = `
+        <div class="print-menu-item" style="display: block; text-align: left; padding: 20px;">
+            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
+                <h1 style="margin: 0 0 10px 0; color: #0f172a;">${nomeLoja}</h1>
+                <p style="margin: 0; font-size: 16px; font-weight: bold; color: #334155;">Lista de Compras Inteligente - ${dataPt}</p>
+            </div>
+            <div style="width: 100%;">
+        `;
+
+        // Motor: Identifica Matérias Primas em Rutura de Stock
+        const criticos = ingredientesLocais.filter(i => parseFloat(i.stock_atual) <= parseFloat(i.stock_minimo));
+        if(criticos.length > 0) {
+            html += `
+            <div class="compras-cat-title" style="background:#fee2e2; color:#991b1b; border-color:#fecaca;"><i class="fas fa-exclamation-circle"></i> Reposição Crítica de Armazém</div>
+            <div class="compras-table-wrapper" style="border-color:#fecaca;">
+                <table class="compras-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">Matéria-Prima</th>
+                            <th style="width: 20%; text-align: center;">Falta Mínima</th>
+                            <th style="width: 30%; text-align: center;">Comprar (Qtd)</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            criticos.forEach(c => {
+                const deficit = (parseFloat(c.stock_minimo) - parseFloat(c.stock_atual)).toFixed(2);
+                html += `<tr>
+                    <td style="padding:12px; font-weight:bold;">${c.nome}</td>
+                    <td style="text-align:center; color:#991b1b; font-weight:bold;">+${deficit} ${c.unidade}</td>
+                    <td contenteditable="true" style="background:#fff; outline:1px dashed #fca5a5;"></td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+        } else {
+            html += `<div style="background:#d1fae5; color:#065f46; padding:15px; border-radius:8px; border:1px solid #a7f3d0; text-align:center; margin-bottom:20px; font-weight:bold;"><i class="fas fa-check-circle"></i> O Armazém está saudável. Nenhum alerta de stock mínimo detetado.</div>`;
+        }
+
         const categoriasDeCompra = [
             "Carnes", 
             "Peixes e Mariscos", 
@@ -1646,20 +1833,6 @@
             "Bebidas"
         ];
 
-        let html = `
-        <div class="print-menu-item" style="display: block; text-align: left; padding: 20px;">
-            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
-                <h1 style="margin: 0 0 10px 0; color: #0f172a;">${nomeLoja}</h1>
-                <p style="margin: 0; font-size: 16px; font-weight: bold; color: #334155;">Lista de Compras Semanal - ${dataPt}</p>
-            </div>
-            
-            <p style="font-size: 14px; margin-bottom: 20px; text-align: center; color: #475569;">
-                <i>Preencha os artigos nas respetivas secções e use o botão [+] se precisar de mais linhas.</i>
-            </p>
-            
-            <div style="width: 100%;">
-        `;
-
         categoriasDeCompra.forEach(cat => {
             html += `
             <div class="compras-cat-title">${cat}</div>
@@ -1667,7 +1840,7 @@
                 <table class="compras-table">
                     <thead>
                         <tr>
-                            <th style="width: 60%;">Artigo a Encomendar</th>
+                            <th style="width: 60%;">Artigo Extra (Reposição Manual)</th>
                             <th style="width: 20%; text-align: center;">Quantidade</th>
                             <th style="width: 20%; text-align: center;">Fornecedor</th>
                         </tr>
@@ -1676,23 +1849,22 @@
                         <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                         <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                         <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                        <tr><td contenteditable="true" style="padding: 12px;"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                     </tbody>
                 </table>
             </div>
-            <button class="btn-add-row no-print" onclick="adicionarLinhaCompra(this)"><i class="fas fa-plus"></i> Adicionar Linha</button>
+            <button class="btn-add-row no-print" onclick="adicionarLinhaCompra(this)"><i class="fas fa-plus"></i> Adicionar Linha Manual</button>
             `;
         });
 
         html += `
             </div>
             <div style="margin-top: 40px; font-size: 12px; color: #666; text-align: center;">
-                Template gerado pela plataforma Portugal Vision.
+                Motor Logístico gerado pela plataforma Portugal Vision.
             </div>
         </div>`;
 
-        document.getElementById('preview-title').innerHTML = '<i class="fas fa-shopping-cart"></i> Template de Compras';
-        document.getElementById('preview-subtitle').innerText = 'Escreva diretamente nas linhas. Na impressão, os botões [ + ] ficarão invisíveis.';
+        document.getElementById('preview-title').innerHTML = '<i class="fas fa-shopping-cart"></i> Lista de Compras Inteligente';
+        document.getElementById('preview-subtitle').innerText = 'Os alertas de rutura foram injetados. Preencha as quantidades e imprima.';
         document.getElementById('print-preview-content').innerHTML = html;
         document.querySelector('.container').classList.add('hidden');
         document.getElementById('print-area-wrapper').classList.remove('hidden');
@@ -1775,7 +1947,7 @@
                             <div class="ficha-layout-flex">
                                 ${imgHtmlFicha}
                                 <div style="flex: 1; min-width: 250px;">
-                                    <h4 style="margin:0 0 10px 0; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">Ingredientes da Ementa:</h4>
+                                    <h4 style="margin:0 0 10px 0; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">Descrição da Ementa:</h4>
                                     <div class="print-item-desc" style="font-size: 14px; margin:0;" contenteditable="true" spellcheck="false">${parseMarkdownToHTML(p.descricao)}</div>
                                 </div>
                             </div>
@@ -1991,10 +2163,13 @@
                 }
 
                 let fichaInternaHtml = "";
-                if(p.ficha_tecnica_texto || p.ficha_tecnica_url) {
-                    fichaInternaHtml = `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">`;
+                if(p.ficha_tecnica_texto || p.ficha_tecnica_url || (p.receita && p.receita.length > 0)) {
+                    fichaInternaHtml = `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; display:flex; gap:5px; flex-wrap:wrap;">`;
+                    if(p.receita && p.receita.length > 0) {
+                        fichaInternaHtml += `<span class="btn-ficha-rapida" style="background:#bfdbfe; color:#1e3a8a;"><i class="fas fa-calculator"></i> ${p.receita.length} Ingredientes</span>`;
+                    }
                     if(p.ficha_tecnica_texto) {
-                        fichaInternaHtml += `<button class="btn-ficha-rapida texto" onclick="abrirModalFicha(${p.id})"><i class="fas fa-file-alt"></i> Ler Notas</button>`;
+                        fichaInternaHtml += `<button class="btn-ficha-rapida texto" onclick="abrirModalFicha('${p.id}')"><i class="fas fa-file-alt"></i> Ler Notas</button>`;
                     }
                     if(p.ficha_tecnica_url) {
                         fichaInternaHtml += `<a href="${p.ficha_tecnica_url}" target="_blank" class="btn-ficha-rapida anexo"><i class="fas fa-paperclip"></i> Anexo</a>`;
@@ -2005,11 +2180,11 @@
                 grid.innerHTML += `
                 <div class="prod-card ${p.oculto ? 'oculto' : ''}">
                     <div class="prod-actions">
-                        <button class="btn-circle" style="background: ${p.oculto ? 'var(--ok)' : '#64748b'}" onclick="alternarOculto(${p.id}, ${p.oculto})" title="Ocultar/Mostrar Artigo">
+                        <button class="btn-circle" style="background: ${p.oculto ? 'var(--ok)' : '#64748b'}" onclick="alternarOculto('${p.id}', ${p.oculto})" title="Ocultar/Mostrar Artigo">
                             ${p.oculto ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>'}
                         </button>
-                        <button class="btn-circle" style="background:var(--warn)" onclick="prepararEdicao(${p.id})"><i class="fas fa-edit"></i></button>
-                        <button class="btn-circle" style="background:var(--err)" onclick="apagarProd(${p.id})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-circle" style="background:var(--warn)" onclick="prepararEdicao('${p.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-circle" style="background:var(--err)" onclick="apagarProd('${p.id}')"><i class="fas fa-trash"></i></button>
                     </div>
                     <img src="${p.imagem_url || ''}" class="prod-img">
                     <div style="padding:12px">
@@ -2147,6 +2322,18 @@
         const ocultarProduto = !document.getElementById('p-visibilidade').checked;
         const pedePontoCarne = document.getElementById('p-pede-ponto').checked;
 
+        // NOVO: COMPILA A RECEITA JSON
+        const receitaRows = document.querySelectorAll('#receita-container .linha-receita');
+        let receitaJson = [];
+        receitaRows.forEach(row => {
+            const select = row.querySelector('.rec-ing');
+            const ingId = select.value;
+            const qtd = parseFloat(row.querySelector('.rec-qtd').value) || 0;
+            if(ingId && qtd > 0) {
+                receitaJson.push({ ingrediente_id: ingId, quantidade: qtd });
+            }
+        });
+
         const dados = {
             nome: nomeProd,
             preco: precoVal,
@@ -2164,7 +2351,8 @@
             
             disponivel_almoco: document.getElementById('p-almoco').checked,
             disponivel_jantar: document.getElementById('p-jantar').checked,
-            ficha_tecnica_texto: document.getElementById('p-ficha-texto').value
+            ficha_tecnica_texto: document.getElementById('p-ficha-texto').value,
+            receita: receitaJson // JSONB INJECTADO
         };
 
         btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A GUARDAR...`;
@@ -2203,17 +2391,17 @@
             let res;
             if (id) { 
                 res = await _sb.from('produtos').update(dados).eq('id', id); 
-                registarAuditoriaLojista(`Atualizou o Artigo: ${nomeProd}`);
+                registarAuditoriaLojista(`Atualizou o Artigo: ${nomeProd} (Bill of Materials gerado)`);
             } else { 
                 res = await _sb.from('produtos').insert([dados]); 
-                registarAuditoriaLojista(`Criou um novo Artigo: ${nomeProd}`);
+                registarAuditoriaLojista(`Criou um novo Artigo: ${nomeProd} (Bill of Materials gerado)`);
             }
 
             if(res.error) throw res.error;
 
             cancelarEdicao(); 
             carregarDados();
-            alert("Artigo guardado com sucesso!");
+            alert("Artigo e Fórmula Matemática guardados com sucesso!");
         } catch (err) { alert("Erro ao guardar: " + err.message); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-check"></i> GUARDAR ARTIGO`; }
     }
 
@@ -2270,6 +2458,8 @@
         document.getElementById('p-almoco').checked = true;
         document.getElementById('p-jantar').checked = true;
 
+        document.getElementById('receita-container').innerHTML = ''; // Limpa Ficha de Custo
+
         document.getElementById('form-title').innerHTML = `<i class="fas fa-box-open"></i> Publicar Artigo`;
         document.getElementById('btn-cancel').classList.add('hidden');
     }
@@ -2303,6 +2493,12 @@
         
         const alergenios = p.alergenios || [];
         document.querySelectorAll('#p-alergenios-container input').forEach(c => c.checked = alergenios.includes(c.value));
+
+        // NOVO: Renderiza a Ficha de Custo Existente
+        document.getElementById('receita-container').innerHTML = '';
+        if(p.receita && Array.isArray(p.receita)) {
+            p.receita.forEach(r => adicionarLinhaReceita(r.ingrediente_id, r.quantidade));
+        }
 
         document.getElementById('form-title').innerHTML = `<i class="fas fa-edit"></i> Editar Artigo`;
         document.getElementById('btn-cancel').classList.remove('hidden');
