@@ -2518,6 +2518,13 @@
             if (data && data.error) throw new Error(data.error);
             if (!data || !data.dados_ia) throw new Error("Resposta inválida do servidor.");
 
+            // <-- BLOQUEIO DE RESPONSABILIDADE INJETADO AQUI -->
+            await mostrarAlertaPro(
+                "⚠️ Aviso Legal - Inteligência Artificial", 
+                "Os dados seguintes foram extraídos e sugeridos automaticamente pela IA com base no teu documento.\n\nA Portugal Vision não se responsabiliza por quantidades erradas ou alergénios não marcados. O lojista é OBRIGADO a rever todos os campos antes de guardar o artigo.", 
+                "aviso"
+            );
+
             const respostaIA = data.dados_ia;
             
             if(respostaIA.descricao_publica) {
