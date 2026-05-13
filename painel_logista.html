@@ -916,6 +916,7 @@
 
     let canalNotificacoes = null;
 
+    // ----- NOVOS TOGGLES (CHEVRONS) PARA A UI -----
     function toggleTesouraria() {
         const div = document.getElementById('painel-tesouraria');
         const seta = document.getElementById('seta-tesouraria');
@@ -943,7 +944,9 @@
         if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
+    // ----------------------------------------------
 
+    // FUNÇÕES DO MOTOR DE ALERTAS PRO
     function mostrarAlertaPro(titulo, mensagem, tipo = 'info') {
         return new Promise((resolve) => {
             const overlay = document.getElementById('pv-dialog-overlay');
@@ -1110,7 +1113,7 @@
     function fecharInfoAlergenios() { document.getElementById('modal-alergenios').classList.add('hidden'); }
 
     function abrirModalFicha(idProduto) {
-        const p = produtosLocais.find(item => item.id === idProduto);
+        const p = produtosLocais.find(item => item.id == idProduto);
         if(!p) return;
 
         document.getElementById('modal-ficha-titulo').innerHTML = `<i class="fas fa-clipboard-list" style="color:var(--s);"></i> ${p.nome}`;
@@ -2046,7 +2049,6 @@
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // NOVO: GERAR TABELA DE PREÇOS
     function gerarTabelaPrecos() {
         const nomeLoja = lojaAtiva.nome || "A Nossa Loja";
         const dataPt = new Date().toLocaleDateString('pt-PT');
@@ -2673,7 +2675,7 @@
     
     async function apagarProd(id) { 
         if(await mostrarConfirmPro("Atenção", "Tem a certeza que deseja apagar este artigo?")) { 
-            const p = produtosLocais.find(item => item.id === id);
+            const p = produtosLocais.find(item => item.id == id);
             const { error } = await _sb.from('produtos').delete().eq('id', id); 
             if(!error) {
                 if(p) registarAuditoriaLojista(`Apagou o Artigo: ${p.nome}`);
@@ -2707,7 +2709,7 @@
     }
 
     function prepararEdicao(id) {
-        const p = produtosLocais.find(item => item.id === id);
+        const p = produtosLocais.find(item => item.id == id);
         if(!p) return;
 
         const divPublicar = document.getElementById('painel-publicar');
