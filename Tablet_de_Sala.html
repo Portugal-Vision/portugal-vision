@@ -1775,11 +1775,7 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...'; btn.disabled = true;
 
         try {
-            if (querImprimir) {
-                gerarTalaoImpressao(mesaSegura, totalPagamento, metodo);
-                window.print();
-            }
-
+            // 1. FAZER TODAS AS OPERAÇÕES DE BASE DE DADOS PRIMEIRO
             if (window.splitEmCurso) {
                 const gruposPorPedido = {};
                 window.splitBillData.forEach(op => {
@@ -1845,15 +1841,29 @@
                 }
             }
 
+            // 2. LIMPAR A INTERFACE E CARREGAR DADOS FREscos
             window.splitEmCurso = false;
             window.splitBillData = [];
             fecharModal('modal-pagar-mesa');
             await carregarDados();
+
+            // 3. AGORA SIM, BLOQUEAR PARA IMPRESSÃO SE SOLICITADO
+            if (querImprimir) {
+                gerarTalaoImpressao(mesaSegura, totalPagamento, metodo);
+                // Um pequeno delay garante que o DOM foi todo renderizado e o modal fechado visualmente
+                setTimeout(() => {
+                    window.print();
+                }, 300);
+            }
             
         } catch(e) {
-            mostrarAlertaCustom("Erro ao fechar mesa.", "Erro Fatal");
+            mostrarAlertaCustom("Erro ao fechar mesa: " + e.message, "Erro Fatal");
         } finally {
-            btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; btn.disabled = false;
+            // Em caso de erro, restaurar o botão. Se der sucesso, o modal já fechou.
+            if(document.getElementById('modal-pagar-mesa').style.display !== 'none') {
+                btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; 
+                btn.disabled = false;
+            }
         }
     }
 
