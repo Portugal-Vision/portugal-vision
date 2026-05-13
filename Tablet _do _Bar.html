@@ -11,12 +11,12 @@
         /* TEMA DARK PARA O BAR (Tons Roxo/Índigo para distinguir da Cozinha) */
         :root { 
             --bg-dark: #0f172a; 
-            --bg-card: #1e1b4b; /* Fundo mais arroxeado escuro */
+            --bg-card: #1e1b4b; 
             --bg-radar: #2e1065;
             --text-light: #f8fafc; 
             --text-muted: #a5b4fc;
-            --primary: #8b5cf6; /* Roxo vibrante em vez do Azul */
-            --warning: #f43f5e; /* Rosa escuro para avisos */
+            --primary: #8b5cf6; 
+            --warning: #f43f5e; 
             --success: #10b981; 
             --danger: #e11d48;
             --border-color: #4c1d95;
@@ -392,6 +392,12 @@
                 
                 if (itensBar.length > 0) {
                     const pedidoApenasBar = { ...p, itens: itensBar };
+                    // Se o item do bar já iniciou a preparação, assume estado local para UI
+                    if(itensBar.some(it => it._barIniciado) && p.estado === 'pendente') {
+                        pedidoApenasBar.estadoLocal = 'preparacao';
+                    } else {
+                        pedidoApenasBar.estadoLocal = p.estado;
+                    }
                     pedidosBar.push(pedidoApenasBar);
                 }
             });
@@ -440,10 +446,10 @@
             let btnAcao = '';
             let classeEstado = '';
 
-            if (p.estado === 'pendente') {
+            if (p.estadoLocal === 'pendente') {
                 classeEstado = 'estado-pendente';
                 btnAcao = `<button class="btn-kds btn-start" onclick="iniciarPreparacao(${p.id})"><i class="fas fa-blender"></i> Preparar Bebida</button>`;
-            } else if (p.estado === 'preparacao') {
+            } else if (p.estadoLocal === 'preparacao') {
                 classeEstado = 'estado-preparacao';
                 btnAcao = `<button class="btn-kds btn-finish" onclick="marcarProntoBar(${p.id})"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
             }
@@ -467,7 +473,21 @@
 
     // --- NOVA LOGICA DE ESTADOS PARCIAIS (BAR) ---
     async function iniciarPreparacao(id) {
-        await _sb.from('pedidos').update({ estado: 'preparacao' }).eq('id', id);
+        const p = cachePedidosBar.find(x => x.id === id);
+        if(!p) return;
+
+        let novoItens = [...p.itens];
+
+        novoItens.forEach(item => {
+            if (isItemDeBar(item)) {
+                item._barIniciado = true;
+            }
+        });
+
+        await _sb.from('pedidos').update({ 
+            itens: novoItens 
+        }).eq('id', id);
+        
         carregarPedidosBar();
     }
 
@@ -498,6 +518,7 @@
                 itens: novoItens
             }).eq('id', id);
         } else {
+            // Guarda o carimbo de pronto do bar, mantendo a pendência da cozinha
             await _sb.from('pedidos').update({ 
                 itens: novoItens
             }).eq('id', id);
