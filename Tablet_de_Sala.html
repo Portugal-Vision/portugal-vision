@@ -1854,7 +1854,7 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...'; btn.disabled = true;
 
         try {
-            // 1. FAZER TODAS AS OPERAÇÕES DE BASE DE DADOS PRIMEIRO
+            // 1. OPERAÇÕES BD - AGORA COM CAPTURA ESTRITA DE ERROS 403
             if (window.splitEmCurso) {
                 const gruposPorPedido = {};
                 window.splitBillData.forEach(op => {
@@ -1883,11 +1883,13 @@
                     const totalRemaining = itemsToKeep.reduce((sum, it) => sum + (it.preco * it.qtde), 0);
                     
                     if (itemsToKeep.length === 0) {
-                        await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', pedidoId);
+                        const { error: err1 } = await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', pedidoId);
+                        if (err1) throw new Error("Acesso Negado (RLS) ao atualizar pedido: " + err1.message);
                     } else {
-                        await _sb.from('pedidos').update({ itens: itemsToKeep, total: totalRemaining }).eq('id', pedidoId);
+                        const { error: err2 } = await _sb.from('pedidos').update({ itens: itemsToKeep, total: totalRemaining }).eq('id', pedidoId);
+                        if (err2) throw new Error("Acesso Negado (RLS) ao atualizar itens: " + err2.message);
                         
-                        await _sb.from('pedidos').insert([{
+                        const { error: err3 } = await _sb.from('pedidos').insert([{
                             loja_id: minhaLojaId,
                             tipo_pedido: ped.tipo_pedido,
                             mesa: ped.mesa,
@@ -1897,9 +1899,9 @@
                             estado: 'finalizado',
                             metodo_pagamento: metodo
                         }]);
+                        if (err3) throw new Error("Acesso Negado (RLS) ao inserir split: " + err3.message);
                     }
                 }
-                
                 registarAuditoria(`Fechou a conta PARCIALMENTE na Mesa ${numMesaLimpo} (Pagamento por ${metodo}) no valor de ${totalPagamento}€`);
 
             } else {
@@ -1907,7 +1909,8 @@
                 if(idsStr && idsStr !== '[]') {
                     const ids = JSON.parse(idsStr);
                     for(let id of ids) {
-                        await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
+                        const { error: errUpdate } = await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
+                        if (errUpdate) throw new Error("Bloqueio de Permissões BD (Verificar Políticas RLS): " + errUpdate.message);
                     }
                     
                     if(mesaSegura !== 'Takeaway' && mesaSegura !== 'Reserva') {
@@ -1920,25 +1923,21 @@
                 }
             }
 
-            // 2. LIMPAR A INTERFACE E CARREGAR DADOS FREscos
+            // 2. LIMPAR INTERFACE (SÓ ACONTECE SE A BD NÃO DER ERRO)
             window.splitEmCurso = false;
             window.splitBillData = [];
             fecharModal('modal-pagar-mesa');
             await carregarDados();
 
-            // 3. AGORA SIM, BLOQUEAR PARA IMPRESSÃO SE SOLICITADO
+            // 3. IMPRIMIR
             if (querImprimir) {
                 gerarTalaoImpressao(mesaSegura, totalPagamento, metodo);
-                // Um pequeno delay garante que o DOM foi todo renderizado e o modal fechado visualmente
-                setTimeout(() => {
-                    window.print();
-                }, 300);
+                setTimeout(() => { window.print(); }, 300);
             }
             
         } catch(e) {
-            mostrarAlertaCustom("Erro ao fechar mesa: " + e.message, "Erro Fatal");
+            mostrarAlertaCustom(e.message, "Erro Fatal BD");
         } finally {
-            // Em caso de erro, restaurar o botão. Se der sucesso, o modal já fechou.
             if(document.getElementById('modal-pagar-mesa').style.display !== 'none') {
                 btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; 
                 btn.disabled = false;
