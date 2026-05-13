@@ -304,7 +304,7 @@
         </div>
 
         <div id="form-reset-pass" style="display:none;">
-            <p style="font-size:13px; margin-top:0;" data-i18n="recover_pass_desc">Insira o e-mail da sua conta para receber um link de redefinição.</p>
+            <p style="font-size:13px; margin-top:0;" data-i18n="recover_pass_desc">Insira o e-mail da sua cuenta para receber um link de redefinição.</p>
             <input type="email" id="reset-pass-email" class="input-form" placeholder="E-mail da Conta" data-i18n-ph="email">
             <button class="btn-checkout" onclick="clienteRecuperarPass()" data-i18n="send_link">Enviar Link</button>
             <a onclick="switchAuth('login')" style="display:block; text-align:center; margin-top:15px; color:var(--s); cursor:pointer; font-weight:600; font-size:13px;" data-i18n="back_to_login">Voltar ao Login</a>
@@ -563,7 +563,7 @@
             your_order: "O seu Pedido", total: "Total:", how_to_order: "1. Como deseja encomendar?", takeaway: "Levantamento", reservation: "Reserva",
             date: "Data:", time: "Hora (Intervalos de 30 min):", people_count: "Nº Pessoas (Só para Reserva)",
             need_nif: "Deseja NIF na Fatura? (Obrigatório escolher)", yes: "Sim", no: "Não", nif_placeholder: "O seu número de contribuinte (NIF)", nif_warning: "Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.",
-            payment_method: "2. Método de Paymento", exclusive_mbway: "Pagamento Exclusivo via MBWay", mbway_instructions: "O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº",
+            payment_method: "2. Método de Pagamento", exclusive_mbway: "Pagamento Exclusivo via MBWay", mbway_instructions: "O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº",
             confirm_order: "Confirmar e Enviar Pedido", ask_bill: "Pedir a Conta", payment_method_simple: "Método de Pagamento", cash: "💵 Dinheiro", card: "💳 Multibanco", meal_ticket: "🎫 Ticket Refeição",
             need_nif_bill: "Deseja fatura com NIF?", send_request: "Enviar Pedido", search_menu: "Pesquisar no menu...", view_order: "Ver Pedido",
             cookies: "Cookies", complaints_book: "Livro de Reclamações", rights_reserved: "Todos os direitos reservados.",
@@ -1206,6 +1206,7 @@
         if(inputData) { inputData.min = hojeIso; inputData.value = hojeIso; }
     }
 
+    // --- NOVA LÓGICA DE HORÁRIOS BLINDADA PARA OS TURNOS ---
     function atualizarHorariosDisponiveis() {
         if (!lojaAtual) return;
         
@@ -1226,6 +1227,7 @@
 
         const diaSemanaDb = (dataSelecionada.getDay() + 6) % 7; 
         
+        // Verifica restrições de Pratos do Dia
         let pratoInvalido = null;
         for (let item of carrinho) {
             const pDb = todosProdutos.find(p => String(p.id) === String(item.id));
@@ -1247,6 +1249,7 @@
             erroDia.style.display = 'none';
         }
 
+        // Lê o novo formato JSON dos Horários (Turnos M1/M2 e T1/T2)
         const horariosLoja = lojaAtual.horarios || {};
         let horarioHoje = horariosLoja[diaSemanaDb] || { status: 'aberto', m1: '12:00', m2: '15:00', t1: '19:00', t2: '23:00' };
 
@@ -1262,6 +1265,7 @@
         const margemMinutos = tipo === 'levantamento' ? 30 : 60; 
         const agoraEmMinutos = (agora.getHours() * 60) + agora.getMinutes();
 
+        // Função interna para gerar blocos de 30m num turno específico
         function adicionarTurno(horaInicio, horaFim, nomeTurno) {
             if(!horaInicio || !horaFim || horaInicio === horaFim) return;
             
@@ -1271,6 +1275,7 @@
             let minStart = (hI * 60) + mI;
             let minEnd = (hF * 60) + mF;
 
+            // Fecha a cozinha mais cedo para a rua, dependendo do tipo de pedido
             if (tipo === 'reserva') { minEnd -= 60; } 
             else if (tipo === 'levantamento') { minEnd -= 45; } 
 
@@ -1291,6 +1296,7 @@
             }
         }
 
+        // Lê os horários da Cozinha guardados pelo Lojista
         const m1 = horarioHoje.m1; const m2 = horarioHoje.m2;
         const t1 = horarioHoje.t1; const t2 = horarioHoje.t2;
 
@@ -1349,7 +1355,7 @@
             root.style.setProperty('--text-color', '#78350f');
         } else {
             root.style.setProperty('--bg', '#fdfbf7');
-            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
             root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#2c3e50'); 
             root.style.setProperty('--s', '#a89f91');
@@ -1962,7 +1968,7 @@
 
                         <div class="card-back">
                             <h4>${p.nome}</h4>
-                            <div class="card-desc">${p.descricao ? parseMarkdownToMenuHTML(p.descricao) : 'Sem descrição disponível.'}</div>
+                            <div class="card-desc">${p.descricao ? parseMarkdownToMenuHTML(p.descricao) : 'Sem descrição disponible.'}</div>
                             ${alergeniosHtml}
                             ${btnAdicionar}
                             <button onclick="virarCartao('${p.id}'); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;" data-i18n="back">
