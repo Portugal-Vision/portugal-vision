@@ -2494,7 +2494,10 @@
         btn.disabled = true;
 
         try {
-            let bodyData = { nomeProduto: nomeProd };
+            let bodyData = { 
+                nomeProduto: nomeProd,
+                inventario: ingredientesLocais.map(i => ({ id: i.id, nome: i.nome, unidade: i.unidade }))
+            };
 
             if (fichaFileInput.files && fichaFileInput.files.length > 0) {
                 const file = fichaFileInput.files[0];
@@ -2542,6 +2545,13 @@
                     }
                 } else {
                     campoNotas.value = respostaIA.notas_internas;
+                }
+            }
+
+            if(respostaIA.receita_sugerida && Array.isArray(respostaIA.receita_sugerida) && respostaIA.receita_sugerida.length > 0) {
+                if(await mostrarConfirmPro("Fórmula Matemática da IA", "A IA cruzou a ficha técnica com o teu Armazém e gerou a Receita Matemática. Desejas aplicar os ingredientes automaticamente?")) {
+                    document.getElementById('receita-container').innerHTML = '';
+                    respostaIA.receita_sugerida.forEach(r => adicionarLinhaReceita(r.ingrediente_id, r.quantidade));
                 }
             }
 
