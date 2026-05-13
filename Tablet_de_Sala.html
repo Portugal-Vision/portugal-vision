@@ -497,25 +497,104 @@
 
     async function descontarStockPermanente(itens) {
         if (!itens || !Array.isArray(itens)) return;
+        
         for (const item of itens) {
             try {
-                const { data: p } = await _sb.from('produtos').select('stock').eq('id', item.id).single();
-                if (p && p.stock !== null) {
+                // 1. Vai buscar o produto e a sua Fórmula Matemática (Receita JSONB)
+                const { data: p } = await _sb.from('produtos')
+                    .select('nome, stock, receita')
+                    .eq('id', item.id)
+                    .single();
+                
+                if (!p) continue;
+
+                // 2. Abater o Stock Fixo do Produto (ex: pratos do dia limitados a 20 doses)
+                if (p.stock !== null && p.stock !== undefined) {
                     await _sb.from('produtos').update({ stock: p.stock - item.qtde }).eq('id', item.id);
                 }
-            } catch(e) {}
+
+                // 3. O OURO: Abater a Matéria-Prima no Armazém (Baseado na Receita)
+                if (p.receita && Array.isArray(p.receita) && p.receita.length > 0) {
+                    for (const ing of p.receita) {
+                        const qtdAbater = parseFloat(ing.quantidade) * item.qtde;
+                        
+                        // Obter o stock atual do ingrediente
+                        const { data: ingredienteDb } = await _sb.from('ingredientes')
+                            .select('stock_atual')
+                            .eq('id', ing.ingrediente_id)
+                            .single();
+
+                        if (ingredienteDb) {
+                            const novoStock = parseFloat(ingredienteDb.stock_atual) - qtdAbater;
+                            
+                            // Atualiza o inventário
+                            await _sb.from('ingredientes')
+                                .update({ stock_atual: novoStock })
+                                .eq('id', ing.ingrediente_id);
+                            
+                            // Regista o movimento para a auditoria de stock (Extrato)
+                            await _sb.from('movimentos_stock').insert([{
+                                loja_id: minhaLojaId,
+                                ingrediente_id: ing.ingrediente_id,
+                                quantidade: -qtdAbater, // Valor negativo = Saída de Armazém
+                                motivo: `Venda (Auto): ${item.qtde}x ${p.nome}`
+                            }]);
+                        }
+                    }
+                }
+            } catch(e) {
+                console.error(`Falha ao processar logística do item ${item.nome}:`, e);
+            }
         }
     }
 
     async function restaurarStockPermanente(itens) {
+        // Função de estorno (quando um pedido é cancelado e os produtos voltam ao armazém)
         if (!itens || !Array.isArray(itens)) return;
+        
         for (const item of itens) {
             try {
-                const { data: p } = await _sb.from('produtos').select('stock').eq('id', item.id).single();
-                if (p && p.stock !== null) {
+                const { data: p } = await _sb.from('produtos')
+                    .select('nome, stock, receita')
+                    .eq('id', item.id)
+                    .single();
+                
+                if (!p) continue;
+
+                // 1. Restaurar doses fixas
+                if (p.stock !== null && p.stock !== undefined) {
                     await _sb.from('produtos').update({ stock: p.stock + item.qtde }).eq('id', item.id);
                 }
-            } catch(e) {}
+
+                // 2. Restaurar Matéria-Prima
+                if (p.receita && Array.isArray(p.receita) && p.receita.length > 0) {
+                    for (const ing of p.receita) {
+                        const qtdRestaurar = parseFloat(ing.quantidade) * item.qtde;
+                        
+                        const { data: ingredienteDb } = await _sb.from('ingredientes')
+                            .select('stock_atual')
+                            .eq('id', ing.ingrediente_id)
+                            .single();
+
+                        if (ingredienteDb) {
+                            const novoStock = parseFloat(ingredienteDb.stock_atual) + qtdRestaurar;
+                            
+                            await _sb.from('ingredientes')
+                                .update({ stock_atual: novoStock })
+                                .eq('id', ing.ingrediente_id);
+                            
+                            await _sb.from('movimentos_stock').insert([{
+                                loja_id: minhaLojaId,
+                                ingrediente_id: ing.ingrediente_id,
+                                quantidade: qtdRestaurar, // Valor positivo = Entrada de Armazém
+                                motivo: `Estorno/Cancelamento: ${item.qtde}x ${p.nome}`
+                            }]);
+                        }
+                    }
+                }
+            } catch(e) {
+                console.error(`Falha ao restaurar logística do item ${item.nome}:`, e);
+            }
         }
     }
 
@@ -2016,9 +2095,6 @@
             window.print();
             
             await registarAuditoria('Imprimiu o Relatório Z (Fecho de Caixa).');
-            
-            // Depois de imprimir, fecha e avisa o lojista
-            enviarTurnoLojista();
             
         } catch (e) {
             mostrarAlertaCustom("Erro ao gerar Relatório Z: " + e.message, "Erro");
