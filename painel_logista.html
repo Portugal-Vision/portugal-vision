@@ -398,8 +398,8 @@
 
     <div id="dash-area" class="hidden">
         
-        <div class="card" style="padding-bottom: 10px;">
-            <div class="header-loja" style="border-bottom: none; margin-bottom: 0;">
+        <div class="card" style="padding-bottom: 25px;">
+            <div class="header-loja" style="border-bottom: none; margin-bottom: 15px;">
                 <div class="logo-box" title="Clique para alterar a imagem">
                     <img id="v-logo" src="https://via.placeholder.com/80">
                     <input type="file" accept="image/*" onchange="subirLogo(this)">
@@ -412,7 +412,7 @@
                         <input type="text" id="v-tel-edit" oninput="marcarAltPerfil()" placeholder="Telemóvel">
                         <input type="text" id="v-telfixo-edit" oninput="marcarAltPerfil()" placeholder="Telefone Fixo">
                         <input type="text" id="v-morada-edit" oninput="marcarAltPerfil()" placeholder="Morada / Código Postal" style="grid-column: span 2;">
-                        <input type="email" id="v-email-edit" oninput="marcarAltPerfil()" placeholder="E-mail de Contacto (Público)" style="grid-column: span 2;">
+                        <input type="email" id="v-email-edit" oninput="marcarAltPerfil()" placeholder="E-mail de Contacto Público" style="grid-column: span 2;">
                         
                         <div>
                             <label style="font-size:12px; color:#64748b; font-weight: 600; margin-bottom: 4px; display: block;">Tipo de Negócio:</label>
@@ -440,6 +440,7 @@
                     <button onclick="location.reload()" style="width:100%; background:var(--err); padding: 8px 12px; font-size:12px; margin:0;"><i class="fas fa-sign-out-alt"></i> Sair</button>
                 </div>
             </div>
+            <button id="btn-save-profile-1" class="btn-save-main" onclick="atualizarPerfil()"><i class="fas fa-save"></i> Guardar Alterações do Perfil e Configurações</button>
         </div>
 
         <div class="card">
@@ -584,8 +585,8 @@
                         <input type="text" id="v-fat-key" oninput="marcarAltPerfil()" placeholder="Client ID / Access Token" style="margin: 0; max-width: 300px; flex: 1;">
                     </div>
                 </div>
-
-                <button id="btn-save-profile" class="btn-save-main" onclick="atualizarPerfil()"><i class="fas fa-save"></i> Guardar Alterações do Perfil e Configurações</button>
+                
+                <button id="btn-save-profile-2" class="btn-save-main" onclick="atualizarPerfil()"><i class="fas fa-save"></i> Guardar Alterações do Perfil e Configurações</button>
             </div>
         </div>
 
@@ -791,7 +792,7 @@
         </div>
 
         <div class="card" style="text-align:center; display: flex; flex-direction: column; align-items: center;">
-            <h4 style="margin:-top: 0;"><i class="fas fa-qrcode"></i> O seu Website Público</h4>
+            <h4 style="margin-top: 0;"><i class="fas fa-qrcode"></i> O seu Website Público</h4>
             <div style="display:flex; gap:10px; margin-bottom:15px; width: 100%; max-width: 400px;">
                 <input type="text" id="link-catalogo" readonly style="font-size:12px; background: #f8fafc; margin: 0;">
                 <button onclick="navigator.clipboard.writeText(document.getElementById('link-catalogo').value); mostrarAlertaPro('Copiado', 'Link copiado para a área de transferência!', 'sucesso');" style="width:90px; background:var(--s); margin: 0;"><i class="fas fa-copy"></i></button>
@@ -918,6 +919,7 @@
 
     let canalNotificacoes = null;
 
+    // ----- NOVOS TOGGLES (CHEVRONS) PARA A UI -----
     function toggleTesouraria() {
         const div = document.getElementById('painel-tesouraria');
         const seta = document.getElementById('seta-tesouraria');
@@ -945,7 +947,9 @@
         if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
+    // ----------------------------------------------
 
+    // FUNÇÕES DO MOTOR DE ALERTAS PRO
     function mostrarAlertaPro(titulo, mensagem, tipo = 'info') {
         return new Promise((resolve) => {
             const overlay = document.getElementById('pv-dialog-overlay');
@@ -2227,7 +2231,8 @@
     }
 
     async function atualizarPerfil() {
-        const btn = document.getElementById('btn-save-profile');
+        const btn1 = document.getElementById('btn-save-profile-1');
+        const btn2 = document.getElementById('btn-save-profile-2');
         const telRaw = document.getElementById('v-tel-edit').value;
         const nifRaw = document.getElementById('v-nif-edit').value;
         const moradaRaw = document.getElementById('v-morada-edit').value;
@@ -2276,7 +2281,8 @@
         const { error } = await _sb.from('lojas').update(dados).eq('id', lojaAtiva.id);
         if(!error) { 
             lojaAtiva = {...lojaAtiva, ...dados};
-            btn.classList.remove('pendente'); 
+            if(btn1) btn1.classList.remove('pendente'); 
+            if(btn2) btn2.classList.remove('pendente'); 
             registarAuditoriaLojista(`Alterou as configurações globais da loja.`);
             mostrarAlertaPro("Sucesso", "Perfil e configurações atualizados com sucesso!", "sucesso"); 
         } else {
@@ -2670,7 +2676,12 @@
         }
     }
 
-    function marcarAltPerfil() { document.getElementById('btn-save-profile').classList.add('pendente'); }
+    function marcarAltPerfil() { 
+        const b1 = document.getElementById('btn-save-profile-1');
+        const b2 = document.getElementById('btn-save-profile-2');
+        if(b1) b1.classList.add('pendente'); 
+        if(b2) b2.classList.add('pendente'); 
+    }
     
     function marcarAltHoras() { 
         document.getElementById('btn-save-config').classList.add('pendente'); 
@@ -2718,6 +2729,7 @@
         document.getElementById('form-title').innerHTML = `<i class="fas fa-box-open"></i> Publicar ou Editar Artigo`;
         document.getElementById('btn-cancel').classList.add('hidden');
         
+        // Auto-fecha o painel após cancelar a edição
         const divPublicar = document.getElementById('painel-publicar');
         if(!divPublicar.classList.contains('hidden')) { togglePublicarArtigo(); }
     }
@@ -2726,6 +2738,7 @@
         const p = produtosLocais.find(item => item.id == id);
         if(!p) return;
 
+        // Auto-Abre o painel de Publicação se estiver fechado
         const divPublicar = document.getElementById('painel-publicar');
         if(divPublicar.classList.contains('hidden')) { togglePublicarArtigo(); }
 
