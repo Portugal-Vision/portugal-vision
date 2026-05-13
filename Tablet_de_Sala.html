@@ -1721,6 +1721,13 @@
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
         fecharModal('modal-detalhes-gerais'); 
         
+        // CORREÇÃO: Limpar o estado do botão sempre que o modal abre
+        const btn = document.querySelector('#modal-pagar-mesa .btn-success');
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; 
+            btn.disabled = false;
+        }
+        
         document.getElementById('pagar-mesa-id-seguro').value = mesa;
         
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
@@ -1829,7 +1836,6 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...'; btn.disabled = true;
 
         try {
-            // 1. OPERAÇÕES BD - AGORA COM CAPTURA ESTRITA DE ERROS 403 E LOOPS PARALELOS
             if (window.splitEmCurso) {
                 const gruposPorPedido = {};
                 window.splitBillData.forEach(op => {
@@ -1907,13 +1913,11 @@
                 }
             }
 
-            // 2. LIMPAR INTERFACE (SÓ ACONTECE SE A BD NÃO DER ERRO)
             window.splitEmCurso = false;
             window.splitBillData = [];
             fecharModal('modal-pagar-mesa');
             await carregarDados();
 
-            // 3. IMPRIMIR
             if (querImprimir) {
                 gerarTalaoImpressao(mesaSegura, totalPagamento, metodo);
                 setTimeout(() => { window.print(); }, 300);
@@ -1922,10 +1926,9 @@
         } catch(e) {
             mostrarAlertaCustom(e.message, "Erro Fatal BD");
         } finally {
-            if(document.getElementById('modal-pagar-mesa').style.display !== 'none') {
-                btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; 
-                btn.disabled = false;
-            }
+            // CORREÇÃO: O botão volta sempre ao normal, quer o modal esteja aberto ou fechado
+            btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; 
+            btn.disabled = false;
         }
     }
 
