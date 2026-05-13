@@ -169,6 +169,7 @@
         </div>
     </div>
 </div>
+
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
@@ -385,6 +386,12 @@
                 
                 if (itensComida.length > 0) {
                     const pedidoApenasComida = { ...p, itens: itensComida };
+                    // Se o item da cozinha já iniciou a preparação, assume estado local para UI
+                    if(itensComida.some(it => it._cozinhaIniciado) && p.estado === 'pendente') {
+                        pedidoApenasComida.estadoLocal = 'preparacao';
+                    } else {
+                        pedidoApenasComida.estadoLocal = p.estado;
+                    }
                     pedidosCozinha.push(pedidoApenasComida);
                 }
             });
@@ -433,10 +440,10 @@
             let btnAcao = '';
             let classeEstado = '';
 
-            if (p.estado === 'pendente') {
+            if (p.estadoLocal === 'pendente') {
                 classeEstado = 'estado-pendente';
                 btnAcao = `<button class="btn-kds btn-start" onclick="iniciarPreparacao(${p.id})"><i class="fas fa-fire"></i> Iniciar Preparação</button>`;
-            } else if (p.estado === 'preparacao') {
+            } else if (p.estadoLocal === 'preparacao') {
                 classeEstado = 'estado-preparacao';
                 btnAcao = `<button class="btn-kds btn-finish" onclick="marcarProntoCozinha(${p.id})"><i class="fas fa-bell"></i> Marcar como Pronto</button>`;
             }
@@ -458,16 +465,26 @@
         }).join('');
     }
 
-    // --- NOVA LOGICA DE ESTADOS PARCIAIS ---
-    
     async function iniciarPreparacao(id) {
-        // Se a cozinha iniciou, passa a encomenda inteira para "preparacao" (o Bar também verá que começou).
-        await _sb.from('pedidos').update({ estado: 'preparacao' }).eq('id', id);
+        const p = cachePedidosFogo.find(x => x.id === id);
+        if(!p) return;
+
+        let novoItens = [...p.itens];
+
+        novoItens.forEach(item => {
+            if (!ignorarNaCozinha(item)) {
+                item._cozinhaIniciado = true;
+            }
+        });
+
+        await _sb.from('pedidos').update({ 
+            itens: novoItens 
+        }).eq('id', id);
+        
         carregarPedidosFogo();
     }
 
     async function marcarProntoCozinha(id) {
-        // Encontra o pedido original na cache local
         const p = cachePedidosFogo.find(x => x.id === id);
         if(!p) return;
 
@@ -495,7 +512,7 @@
                 itens: novoItens
             }).eq('id', id);
         } else {
-            // Se as bebidas ainda estão pendentes, guarda os itens com o carimbo mas mantém em "preparação"
+            // Se as bebidas ainda estão pendentes, guarda os itens com o carimbo mas mantém na sala a aguardar
             await _sb.from('pedidos').update({ 
                 itens: novoItens
             }).eq('id', id);
