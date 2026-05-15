@@ -149,6 +149,12 @@
 
         .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: var(--p); }
         
+        /* GARANTIA DE CONTRASTE NOS DROPDOWNS EM TEMAS ESCUROS */
+        select option {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+        }
+
         /* INPUTS CORRIGIDOS */
         .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2); font-family: inherit; font-size: 14px; background: rgba(128,128,128,0.05); color: var(--text-color); transition: 0.3s; margin-bottom: 5px; }
         .input-form:focus { outline: none; border-color: var(--ok); background: transparent; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
@@ -1249,9 +1255,9 @@
             erroDia.style.display = 'none';
         }
 
-        // Lê o novo formato JSON dos Horários (Turnos M1/M2 e T1/T2)
+        // Lê o novo formato JSON dos Horários (Turnos M1/M2 e J1/J2)
         const horariosLoja = lojaAtual.horarios || {};
-        let horarioHoje = horariosLoja[diaSemanaDb] || { status: 'aberto', m1: '12:00', m2: '15:00', t1: '19:00', t2: '23:00' };
+        let horarioHoje = horariosLoja[diaSemanaDb] || { status: 'aberto', m1: '12:00', m2: '15:00', j1: '19:00', j2: '23:00' };
 
         selectEl.innerHTML = ''; 
         
@@ -1298,10 +1304,10 @@
 
         // Lê os horários da Cozinha guardados pelo Lojista
         const m1 = horarioHoje.m1; const m2 = horarioHoje.m2;
-        const t1 = horarioHoje.t1; const t2 = horarioHoje.t2;
+        const j1 = horarioHoje.j1; const j2 = horarioHoje.j2;
 
         if (m1 && m2) adicionarTurno(m1, m2, "Almoço");
-        if (t1 && t2) adicionarTurno(t1, t2, "Jantar");
+        if (j1 && j2) adicionarTurno(j1, j2, "Jantar");
 
         if (optionsHtml === '') {
             selectEl.innerHTML = '<option value="" disabled selected>Sem horários disponíveis</option>';
@@ -1355,7 +1361,7 @@
             root.style.setProperty('--text-color', '#78350f');
         } else {
             root.style.setProperty('--bg', '#fdfbf7');
-            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
             root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#2c3e50'); 
             root.style.setProperty('--s', '#a89f91');
