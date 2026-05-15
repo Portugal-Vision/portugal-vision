@@ -442,7 +442,7 @@
                     </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;">
-                    <button onclick="location.reload()" style="width:100%; background:var(--s); padding: 8px 12px; font-size:12px; margin:0;"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                    <button id="btn-atualizar-dados" onclick="carregarDados(); carregarMetricasHoje(); carregarStaff();" style="width:100%; background:var(--s); padding: 8px 12px; font-size:12px; margin:0;"><i class="fas fa-sync-alt"></i> Atualizar</button>
                     <button onclick="logoutLojista()" style="width:100%; background:var(--err); padding: 8px 12px; font-size:12px; margin:0;"><i class="fas fa-sign-out-alt"></i> Sair</button>
                 </div>
             </div>
@@ -946,7 +946,6 @@
 
     let canalNotificacoes = null;
 
-    // ----- NOVOS TOGGLES (CHEVRONS) PARA A UI -----
     function toggleTesouraria() {
         const div = document.getElementById('painel-tesouraria');
         const seta = document.getElementById('seta-tesouraria');
@@ -974,9 +973,7 @@
         if(div.classList.contains('hidden')) { div.classList.remove('hidden'); seta.innerText = '▲'; } 
         else { div.classList.add('hidden'); seta.innerText = '▼'; }
     }
-    // ----------------------------------------------
 
-    // FUNÇÕES DO MOTOR DE ALERTAS PRO
     function mostrarAlertaPro(titulo, mensagem, tipo = 'info') {
         return new Promise((resolve) => {
             const overlay = document.getElementById('pv-dialog-overlay');
@@ -1315,7 +1312,7 @@
             const dadosLoja = {
                 auth_id: authData.user.id,
                 nome: nomeInput, email: emailInput, slug: criarSlug(nomeInput),
-                plano: 'free', aceitou_termos: true, created_at: new Date(),
+                status: 'ativa', plano: 'free', aceitou_termos: true, created_at: new Date(),
                 takeaway_ativo: true, reservas_ativo: true,
                 pag_dinheiro: true, pag_mb: true, pag_ticket: true
             };
@@ -1646,7 +1643,20 @@
         canalNotificacoes = _sb.channel('alertas-loja')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: 'loja_id=eq.' + lojaAtiva.id },
                 (payload) => { dispararAlertaVisual(payload.new.mensagem); }
-            ).subscribe();
+            )
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos', filter: 'loja_id=eq.' + lojaAtiva.id },
+                (payload) => { 
+                    dispararAlertaVisual(`Novo pedido recebido! Verifique a cozinha ou as reservas.`);
+                    carregarMetricasHoje(); 
+                }
+            )
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chamadas_sala', filter: 'loja_id=eq.' + lojaAtiva.id },
+                (payload) => { 
+                    let msg = payload.new.tipo_chamada === 'conta' ? `A Mesa ${payload.new.mesa} pediu a conta.` : `A Mesa ${payload.new.mesa} chamou um empregado.`;
+                    dispararAlertaVisual(msg);
+                }
+            )
+            .subscribe();
     }
 
     function dispararAlertaVisual(mensagem) {
@@ -2427,7 +2437,7 @@
 
     async function carregarDados() {
         if(!lojaAtiva) return;
-        const btnAtualizar = document.querySelector('button[onclick="location.reload()"]'); // Adaptado ao novo botão de reload
+        const btnAtualizar = document.getElementById('btn-atualizar-dados'); 
         if(btnAtualizar) { btnAtualizar.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A carregar...`; btnAtualizar.disabled = true; }
 
         try {
