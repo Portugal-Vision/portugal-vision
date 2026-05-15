@@ -113,6 +113,12 @@
         .grid-publish-2col { grid-column: span 2; }
         .grid-publish-1col { grid-column: span 1; }
 
+        /* CORREÇÃO DO SELECT DE OPÇÕES BRANCAS PARA TEMAS ESCUROS */
+        select option {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+        }
+
         input, select, textarea { width: 100%; padding: 12px 14px; margin: 6px 0 12px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; font-size: 14px; background: #fff; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--s); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 
@@ -601,6 +607,21 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <input type="text" id="search-armazem" oninput="filtrarArmazem()" placeholder="Pesquisar matéria-prima..." style="margin:0; flex:1;">
                     <button onclick="imprimirInventarioAtual()" style="width:auto; margin:0; background:var(--p);"><i class="fas fa-print"></i> Imprimir Stock</button>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center; flex-wrap:wrap;">
+                    <input type="hidden" id="ing-id">
+                    <input type="text" id="ing-nome" placeholder="Nome (Ex: Bife da Vazia)" style="flex:2; margin:0;">
+                    <select id="ing-unidade" style="flex:1; margin:0;">
+                        <option value="Kg">Kg</option>
+                        <option value="Litros">Litros</option>
+                        <option value="Unidade">Unidade</option>
+                        <option value="Gramas">Gramas</option>
+                    </select>
+                    <input type="number" step="0.001" id="ing-stock" placeholder="Stock Atual" style="flex:1; margin:0;">
+                    <input type="number" step="0.001" id="ing-min" placeholder="Min. Crítico" style="flex:1; margin:0;">
+                    <button onclick="salvarIngrediente()" style="background:var(--ok); width:auto; margin:0;"><i class="fas fa-save"></i></button>
+                    <button onclick="cancelarEdicaoIngrediente()" id="btn-canc-ing" class="hidden" style="background:var(--err); width:auto; margin:0;"><i class="fas fa-times"></i></button>
                 </div>
 
                 <div id="armazem-lista"></div>
@@ -1216,8 +1237,8 @@
                         <div>
                             <small style="font-size:10px; color:#64748b; font-weight:bold;">🌙 JANTAR</small>
                             <div style="display:flex; gap:5px;">
-                                <input type="time" id="h-${i}-t1" oninput="marcarAltHoras()" title="Início">
-                                <input type="time" id="h-${i}-t2" oninput="marcarAltHoras()" title="Fim">
+                                <input type="time" id="h-${i}-j1" oninput="marcarAltHoras()" title="Início">
+                                <input type="time" id="h-${i}-j2" oninput="marcarAltHoras()" title="Fim">
                             </div>
                         </div>
                     </div>
@@ -1392,8 +1413,8 @@
             document.getElementById(`h-${i}-fecho`).value = diaH.fecho || "";
             document.getElementById(`h-${i}-m1`).value = diaH.m1 || "";
             document.getElementById(`h-${i}-m2`).value = diaH.m2 || "";
-            document.getElementById(`h-${i}-t1`).value = diaH.t1 || "";
-            document.getElementById(`h-${i}-t2`).value = diaH.t2 || "";
+            document.getElementById(`h-${i}-j1`).value = diaH.j1 || diaH.t1 || "";
+            document.getElementById(`h-${i}-j2`).value = diaH.j2 || diaH.t2 || "";
             atualizarEstiloDia(i); 
         });
 
@@ -2367,8 +2388,8 @@
                 fecho: document.getElementById(`h-${i}-fecho`).value,
                 m1: document.getElementById(`h-${i}-m1`).value,
                 m2: document.getElementById(`h-${i}-m2`).value,
-                t1: document.getElementById(`h-${i}-t1`).value,
-                t2: document.getElementById(`h-${i}-t2`).value
+                j1: document.getElementById(`h-${i}-j1`).value,
+                j2: document.getElementById(`h-${i}-j2`).value
             };
         });
         
@@ -2394,9 +2415,9 @@
     }
 
     function replicarSegunda() {
-        const base = ['status', 'abertura', 'fecho', 'm1', 'm2', 't1', 't2'].map(k => document.getElementById(`h-0-${k}`).value);
+        const base = ['status', 'abertura', 'fecho', 'm1', 'm2', 'j1', 'j2'].map(k => document.getElementById(`h-0-${k}`).value);
         for(let i = 1; i < 7; i++) {
-            ['status', 'abertura', 'fecho', 'm1', 'm2', 't1', 't2'].forEach((k, idx) => document.getElementById(`h-${i}-${k}`).value = base[idx]);
+            ['status', 'abertura', 'fecho', 'm1', 'm2', 'j1', 'j2'].forEach((k, idx) => document.getElementById(`h-${i}-${k}`).value = base[idx]);
             atualizarEstiloDia(i);
         }
         marcarAltHoras();
