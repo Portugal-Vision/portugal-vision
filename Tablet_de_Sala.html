@@ -129,25 +129,11 @@
         .custom-alert-title { font-size: 1.4em; font-weight: 800; color: var(--text); margin-bottom: 10px; }
         .custom-alert-text { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 1em; }
         .custom-alert-actions { display: flex; gap: 10px; justify-content: center; }
-
-        /* IMPRESSÃO DO TALÃO TÉRMICO 80mm e RELATÓRIO Z - CORRIGIDA */
-        @media print {
-            body.is-printing-report { height: auto !important; overflow: visible !important; }
-            body.is-printing-report * { visibility: hidden; }
-            body.is-printing-report #print-area, body.is-printing-report #print-area * { visibility: visible; }
-            body.is-printing-report #print-area { 
-                position: absolute; left: 0; top: 0; 
-                width: 80mm; 
-                font-family: 'Courier New', Courier, monospace; 
-                color: #000; background: #fff; padding: 10px; font-size: 12px; 
-            }
-            body.is-printing-report .no-print { display: none !important; }
-        }
     </style>
 </head>
 <body>
 
-<div id="custom-alert-modal" class="custom-alert-overlay no-print">
+<div id="custom-alert-modal" class="custom-alert-overlay">
     <div class="custom-alert-box">
         <div id="custom-alert-icon" style="font-size: 3em; margin-bottom: 15px; color: var(--primary);"><i class="fas fa-info-circle"></i></div>
         <div id="custom-alert-title" class="custom-alert-title">Aviso</div>
@@ -156,7 +142,7 @@
     </div>
 </div>
 
-<div id="login-screen" class="no-print">
+<div id="login-screen">
     <div class="login-box">
         <h2 style="margin-top:0; color: var(--primary);"><i class="fas fa-tablet-alt"></i> Painel de Sala</h2>
         <p style="color: #64748b; margin-bottom: 25px;">Acesso restrito a colaboradores.</p>
@@ -176,7 +162,7 @@
     </div>
 </div>
 
-<div id="dashboard-screen" class="no-print" style="display: none; height: 100%; flex-direction: column;">
+<div id="dashboard-screen" style="display: none; height: 100%; flex-direction: column;">
     <header>
         <div class="logo-area">
             <h1><span class="status-dot"></span> <span id="nome-restaurante">A carregar...</span></h1>
@@ -228,7 +214,7 @@
     </div>
 </div>
 
-<div id="modal-detalhes-gerais" class="modal no-print">
+<div id="modal-detalhes-gerais" class="modal">
     <div class="modal-content" style="max-width: 650px;">
         <div class="modal-header">
             <h3 id="detalhes-gerais-titulo" style="margin:0; font-size: 1.5em; display:flex; align-items:center; gap:10px;">Detalhes</h3>
@@ -239,7 +225,7 @@
     </div>
 </div>
 
-<div id="modal-dividir-conta" class="modal no-print">
+<div id="modal-dividir-conta" class="modal">
     <div class="modal-content" style="max-width: 500px;">
         <div class="modal-header" style="background: #eff6ff;">
             <h3 style="margin:0; color: var(--primary);"><i class="fas fa-cut"></i> Dividir Conta</h3>
@@ -260,7 +246,7 @@
     </div>
 </div>
 
-<div id="modal-transferir-mesa" class="modal no-print">
+<div id="modal-transferir-mesa" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-exchange-alt"></i> Transferir Conta</h3>
@@ -275,7 +261,7 @@
     </div>
 </div>
 
-<div id="modal-adicionar-mesa" class="modal no-print">
+<div id="modal-adicionar-mesa" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header" style="background: #f8fafc;">
             <h3 style="margin:0; color: var(--text);"><i class="fas fa-plus-circle" style="color: var(--primary);"></i> Adicionar Mesa</h3>
@@ -289,7 +275,7 @@
     </div>
 </div>
 
-<div id="modal-pin-seguranca" class="modal no-print" style="z-index: 10000;">
+<div id="modal-pin-seguranca" class="modal" style="z-index: 10000;">
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header" style="background: #fffbeb;">
             <h3 style="margin:0; color: var(--warning);"><i class="fas fa-user-shield"></i> Autorização</h3>
@@ -303,7 +289,7 @@
     </div>
 </div>
 
-<div id="modal-historico" class="modal no-print">
+<div id="modal-historico" class="modal">
     <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-history"></i> Histórico de Turno (Hoje)</h3>
@@ -315,7 +301,7 @@
     </div>
 </div>
 
-<div id="modal-pos" class="modal no-print">
+<div id="modal-pos" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-cash-register"></i> Novo Pedido Manual</h3>
@@ -340,7 +326,7 @@
     </div>
 </div>
 
-<div id="modal-mesa-reserva" class="modal no-print">
+<div id="modal-mesa-reserva" class="modal">
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header">
             <h3 style="margin:0;">Atribuir Mesa</h3>
@@ -355,7 +341,7 @@
     </div>
 </div>
 
-<div id="modal-pagar-mesa" class="modal no-print">
+<div id="modal-pagar-mesa" class="modal">
     <div class="modal-content" style="max-width: 500px; text-align: center;">
         <div class="modal-header">
             <h3 id="modal-pagar-mesa-title" style="margin:0;"><i class="fas fa-box"></i> Fechar Pedido</h3>
@@ -402,7 +388,7 @@
     </div>
 </div>
 
-<div id="modal-edicao" class="modal no-print">
+<div id="modal-edicao" class="modal">
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-edit"></i> Editar Pedido <span id="edit-pedido-id" style="color:var(--primary);"></span></h3>
@@ -427,7 +413,7 @@
     </div>
 </div>
 
-<div id="modal-fecho" class="modal no-print">
+<div id="modal-fecho" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-lock"></i> Fecho Diário (Relatório Z)</h3>
@@ -447,8 +433,6 @@
         </div>
     </div>
 </div>
-
-<div id="print-area" class="no-print"></div>
 
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
@@ -520,24 +504,19 @@
 
     async function descontarStockPermanente(itens) {
         if (!itens || !Array.isArray(itens)) return;
-        
         await Promise.all(itens.map(async (item) => {
             try {
                 const { data: p } = await _sb.from('produtos').select('nome, stock, receita').eq('id', item.id).single();
                 if (!p) return;
-
                 if (p.stock !== null && p.stock !== undefined) {
                     await _sb.from('produtos').update({ stock: p.stock - item.qtde }).eq('id', item.id);
                 }
-
                 if (p.receita && Array.isArray(p.receita) && p.receita.length > 0) {
                     await Promise.all(p.receita.map(async (ing) => {
                         const qtdAbater = parseFloat(ing.quantidade) * item.qtde;
                         const { data: ingredienteDb } = await _sb.from('ingredientes').select('stock_atual').eq('id', ing.ingrediente_id).single();
-
                         if (ingredienteDb) {
                             const novoStock = parseFloat(ingredienteDb.stock_atual) - qtdAbater;
-                            
                             await Promise.all([
                                 _sb.from('ingredientes').update({ stock_atual: novoStock }).eq('id', ing.ingrediente_id),
                                 _sb.from('movimentos_stock').insert([{
@@ -550,32 +529,25 @@
                         }
                     }));
                 }
-            } catch(e) {
-                console.error(`Falha ao processar logística do item ${item.nome}:`, e);
-            }
+            } catch(e) {}
         }));
     }
 
     async function restaurarStockPermanente(itens) {
         if (!itens || !Array.isArray(itens)) return;
-        
         await Promise.all(itens.map(async (item) => {
             try {
                 const { data: p } = await _sb.from('produtos').select('nome, stock, receita').eq('id', item.id).single();
                 if (!p) return;
-
                 if (p.stock !== null && p.stock !== undefined) {
                     await _sb.from('produtos').update({ stock: p.stock + item.qtde }).eq('id', item.id);
                 }
-
                 if (p.receita && Array.isArray(p.receita) && p.receita.length > 0) {
                     await Promise.all(p.receita.map(async (ing) => {
                         const qtdRestaurar = parseFloat(ing.quantidade) * item.qtde;
                         const { data: ingredienteDb } = await _sb.from('ingredientes').select('stock_atual').eq('id', ing.ingrediente_id).single();
-
                         if (ingredienteDb) {
                             const novoStock = parseFloat(ingredienteDb.stock_atual) + qtdRestaurar;
-                            
                             await Promise.all([
                                 _sb.from('ingredientes').update({ stock_atual: novoStock }).eq('id', ing.ingrediente_id),
                                 _sb.from('movimentos_stock').insert([{
@@ -588,9 +560,7 @@
                         }
                     }));
                 }
-            } catch(e) {
-                console.error(`Falha ao restaurar logística do item ${item.nome}:`, e);
-            }
+            } catch(e) {}
         }));
     }
 
@@ -793,7 +763,6 @@
         const isMesa = /^\d+$/.test(mesaInput) || mesaInput.toLowerCase().includes('esplanada') || mesaInput.toLowerCase().includes('mesa');
         const tipoPedido = isMesa ? 'mesa' : 'levantamento';
 
-        // Adaptar itens para concatenar a obs ao nome antes de ir para BD para facilitar leitura na cozinha
         const itensLimpos = posCarrinho.map(i => {
             let nomeFinal = i.nome;
             if(i.obs && i.obs.trim() !== '') nomeFinal += ` | **OBS: ${i.obs}**`;
@@ -1573,7 +1542,7 @@
             btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto');">Marcar Pronto</button>`; 
         } 
         else if(p.estado === 'pronto') { 
-            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto pour Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
+            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto para Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
             btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '${metodoTakeaway}');"><i class="fas fa-check-double"></i> Entregar e Fechar Conta</button>`; 
         }
         else if(p.estado === 'reserva_confirmada') {
@@ -1752,8 +1721,6 @@
         }, "Confirmação de Pagamento");
     }
 
-    // --- NOVA LÓGICA DE PAGAMENTO: DESCONTOS, TROCOS E 2 TALÕES ---
-    
     function aplicarDescontoConta() {
         const perc = parseFloat(document.getElementById('pagar-desc-perc').value);
         let totalBase = parseFloat(document.getElementById('pagar-mesa-total-original').value);
@@ -1769,7 +1736,7 @@
         }
         
         document.getElementById('pagar-mesa-total').innerText = novoTotal.toFixed(2);
-        calcularTroco(); // Atualiza troco se o desconto mudar o valor
+        calcularTroco(); 
     }
 
     function toggleTrocoCalculadora() {
@@ -1843,7 +1810,48 @@
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
     }
 
-    function gerarTalaoImpressao(mesa, totalAtual, metodo, isConsulta, nifCliente, trocoInfo) {
+    // NOVA FUNÇÃO: Motor de Impressão via Iframe Invisível (Zero bugs visuais)
+    function imprimirConteudoIsolado(htmlContent) {
+        let iframe = document.getElementById('print-iframe-motor');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'print-iframe-motor';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+        }
+        
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    @page { margin: 0; }
+                    body { font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #000; margin: 0; padding: 10px; width: 80mm; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; }
+                    th, td { text-align: left; padding: 3px 0; border-bottom: 1px dashed #ccc; }
+                    th:last-child, td:last-child { text-align: right; }
+                    hr { border: 1px dashed #000; margin: 10px 0; width: 100%; }
+                    h2 { font-size: 18px; margin: 0 0 5px 0; }
+                    .header-talao { text-align: center; margin-bottom: 15px; }
+                    .totais-talao { text-align: right; font-size: 16px; font-weight: bold; margin: 10px 0; }
+                </style>
+            </head>
+            <body>
+                ${htmlContent}
+            </body>
+            </html>
+        `);
+        doc.close();
+        
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }, 500);
+    }
+
+    function gerarTalaoImpressaoHTML(mesa, totalAtual, metodo, isConsulta, nifCliente, trocoInfo) {
         let nomeLoja = window.lojaDataAtual ? window.lojaDataAtual.nome : "Restaurante";
         let nifLoja = window.lojaDataAtual ? (window.lojaDataAtual.nif || "S/ NIF") : "S/ NIF";
         
@@ -1851,16 +1859,16 @@
         let headerDoc = isConsulta ? "TALÃO DE CONSULTA<br><small>NÃO SERVE COMO FATURA</small>" : "FATURA / RECIBO";
         
         let html = `
-            <div style="text-align:center; margin-bottom: 15px;">
-                <h2 style="margin:0; font-size:18px;">${nomeLoja}</h2>
-                <div style="font-size:12px;">NIF Empresa: ${nifLoja}</div>
+            <div class="header-talao">
+                <h2>${nomeLoja}</h2>
+                <div>NIF Empresa: ${nifLoja}</div>
                 <div style="margin-top:5px; font-weight:bold; font-size:14px; text-transform:uppercase;">${headerDoc}</div>
                 <div style="margin-top:5px; font-weight:bold; font-size:14px;">Mesa: ${mesa}</div>
-                <div style="font-size:12px;">${subNif}</div>
+                <div>${subNif}</div>
             </div>
-            <hr style="border:1px dashed #000; margin:10px 0;">
-            <table style="width:100%; font-size:12px; text-align:left; border-collapse: collapse;">
-                <thead><tr><th>Qtd</th><th>Artigo</th><th style="text-align:right;">Preço</th></tr></thead>
+            <hr>
+            <table>
+                <thead><tr><th>Qtd</th><th>Artigo</th><th>Preço</th></tr></thead>
                 <tbody>
         `;
         
@@ -1902,23 +1910,23 @@
         
         itensPrint.forEach(it => {
             html += `<tr>
-                <td style="padding:3px 0; border-bottom:1px dashed #eee;">${it.qtde}</td>
-                <td style="padding:3px 0; border-bottom:1px dashed #eee;">${it.nome}</td>
-                <td style="text-align:right; padding:3px 0; border-bottom:1px dashed #eee;">${(it.preco * it.qtde).toFixed(2)}€</td>
+                <td>${it.qtde}</td>
+                <td>${it.nome}</td>
+                <td>${(it.preco * it.qtde).toFixed(2)}€</td>
             </tr>`;
         });
         
         html += `
                 </tbody>
             </table>
-            <hr style="border:1px dashed #000; margin:10px 0;">`;
+            <hr>`;
             
         if (totalOriginal > totalAtual) {
             html += `<div style="text-align:right; font-size:12px;">Subtotal: ${totalOriginal.toFixed(2)}€</div>
                      <div style="text-align:right; font-size:12px; color:#c0392b;">Desconto: -${(totalOriginal - totalAtual).toFixed(2)}€</div>`;
         }
             
-        html += `<div style="text-align:right; font-size:16px; font-weight:bold;">Total a Pagar: ${parseFloat(totalAtual).toFixed(2)}€</div>`;
+        html += `<div class="totais-talao">Total a Pagar: ${parseFloat(totalAtual).toFixed(2)}€</div>`;
         
         if (!isConsulta) {
             html += `<div style="text-align:right; font-size:12px; margin-top:5px;">Pago com: ${metodo}</div>`;
@@ -1931,20 +1939,16 @@
             html += `<div style="text-align:center; margin-top:20px; font-size:11px;">Obrigado por nos escolher.</div>`;
         }
         
-        document.getElementById('print-area').innerHTML = html;
+        return html;
     }
 
     function imprimirTalaoConsulta() {
         const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
         const totalAtual = parseFloat(document.getElementById('pagar-mesa-total').innerText.replace('€',''));
-        gerarTalaoImpressao(mesaSegura, totalAtual, null, true, null, null);
         
-        // Destrava o ecrã para permitir à impressora ler o talão solto
-        document.body.classList.add('is-printing-report');
-        setTimeout(() => { 
-            window.print(); 
-            document.body.classList.remove('is-printing-report');
-        }, 300);
+        // Novo motor
+        const talaoHtml = gerarTalaoImpressaoHTML(mesaSegura, totalAtual, null, true, null, null);
+        imprimirConteudoIsolado(talaoHtml);
     }
 
     async function confirmarFechoMesa() {
@@ -1966,6 +1970,10 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...'; btn.disabled = true;
 
         try {
+            // 1. GERAR HTML DO TALÃO ANTES DE LIMPAR AS VARIÁVEIS DA DIVISÃO
+            const talaoFinalHTML = gerarTalaoImpressaoHTML(mesaSegura, totalPagamento, metodo, false, nifInput, trocoInfo);
+
+            // 2. EXECUTAR ABATE NA BASE DE DADOS
             if (window.splitEmCurso) {
                 const gruposPorPedido = {};
                 window.splitBillData.forEach(op => {
@@ -2066,19 +2074,14 @@
                 }
             }
 
+            // 3. LIMPEZA, RECARREGAMENTO E IMPRESSÃO (O SEGREDO DA CORREÇÃO)
             window.splitEmCurso = false;
             window.splitBillData = [];
             fecharModal('modal-pagar-mesa');
-            await carregarDados();
-
-            gerarTalaoImpressao(mesaSegura, totalPagamento, metodo, false, nifInput, trocoInfo);
             
-            // Destrava o ecrã para permitir à impressora ler o talão solto
-            document.body.classList.add('is-printing-report');
-            setTimeout(() => { 
-                window.print(); 
-                document.body.classList.remove('is-printing-report');
-            }, 300);
+            await carregarDados(); // O ecrã vai agora refletir o abate na mesa.
+
+            imprimirConteudoIsolado(talaoFinalHTML); // Dispara a impressora em background sem rebentar o layout.
             
         } catch(e) {
             mostrarAlertaCustom(e.message, "Erro Fatal BD");
@@ -2185,44 +2188,37 @@
             let horaFecho = new Date().toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
 
             let htmlZ = `
-                <div style="text-align:center; margin-bottom: 10px;">
-                    <h2 style="margin:0; font-size:18px;">${nomeLoja}</h2>
-                    <h3 style="margin:5px 0 0 0; font-size:16px;">RELATÓRIO Z</h3>
-                    <div style="font-size:12px; margin-top:5px;">Data: ${dataHoje} | Hora: ${horaFecho}</div>
-                    <div style="font-size:12px;">Operador: ${nomeOperadorAtual}</div>
+                <div class="header-talao">
+                    <h2>${nomeLoja}</h2>
+                    <h3>RELATÓRIO Z</h3>
+                    <div>Data: ${dataHoje} | Hora: ${horaFecho}</div>
+                    <div>Operador: ${nomeOperadorAtual}</div>
                 </div>
-                <hr style="border:1px dashed #000; margin:10px 0;">
+                <hr>
                 <div style="font-size:14px; margin-bottom:10px; font-weight:bold;">VENDAS POR PAGAMENTO</div>
-                <table style="width:100%; font-size:12px; text-align:left; border-collapse: collapse;">
-                    <tr><td style="padding:2px 0;">Dinheiro:</td><td style="text-align:right;">${totalDinheiro.toFixed(2)}€</td></tr>
-                    <tr><td style="padding:2px 0;">Multibanco:</td><td style="text-align:right;">${totalMB.toFixed(2)}€</td></tr>
-                    <tr><td style="padding:2px 0;">MBWay:</td><td style="text-align:right;">${totalMBWay.toFixed(2)}€</td></tr>
-                    <tr><td style="padding:2px 0;">Ticket Refeição:</td><td style="text-align:right;">${totalTicket.toFixed(2)}€</td></tr>
+                <table>
+                    <tr><td>Dinheiro:</td><td style="text-align:right;">${totalDinheiro.toFixed(2)}€</td></tr>
+                    <tr><td>Multibanco:</td><td style="text-align:right;">${totalMB.toFixed(2)}€</td></tr>
+                    <tr><td>MBWay:</td><td style="text-align:right;">${totalMBWay.toFixed(2)}€</td></tr>
+                    <tr><td>Ticket Refeição:</td><td style="text-align:right;">${totalTicket.toFixed(2)}€</td></tr>
                 </table>
-                <hr style="border:1px dashed #000; margin:10px 0;">
-                <div style="font-size:20px; font-weight:bold; text-align:center; margin: 15px 0;">TOTAL: ${totalGlobal.toFixed(2)}€</div>
-                <hr style="border:1px dashed #000; margin:10px 0;">
+                <hr>
+                <div class="totais-talao">TOTAL: ${totalGlobal.toFixed(2)}€</div>
+                <hr>
                 <div style="font-size:12px; margin-bottom:10px; font-weight:bold;">RESUMO DE IVA</div>
-                <table style="width:100%; font-size:11px; text-align:left; border-collapse: collapse;">
-                    <tr><td style="padding:2px 0;">IVA 23%:</td><td style="text-align:right;">${iva23.toFixed(2)}€</td></tr>
-                    <tr><td style="padding:2px 0;">IVA 13%:</td><td style="text-align:right;">${iva13.toFixed(2)}€</td></tr>
-                    <tr><td style="padding:2px 0;">IVA 6%:</td><td style="text-align:right;">${iva6.toFixed(2)}€</td></tr>
+                <table>
+                    <tr><td>IVA 23%:</td><td style="text-align:right;">${iva23.toFixed(2)}€</td></tr>
+                    <tr><td>IVA 13%:</td><td style="text-align:right;">${iva13.toFixed(2)}€</td></tr>
+                    <tr><td>IVA 6%:</td><td style="text-align:right;">${iva6.toFixed(2)}€</td></tr>
                 </table>
-                <hr style="border:1px dashed #000; margin:10px 0;">
+                <hr>
                 <div style="font-size:12px; margin-top:20px; margin-bottom:30px;">
                     Assinatura / Visto do Operador:
                     <div style="border-bottom: 1px solid #000; margin-top: 25px;"></div>
                 </div>
             `;
 
-            document.getElementById('print-area').innerHTML = htmlZ;
-            
-            // Destrava o ecrã para imprimir
-            document.body.classList.add('is-printing-report');
-            setTimeout(() => { 
-                window.print(); 
-                document.body.classList.remove('is-printing-report');
-            }, 300);
+            imprimirConteudoIsolado(htmlZ);
             
             await registarAuditoria('Imprimiu o Relatório Z (Fecho de Caixa).');
         } catch (e) {
