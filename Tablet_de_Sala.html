@@ -355,26 +355,48 @@
 </div>
 
 <div id="modal-pagar-mesa" class="modal no-print">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
+    <div class="modal-content" style="max-width: 500px; text-align: center;">
         <div class="modal-header">
-            <h3 id="modal-pagar-mesa-title" style="margin:0;">Fechar Pedido</h3>
+            <h3 id="modal-pagar-mesa-title" style="margin:0;"><i class="fas fa-box"></i> Fechar Pedido</h3>
             <div class="close-modal" onclick="fecharModal('modal-pagar-mesa')"><i class="fas fa-times"></i></div> 
         </div>
         <div class="modal-body">
-            <h2 style="color: var(--primary); font-size: 2.5em; margin: 10px 0;"><span id="pagar-mesa-total">0.00</span>€</h2>
-            <p style="color:#475569; margin-bottom: 15px;">Confirme o método de pagamento efetuado pelo cliente:</p>
-            <select id="pagar-mesa-metodo" class="input-form"></select>
             
-            <label style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; color: #475569;">
-                <input type="checkbox" id="imprimir-talao-check" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
-                Imprimir Talão de Consulta
-            </label>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #e2e8f0;">
+                <div style="text-align:left;">
+                    <span style="font-size:12px; color:#64748b; font-weight:bold;">TOTAL A PAGAR</span>
+                    <h2 style="color: var(--primary); font-size: 2.2em; margin: 0;"><span id="pagar-mesa-total">0.00</span>€</h2>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:5px; width:130px;">
+                    <input type="number" id="pagar-desc-perc" class="input-form" style="margin:0; padding:8px; font-size:12px;" placeholder="Desconto %">
+                    <button class="btn-action" style="background:#cbd5e1; color:#1e293b; padding:8px; font-size:12px;" onclick="aplicarDescontoConta()"><i class="fas fa-tags"></i> Aplicar</button>
+                </div>
+            </div>
+
+            <div style="text-align:left; margin-bottom:15px;">
+                <label style="font-size:12px; font-weight:bold; color:#64748b;">NIF do Cliente (Opcional):</label>
+                <input type="text" id="pagar-mesa-nif" class="input-form" style="margin-top:5px; margin-bottom: 0;" placeholder="Ex: 999999990">
+            </div>
+
+            <div style="text-align:left; margin-bottom:15px;">
+                <label style="font-size:12px; font-weight:bold; color:#64748b;">Método de Pagamento:</label>
+                <select id="pagar-mesa-metodo" class="input-form" style="margin-top:5px; margin-bottom: 0;" onchange="toggleTrocoCalculadora()"></select>
+            </div>
+
+            <div id="zona-troco" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; padding:15px; border-radius:12px; margin-bottom:15px; text-align:left;">
+                <label style="font-size:12px; font-weight:bold; color:#166534;">Valor Entregue (€):</label>
+                <input type="number" id="pagar-valor-entregue" class="input-form" style="margin-top:5px; margin-bottom:10px;" placeholder="Ex: 50" oninput="calcularTroco()">
+                <div style="font-size:1.4em; font-weight:900; color:#15803d; text-align:right;">Troco: <span id="pagar-valor-troco">0.00</span>€</div>
+            </div>
 
             <input type="hidden" id="pagar-mesa-ids">
             <input type="hidden" id="pagar-mesa-id-seguro">
-            <button class="btn-login btn-success" style="background: var(--success); margin-top: 15px;" onclick="confirmarFechoMesa()">
-                <i class="fas fa-check-double"></i> Confirmar Pagamento
-            </button>
+            <input type="hidden" id="pagar-mesa-total-original">
+        </div>
+        
+        <div class="modal-footer" style="display:flex; gap:10px;">
+            <button class="btn-action btn-resolve" style="flex:1; padding: 15px 10px;" onclick="imprimirTalaoConsulta()"><i class="fas fa-print"></i> Talão Consulta</button>
+            <button class="btn-action btn-success" style="flex:1; padding: 15px 10px;" id="btn-confirmar-fecho" onclick="confirmarFechoMesa()"><i class="fas fa-check-double"></i> Fatura Final</button>
         </div>
     </div>
 </div>
@@ -495,7 +517,6 @@
         } catch(e) {}
     }
 
-    // OTIMIZAÇÃO: Parallel Processing para Abate de Stock
     async function descontarStockPermanente(itens) {
         if (!itens || !Array.isArray(itens)) return;
         
@@ -534,7 +555,6 @@
         }));
     }
 
-    // OTIMIZAÇÃO: Parallel Processing para Estorno de Stock
     async function restaurarStockPermanente(itens) {
         if (!itens || !Array.isArray(itens)) return;
         
@@ -620,7 +640,6 @@
         document.getElementById('pos-mesa').value = num;
     }
 
-    // INJEÇÃO DA SOLUÇÃO CRM (Pesquisa de Clientes por Telemóvel)
     let timeoutPesquisa = null;
     async function pesquisarClienteCRM(telefone) {
         if (timeoutPesquisa) clearTimeout(timeoutPesquisa);
@@ -639,7 +658,7 @@
                 }
                 dispararToast('Cliente Encontrado', `Dados de ${data.nome || 'Cliente VIP'} preenchidos.`, 'cozinha');
             }
-        }, 500); // 500ms de debounce para não rebentar a BD enquanto escreve
+        }, 500);
     }
 
     function renderizarPOS() {
@@ -695,7 +714,7 @@
         }
 
         if (existente) existente.qtde += 1; 
-        else posCarrinho.push({ id, nome, preco, qtde: 1 });
+        else posCarrinho.push({ id, nome, preco, qtde: 1, obs: '' });
         atualizarCarrinhoPOS();
     }
 
@@ -716,6 +735,10 @@
         atualizarCarrinhoPOS();
     }
 
+    function atualizarObsPOS(index, texto) {
+        if (posCarrinho[index]) posCarrinho[index].obs = texto;
+    }
+
     function atualizarCarrinhoPOS() {
         const list = document.getElementById('pos-cart-list');
         posTotal = 0;
@@ -727,16 +750,19 @@
                 const subtotal = item.qtde * item.preco;
                 posTotal += subtotal;
                 return `
-                    <li style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <strong>${item.nome}</strong><br>
-                            <span style="font-size:0.85em; color:#64748b;">${item.preco.toFixed(2)}€/un</span>
+                    <li style="display:flex; flex-direction:column; border-bottom:1px solid #e2e8f0; padding:8px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>${item.nome}</strong><br>
+                                <span style="font-size:0.85em; color:#64748b;">${item.preco.toFixed(2)}€/un</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button onclick="alterarQtdePOS(${index}, -1)" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">-</button>
+                                <span style="font-weight:bold; width:20px; text-align:center;">${item.qtde}</span>
+                                <button onclick="alterarQtdePOS(${index}, 1)" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">+</button>
+                            </div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <button onclick="alterarQtdePOS(${index}, -1)" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">-</button>
-                            <span style="font-weight:bold; width:20px; text-align:center;">${item.qtde}</span>
-                            <button onclick="alterarQtdePOS(${index}, 1)" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">+</button>
-                        </div>
+                        <input type="text" class="input-form obs-input" placeholder="+ Obs. Cozinha (ex: mal passado)" value="${item.obs || ''}" onchange="atualizarObsPOS(${index}, this.value)" style="margin:5px 0 0 0; padding:6px 10px; font-size:12px; background:#f8fafc; border-radius:6px;">
                     </li>
                 `;
             }).join('');
@@ -766,6 +792,13 @@
         const isMesa = /^\d+$/.test(mesaInput) || mesaInput.toLowerCase().includes('esplanada') || mesaInput.toLowerCase().includes('mesa');
         const tipoPedido = isMesa ? 'mesa' : 'levantamento';
 
+        // Adaptar itens para concatenar a obs ao nome antes de ir para BD para facilitar leitura na cozinha
+        const itensLimpos = posCarrinho.map(i => {
+            let nomeFinal = i.nome;
+            if(i.obs && i.obs.trim() !== '') nomeFinal += ` | **OBS: ${i.obs}**`;
+            return { id: i.id, nome: nomeFinal, preco: i.preco, qtde: i.qtde };
+        });
+
         try {
             await descontarStockPermanente(posCarrinho);
 
@@ -777,7 +810,7 @@
                 nif_cliente: nifInput || null,
                 telefone: telefoneInput || null,
                 quer_nif: !!nifInput,
-                itens: posCarrinho,
+                itens: itensLimpos,
                 total: posTotal,
                 estado: 'pendente',
                 status_presenca: isMesa ? 'sentado' : 'pendente',
@@ -1717,18 +1750,66 @@
             carregarDados();
         }, "Confirmação de Pagamento");
     }
+
+    // --- NOVA LÓGICA DE PAGAMENTO: DESCONTOS, TROCOS E 2 TALÕES ---
     
+    function aplicarDescontoConta() {
+        const perc = parseFloat(document.getElementById('pagar-desc-perc').value);
+        let totalBase = parseFloat(document.getElementById('pagar-mesa-total-original').value);
+        
+        if (isNaN(totalBase) || totalBase <= 0) return;
+        
+        let novoTotal = totalBase;
+        
+        if (!isNaN(perc) && perc > 0 && perc <= 100) {
+            novoTotal = totalBase - (totalBase * (perc / 100));
+        } else {
+            document.getElementById('pagar-desc-perc').value = '';
+        }
+        
+        document.getElementById('pagar-mesa-total').innerText = novoTotal.toFixed(2);
+        calcularTroco(); // Atualiza troco se o desconto mudar o valor
+    }
+
+    function toggleTrocoCalculadora() {
+        const metodo = document.getElementById('pagar-mesa-metodo').value;
+        const zonaTroco = document.getElementById('zona-troco');
+        if (metodo === 'Dinheiro') {
+            zonaTroco.style.display = 'block';
+            document.getElementById('pagar-valor-entregue').value = '';
+            document.getElementById('pagar-valor-troco').innerText = '0.00';
+            setTimeout(() => document.getElementById('pagar-valor-entregue').focus(), 100);
+        } else {
+            zonaTroco.style.display = 'none';
+        }
+    }
+
+    function calcularTroco() {
+        const entregue = parseFloat(document.getElementById('pagar-valor-entregue').value);
+        const aPagar = parseFloat(document.getElementById('pagar-mesa-total').innerText.replace('€',''));
+        const spanTroco = document.getElementById('pagar-valor-troco');
+        
+        if (!isNaN(entregue) && entregue >= aPagar) {
+            spanTroco.innerText = (entregue - aPagar).toFixed(2);
+        } else {
+            spanTroco.innerText = '0.00';
+        }
+    }
+
     function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
         fecharModal('modal-detalhes-gerais'); 
         
-        // CORREÇÃO: Limpar o estado do botão sempre que o modal abre
         const btn = document.querySelector('#modal-pagar-mesa .btn-success');
         if (btn) {
-            btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; 
+            btn.innerHTML = '<i class="fas fa-check-double"></i> Fatura Final'; 
             btn.disabled = false;
         }
         
         document.getElementById('pagar-mesa-id-seguro').value = mesa;
+        document.getElementById('pagar-mesa-total-original').value = total;
+        document.getElementById('pagar-mesa-total').innerText = parseFloat(total).toFixed(2);
+        document.getElementById('pagar-desc-perc').value = '';
+        document.getElementById('pagar-mesa-nif').value = '';
         
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
@@ -1737,7 +1818,6 @@
             document.querySelector('#modal-pagar-mesa h3').innerHTML = `<i class="fas fa-utensils"></i> ${label} ${mesa.replace('Mesa ', '')}`;
         }
 
-        document.getElementById('pagar-mesa-total').innerText = parseFloat(total).toFixed(2);
         document.getElementById('pagar-mesa-ids').value = idsStr;
         
         const selectMetodo = document.getElementById('pagar-mesa-metodo');
@@ -1758,18 +1838,24 @@
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") { selectMetodo.value = metodoPreferido; } 
         else { selectMetodo.value = "Dinheiro"; }
         
+        toggleTrocoCalculadora();
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
     }
 
-    function gerarTalaoImpressao(mesa, total, metodo) {
+    function gerarTalaoImpressao(mesa, totalAtual, metodo, isConsulta, nifCliente, trocoInfo) {
         let nomeLoja = window.lojaDataAtual ? window.lojaDataAtual.nome : "Restaurante";
-        let nifLoja = window.lojaDataAtual ? (window.lojaDataAtual.nif || "Consumidor Final") : "Consumidor Final";
+        let nifLoja = window.lojaDataAtual ? (window.lojaDataAtual.nif || "S/ NIF") : "S/ NIF";
+        
+        let subNif = isConsulta ? "Talão de Consulta" : (nifCliente ? `NIF: ${nifCliente}` : "Consumidor Final");
+        let headerDoc = isConsulta ? "TALÃO DE CONSULTA<br><small>NÃO SERVE COMO FATURA</small>" : "FATURA / RECIBO";
         
         let html = `
             <div style="text-align:center; margin-bottom: 15px;">
                 <h2 style="margin:0; font-size:18px;">${nomeLoja}</h2>
-                <div style="font-size:12px;">NIF: ${nifLoja}</div>
+                <div style="font-size:12px;">NIF Empresa: ${nifLoja}</div>
+                <div style="margin-top:5px; font-weight:bold; font-size:14px; text-transform:uppercase;">${headerDoc}</div>
                 <div style="margin-top:5px; font-weight:bold; font-size:14px;">Mesa: ${mesa}</div>
+                <div style="font-size:12px;">${subNif}</div>
             </div>
             <hr style="border:1px dashed #000; margin:10px 0;">
             <table style="width:100%; font-size:12px; text-align:left; border-collapse: collapse;">
@@ -1778,18 +1864,23 @@
         `;
         
         let itensPrint = [];
+        let totalOriginal = 0;
         
         if (window.splitEmCurso && window.splitBillData) {
             window.splitBillData.forEach(op => {
                 if (op.payQtde > 0) {
                     itensPrint.push({ qtde: op.payQtde, nome: op.nome, preco: op.preco });
+                    totalOriginal += (op.preco * op.payQtde);
                 }
             });
         } else {
             const numMesaLimpo = mesa.replace('Mesa ', '').trim();
             if (window.mesasGlobais[numMesaLimpo]) {
                 window.mesasGlobais[numMesaLimpo].rondas.forEach(r => {
-                    if(r.itens) r.itens.forEach(it => itensPrint.push(it));
+                    if(r.itens) r.itens.forEach(it => {
+                        itensPrint.push(it);
+                        totalOriginal += (it.preco * it.qtde);
+                    });
                 });
             } else {
                 const idsStr = document.getElementById('pagar-mesa-ids').value;
@@ -1798,7 +1889,10 @@
                         const ids = JSON.parse(idsStr);
                         ids.forEach(id => {
                             let p = window.pedidosGlobais.find(x => x.id === id);
-                            if(p && p.itens) p.itens.forEach(it => itensPrint.push(it));
+                            if(p && p.itens) p.itens.forEach(it => {
+                                itensPrint.push(it);
+                                totalOriginal += (it.preco * it.qtde);
+                            });
                         });
                     } catch(e){}
                 }
@@ -1816,21 +1910,50 @@
         html += `
                 </tbody>
             </table>
-            <hr style="border:1px dashed #000; margin:10px 0;">
-            <div style="text-align:right; font-size:16px; font-weight:bold;">Total: ${parseFloat(total).toFixed(2)}€</div>
-            <div style="text-align:right; font-size:12px; margin-top:5px;">Pago com: ${metodo}</div>
-            <div style="text-align:center; margin-top:20px; font-size:11px;">Obrigado pela sua visita!</div>
-        `;
+            <hr style="border:1px dashed #000; margin:10px 0;">`;
+            
+        if (totalOriginal > totalAtual) {
+            html += `<div style="text-align:right; font-size:12px;">Subtotal: ${totalOriginal.toFixed(2)}€</div>
+                     <div style="text-align:right; font-size:12px; color:#c0392b;">Desconto: -${(totalOriginal - totalAtual).toFixed(2)}€</div>`;
+        }
+            
+        html += `<div style="text-align:right; font-size:16px; font-weight:bold;">Total a Pagar: ${parseFloat(totalAtual).toFixed(2)}€</div>`;
+        
+        if (!isConsulta) {
+            html += `<div style="text-align:right; font-size:12px; margin-top:5px;">Pago com: ${metodo}</div>`;
+            if (trocoInfo) {
+                html += `<div style="text-align:right; font-size:12px;">Entregue: ${trocoInfo.entregue}€</div>
+                         <div style="text-align:right; font-size:12px;">Troco: ${trocoInfo.troco}€</div>`;
+            }
+            html += `<div style="text-align:center; margin-top:20px; font-size:11px;">Obrigado pela sua visita!</div>`;
+        } else {
+            html += `<div style="text-align:center; margin-top:20px; font-size:11px;">Obrigado por nos escolher.</div>`;
+        }
         
         document.getElementById('print-area').innerHTML = html;
     }
 
+    function imprimirTalaoConsulta() {
+        const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
+        const totalAtual = parseFloat(document.getElementById('pagar-mesa-total').innerText.replace('€',''));
+        gerarTalaoImpressao(mesaSegura, totalAtual, null, true, null, null);
+        setTimeout(() => { window.print(); }, 300);
+    }
+
     async function confirmarFechoMesa() {
         const metodo = document.getElementById('pagar-mesa-metodo').value;
-        const querImprimir = document.getElementById('imprimir-talao-check').checked;
+        const nifInput = document.getElementById('pagar-mesa-nif').value.trim();
         const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
         const totalPagamento = parseFloat(document.getElementById('pagar-mesa-total').innerText.replace('€',''));
+        const totalOriginal = parseFloat(document.getElementById('pagar-mesa-total-original').value);
         const numMesaLimpo = mesaSegura.replace('Mesa ', '').trim();
+        
+        let trocoInfo = null;
+        if (metodo === 'Dinheiro') {
+            const ent = parseFloat(document.getElementById('pagar-valor-entregue').value);
+            const troco = parseFloat(document.getElementById('pagar-valor-troco').innerText);
+            if (!isNaN(ent)) trocoInfo = { entregue: ent.toFixed(2), troco: troco.toFixed(2) };
+        }
         
         const btn = document.querySelector('#modal-pagar-mesa .btn-success');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...'; btn.disabled = true;
@@ -1863,11 +1986,22 @@
                     });
                     
                     itemsToKeep = itemsToKeep.filter(it => it.qtde > 0);
-                    const totalRemaining = itemsToKeep.reduce((sum, it) => sum + (it.preco * it.qtde), 0);
+                    let totalRemaining = itemsToKeep.reduce((sum, it) => sum + (it.preco * it.qtde), 0);
                     
+                    if (totalPagamento < totalOriginal) {
+                        const ratioDesconto = totalPagamento / totalOriginal;
+                        totalPaidForThisPedido = totalPaidForThisPedido * ratioDesconto;
+                    }
+
                     if (itemsToKeep.length === 0) {
                         promessasSplit.push((async () => {
-                            const { error: err1 } = await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', pedidoId);
+                            const { error: err1 } = await _sb.from('pedidos').update({ 
+                                estado: 'finalizado', 
+                                metodo_pagamento: metodo,
+                                total: totalPaidForThisPedido,
+                                nif_cliente: nifInput || null,
+                                quer_nif: !!nifInput
+                            }).eq('id', pedidoId);
                             if (err1) throw new Error("Acesso Negado (RLS) ao atualizar pedido: " + err1.message);
                         })());
                     } else {
@@ -1883,7 +2017,9 @@
                                 itens: itemsPaid,
                                 total: totalPaidForThisPedido,
                                 estado: 'finalizado',
-                                metodo_pagamento: metodo
+                                metodo_pagamento: metodo,
+                                nif_cliente: nifInput || null,
+                                quer_nif: !!nifInput
                             }]);
                             if (err3) throw new Error("Acesso Negado (RLS) ao inserir split: " + err3.message);
                         })());
@@ -1897,9 +2033,19 @@
                 const idsStr = document.getElementById('pagar-mesa-ids').value;
                 if(idsStr && idsStr !== '[]') {
                     const ids = JSON.parse(idsStr);
+                    const racioDesconto = totalPagamento / totalOriginal;
                     
                     await Promise.all(ids.map(async (id) => {
-                        const { error: errUpdate } = await _sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', id);
+                        let pData = window.pedidosGlobais.find(x => x.id === id);
+                        let subNovoTotal = pData ? (pData.total * racioDesconto) : 0;
+                        
+                        const { error: errUpdate } = await _sb.from('pedidos').update({ 
+                            estado: 'finalizado', 
+                            metodo_pagamento: metodo,
+                            total: subNovoTotal,
+                            nif_cliente: nifInput || null,
+                            quer_nif: !!nifInput
+                        }).eq('id', id);
                         if (errUpdate) throw new Error("Acesso Negado (RLS): " + errUpdate.message);
                     }));
                     
@@ -1918,16 +2064,13 @@
             fecharModal('modal-pagar-mesa');
             await carregarDados();
 
-            if (querImprimir) {
-                gerarTalaoImpressao(mesaSegura, totalPagamento, metodo);
-                setTimeout(() => { window.print(); }, 300);
-            }
+            gerarTalaoImpressao(mesaSegura, totalPagamento, metodo, false, nifInput, trocoInfo);
+            setTimeout(() => { window.print(); }, 300);
             
         } catch(e) {
             mostrarAlertaCustom(e.message, "Erro Fatal BD");
         } finally {
-            // CORREÇÃO: O botão volta sempre ao normal, quer o modal esteja aberto ou fechado
-            btn.innerHTML = '<i class="fas fa-check-double"></i> Confirmar Pagamento'; 
+            btn.innerHTML = '<i class="fas fa-check-double"></i> Fatura Final'; 
             btn.disabled = false;
         }
     }
@@ -1978,7 +2121,8 @@
         }, "Confirmar Estorno");
     }
 
-    // NOVA FUNÇÃO: GERAR O RELATÓRIO Z DE FECHO DE CAIXA
+    function abrirFechoTurno() { document.getElementById('modal-fecho').style.display = 'flex'; }
+
     async function gerarRelatorioZ() {
         const btn = document.querySelector('#modal-fecho .btn-success');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A calcular...';
@@ -1993,42 +2137,33 @@
                 .gte('created_at', hoje + 'T00:00:00')
                 .lte('created_at', hoje + 'T23:59:59');
 
-            let totalGlobal = 0;
-            let totalDinheiro = 0;
-            let totalMB = 0;
-            let totalMBWay = 0;
-            let totalTicket = 0;
-            
+            let totalGlobal = 0; let totalDinheiro = 0; let totalMB = 0; let totalMBWay = 0; let totalTicket = 0;
             let iva23 = 0, iva13 = 0, iva6 = 0, iva0 = 0;
-            
-            let htmlDocs = '';
 
             if (pedidosHoje && pedidosHoje.length > 0) {
                 pedidosHoje.forEach(p => {
                     totalGlobal += p.total;
-                    
                     if (p.metodo_pagamento === 'Dinheiro') totalDinheiro += p.total;
                     else if (p.metodo_pagamento === 'Multibanco') totalMB += p.total;
                     else if (p.metodo_pagamento === 'MBWay') totalMBWay += p.total;
                     else if (p.metodo_pagamento === 'Ticket Refeição') totalTicket += p.total;
 
-                    // Calcular IVAs baseados nos itens (assumindo que tens essa info no array, senão mapeia para a BD)
                     if (p.itens && Array.isArray(p.itens)) {
                         p.itens.forEach(item => {
-                            // Aproximação do IVA se não estiver no item JSON, busca ao catalogo
-                            const prodRef = produtosCatalogo.find(c => c.nome === item.nome);
+                            const prodRef = produtosCatalogo.find(c => c.nome.includes(item.nome.split(' | ')[0]));
                             const taxa = prodRef && prodRef.taxa_iva ? parseFloat(prodRef.taxa_iva) : 23;
-                            const valorBase = item.preco * item.qtde;
-                            const valorIva = valorBase - (valorBase / (1 + (taxa/100)));
                             
+                            // Distribuição proporcional se houve desconto no total do pedido
+                            const ratioDoTotal = (item.preco * item.qtde) / p.itens.reduce((s,i)=>s+(i.preco*i.qtde), 0);
+                            const valorFinalItem = p.total * ratioDoTotal;
+                            
+                            const valorIva = valorFinalItem - (valorFinalItem / (1 + (taxa/100)));
                             if (taxa === 23) iva23 += valorIva;
                             else if (taxa === 13) iva13 += valorIva;
                             else if (taxa === 6) iva6 += valorIva;
                             else iva0 += valorIva;
                         });
                     }
-                    
-                    htmlDocs += `<tr><td style="padding:2px 0;">#${p.id}</td><td style="text-align:right;">${p.total.toFixed(2)}€</td></tr>`;
                 });
             }
 
@@ -2043,9 +2178,7 @@
                     <div style="font-size:12px; margin-top:5px;">Data: ${dataHoje} | Hora: ${horaFecho}</div>
                     <div style="font-size:12px;">Operador: ${nomeOperadorAtual}</div>
                 </div>
-                
                 <hr style="border:1px dashed #000; margin:10px 0;">
-                
                 <div style="font-size:14px; margin-bottom:10px; font-weight:bold;">VENDAS POR PAGAMENTO</div>
                 <table style="width:100%; font-size:12px; text-align:left; border-collapse: collapse;">
                     <tr><td style="padding:2px 0;">Dinheiro:</td><td style="text-align:right;">${totalDinheiro.toFixed(2)}€</td></tr>
@@ -2053,24 +2186,16 @@
                     <tr><td style="padding:2px 0;">MBWay:</td><td style="text-align:right;">${totalMBWay.toFixed(2)}€</td></tr>
                     <tr><td style="padding:2px 0;">Ticket Refeição:</td><td style="text-align:right;">${totalTicket.toFixed(2)}€</td></tr>
                 </table>
-
                 <hr style="border:1px dashed #000; margin:10px 0;">
-                
-                <div style="font-size:20px; font-weight:bold; text-align:center; margin: 15px 0;">
-                    TOTAL: ${totalGlobal.toFixed(2)}€
-                </div>
-
+                <div style="font-size:20px; font-weight:bold; text-align:center; margin: 15px 0;">TOTAL: ${totalGlobal.toFixed(2)}€</div>
                 <hr style="border:1px dashed #000; margin:10px 0;">
-
                 <div style="font-size:12px; margin-bottom:10px; font-weight:bold;">RESUMO DE IVA</div>
                 <table style="width:100%; font-size:11px; text-align:left; border-collapse: collapse;">
                     <tr><td style="padding:2px 0;">IVA 23%:</td><td style="text-align:right;">${iva23.toFixed(2)}€</td></tr>
                     <tr><td style="padding:2px 0;">IVA 13%:</td><td style="text-align:right;">${iva13.toFixed(2)}€</td></tr>
                     <tr><td style="padding:2px 0;">IVA 6%:</td><td style="text-align:right;">${iva6.toFixed(2)}€</td></tr>
                 </table>
-
                 <hr style="border:1px dashed #000; margin:10px 0;">
-                
                 <div style="font-size:12px; margin-top:20px; margin-bottom:30px;">
                     Assinatura / Visto do Operador:
                     <div style="border-bottom: 1px solid #000; margin-top: 25px;"></div>
@@ -2079,9 +2204,7 @@
 
             document.getElementById('print-area').innerHTML = htmlZ;
             window.print();
-            
             await registarAuditoria('Imprimiu o Relatório Z (Fecho de Caixa).');
-            
         } catch (e) {
             mostrarAlertaCustom("Erro ao gerar Relatório Z: " + e.message, "Erro");
         } finally {
@@ -2092,16 +2215,9 @@
 
     function fecharModal(id) { 
         document.getElementById(id).style.display = 'none'; 
-        if (id === 'modal-detalhes-gerais') {
-            modalDetalheAberto = { tipo: null, id: null };
-        }
-        if (id === 'modal-dividir-conta') {
-            window.splitEmCurso = false;
-            window.splitBillData = [];
-        }
-        if (id === 'modal-adicionar-mesa') {
-            document.getElementById('input-adicionar-mesa').value = '';
-        }
+        if (id === 'modal-detalhes-gerais') modalDetalheAberto = { tipo: null, id: null };
+        if (id === 'modal-dividir-conta') { window.splitEmCurso = false; window.splitBillData = []; }
+        if (id === 'modal-adicionar-mesa') document.getElementById('input-adicionar-mesa').value = '';
     }
 
     verificarSessao();
