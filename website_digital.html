@@ -149,11 +149,13 @@
 
         .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: var(--p); }
         
+        /* GARANTIA DE CONTRASTE NOS DROPDOWNS EM TEMAS ESCUROS */
         select option {
             background-color: #ffffff !important;
             color: #1e293b !important;
         }
 
+        /* INPUTS CORRIGIDOS */
         .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2); font-family: inherit; font-size: 14px; background: rgba(128,128,128,0.05); color: var(--text-color); transition: 0.3s; margin-bottom: 5px; }
         .input-form:focus { outline: none; border-color: var(--ok); background: transparent; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
         .input-form::placeholder { color: #94a3b8; }
@@ -163,7 +165,7 @@
         .order-type-box label:hover, .payment-box label:hover { background: rgba(0,0,0,0.05); }
         .order-type-box input[type="radio"], .payment-box input[type="radio"] { accent-color: var(--ok); transform: scale(1.1); margin:0;}
 
-        .mbway-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 0.9em; color: #166534; display: none; }
+        .mbway-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 0.9em; color: #166534; display: block; }
         .mbway-info strong { color: #15803d; }
 
         .btn-checkout { background: var(--ok); color: white; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 1.1em; display: block; width: 100%; border: none; cursor: pointer; margin-top: 20px; transition: 0.3s; flex-shrink: 0;}
@@ -413,14 +415,16 @@
                                 <i class="fas fa-exclamation-triangle"></i> <span data-i18n="nif_warning">Após finalizar, não será possível adicionar NIF, pois a fatura é emitida no ato do pagamento.</span>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
                 <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1);">
                     <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="payment_method">2. Método de Pagamento</h4>
                     <div class="payment-box">
+                        <label id="label-mbway" style="display:flex;"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" checked> <i class="fas fa-mobile-screen-button" style="margin-right:5px;"></i> MBWay</label>
                     </div>
-                    <div id="mbway-zone" class="mbway-info" style="display:none;">
+                    <div id="mbway-zone" class="mbway-info" style="display:block;">
                         <i class="fas fa-info-circle"></i> <strong data-i18n="exclusive_mbway">Pagamento Exclusivo via MBWay</strong><br>
                         <span data-i18n="mbway_instructions">O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº</span> <strong id="mbway-phone"></strong>.
                     </div>
@@ -1008,12 +1012,10 @@
             if(p.estado === 'finalizado') { corBadge = 'bg-pronto'; textoBadge = 'Concluído'; }
             
             let btnAcoes = '';
-            // Cliente só pode cancelar reservas/pedidos com mais de 60m de antecedência se estiverem pendentes/confirmados.
             if(diffMinutos > 60 && (p.estado === 'aguarda_confirmacao' || p.estado === 'reserva_confirmada' || p.estado === 'pendente')) {
                 btnAcoes += `<button onclick="cancelarMeuPedido(${p.id})" style="background:var(--err); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:11px;">Cancelar</button>`;
             }
             
-            // Botões de sala (Cheguei / Vou Atrasar)
             if((p.tipo_pedido === 'reserva' || p.tipo_pedido === 'mesa') && p.estado === 'reserva_confirmada' && diffMinutos <= 120 && diffMinutos >= -30) {
                 if (p.status_presenca === 'no_local') {
                     btnAcoes += `<span style="font-size:11px; color:var(--ok); font-weight:bold; margin-left:5px;"><i class="fas fa-check"></i> Receção Notificada</span>`;
@@ -1218,7 +1220,6 @@
         if(inputData) { inputData.min = hojeIso; inputData.value = hojeIso; }
     }
 
-    // --- NOVA LÓGICA DE HORÁRIOS BLINDADA PARA OS TURNOS ---
     function atualizarHorariosDisponiveis() {
         if (!lojaAtual) return;
         
@@ -1276,7 +1277,6 @@
         const margemMinutos = tipo === 'levantamento' ? 30 : 60; 
         const agoraEmMinutos = (agora.getHours() * 60) + agora.getMinutes();
 
-        // Função interna para gerar blocos de 30m num turno específico
         function adicionarTurno(horaInicio, horaFim, nomeTurno) {
             if(!horaInicio || !horaFim || horaInicio === horaFim) return;
             
@@ -1286,12 +1286,10 @@
             let minStart = (hI * 60) + mI;
             let minEnd = (hF * 60) + mF;
 
-            // Correção OBRIGATÓRIA: Se a hora de fecho for menor que a de início, o turno atravessa a meia-noite
             if (minEnd < minStart) {
-                minEnd += 1440; // Adiciona 24 horas em minutos
+                minEnd += 1440;
             }
 
-            // Fecha a cozinha mais cedo para a rua, dependendo do tipo de pedido
             if (tipo === 'reserva') { minEnd -= 60; } 
             else if (tipo === 'levantamento') { minEnd -= 45; } 
 
@@ -1299,15 +1297,12 @@
             let slotsHtml = '';
 
             for (let tempo = minStart; tempo <= minEnd; tempo += 30) {
-                // Previne agendamentos no passado no próprio dia
                 if (isHoje && tempo <= (agoraEmMinutos + margemMinutos)) continue;
                 
-                // Formatação visual da hora para não mostrar "25:00" mas sim "01:00"
                 let tempoFormatado = tempo >= 1440 ? tempo - 1440 : tempo;
                 
                 const h = Math.floor(tempoFormatado / 60).toString().padStart(2, '0');
                 const m = (tempoFormatado % 60).toString().padStart(2, '0');
-                
                 slotsHtml += `<option value="${h}:${m}">${h}:${m}${tempo >= 1440 ? ' (Dia Seg.)' : ''}</option>`;
                 turnoTemSlots = true;
             }
@@ -1486,11 +1481,9 @@
 
             configurarDatasIniciais();
             
-            // Injetar métodos de pagamento dinâmicos para Takeaway (FORÇAR MBWAY se disponível)
             let paymentOptionsHtml = '';
             let mbwayAtivo = loja.mbway_key ? true : false;
             
-            // Se for takeaway, mostra apenas MBWay (se existir)
             if (mbwayAtivo) {
                 paymentOptionsHtml += `<label id="label-mbway"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" checked onchange="toggleMbwayInfo()"> <i class="fas fa-mobile-screen-button" style="margin-right:5px;"></i> MBWay</label>`;
             } else {
@@ -1909,7 +1902,7 @@
                     quer_nif: querNif,
                     nif_cliente: nifCliente,
                     data_agendada: dataAgendada.toISOString(), 
-                    estado: 'pendente',
+                    estado: 'aguarda_confirmacao',
                     status_presenca: 'pendente'
                 }]);
                 if (error) throw error; 
