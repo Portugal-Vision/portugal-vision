@@ -357,7 +357,7 @@
 
             <div id="cart-login-section" style="display:none; margin-top: 20px; padding: 20px; background: rgba(128, 128, 128, 0.05); border: 1px dashed var(--s); border-radius: 12px;">
                 <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="auth_title">Identificação (Obrigatória)</h4>
-                <p style="font-size: 12px; color: var(--s); margin-top:0;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
+                <p style="font-size: 12px; color: var(--s); margin-top:0;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identify.</p>
                 
                 <div class="auth-tab">
                     <div id="cart-tab-login" class="active" onclick="switchCartAuth('login')" data-i18n="login">Entrar</div>
@@ -423,8 +423,9 @@
                 <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1);">
                     <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="payment_method">2. Método de Pagamento</h4>
                     <div class="payment-box">
+                        <label id="label-mbway" style="display:flex;"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" checked onchange="toggleMbwayInfo()"> <i class="fas fa-mobile-screen-button" style="margin-right:5px;"></i> MBWay</label>
                     </div>
-                    <div id="mbway-zone" class="mbway-info" style="display:none;">
+                    <div id="mbway-zone" class="mbway-info" style="display:block;">
                         <i class="fas fa-info-circle"></i> <strong data-i18n="exclusive_mbway">Pagamento Exclusivo via MBWay</strong><br>
                         <span data-i18n="mbway_instructions">O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº</span> <strong id="mbway-phone"></strong>.
                     </div>
@@ -1088,7 +1089,7 @@
         });
     }
 
-    // --- ROTEAMENTO DE ÁUDIO INTELIGENTE ---
+    // --- ROTEAMENTO DE ÁUDIO INTELIGENTE E TRANSFERÊNCIA DE MESAS ---
     function iniciarOuvinteCliente() {
         if(!lojaAtual) return;
         if(!clienteAtual && !mesaAtual) return;
@@ -1105,6 +1106,17 @@
                 const mesaAtribuida = payload.new.mesa;
                 const alerta = document.getElementById('cliente-alert');
                 const msgEl = document.getElementById('cliente-alert-msg');
+                
+                // --- NOVA LÓGICA DE DETEÇÃO DE TRANSFERÊNCIA DE MESA ---
+                if (mesaAtual && mesaAtribuida && mesaAtual !== mesaAtribuida && tipoPedido === 'mesa') {
+                    // O cliente está na mesa A, mas o servidor diz que ele agora pertence à mesa B. Reencaminhar.
+                    setTimeout(() => {
+                        const novaUrl = new URL(window.location.href);
+                        novaUrl.searchParams.set('mesa', mesaAtribuida);
+                        window.location.href = novaUrl.toString();
+                    }, 500);
+                    return;
+                }
                 
                 if (mesaAtual && (novoEstado === 'finalizado' || novoEstado === 'cancelado')) {
                     localStorage.removeItem('pv_mesa_sessao');
@@ -1376,7 +1388,7 @@
             root.style.setProperty('--text-color', '#78350f');
         } else {
             root.style.setProperty('--bg', '#fdfbf7');
-            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
+            root.style.setProperty('--bg-image', 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z\' fill=\'%23334155\' fill-opacity=\'0.04\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")');
             root.style.setProperty('--bg-size', 'auto');
             root.style.setProperty('--p', '#2c3e50'); 
             root.style.setProperty('--s', '#a89f91');
