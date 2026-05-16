@@ -129,12 +129,11 @@
         .custom-alert-title { font-size: 1.4em; font-weight: 800; color: var(--text); margin-bottom: 10px; }
         .custom-alert-text { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 1em; }
         .custom-alert-actions { display: flex; gap: 10px; justify-content: center; }
-
     </style>
 </head>
 <body>
 
-<div id="custom-alert-modal" class="custom-alert-overlay">
+<div id="custom-alert-modal" class="custom-alert-overlay no-print">
     <div class="custom-alert-box">
         <div id="custom-alert-icon" style="font-size: 3em; margin-bottom: 15px; color: var(--primary);"><i class="fas fa-info-circle"></i></div>
         <div id="custom-alert-title" class="custom-alert-title">Aviso</div>
@@ -143,7 +142,7 @@
     </div>
 </div>
 
-<div id="login-screen">
+<div id="login-screen" class="no-print">
     <div class="login-box">
         <h2 style="margin-top:0; color: var(--primary);"><i class="fas fa-tablet-alt"></i> Painel de Sala</h2>
         <p style="color: #64748b; margin-bottom: 25px;">Acesso restrito a colaboradores.</p>
@@ -163,7 +162,7 @@
     </div>
 </div>
 
-<div id="dashboard-screen" style="display: none; height: 100%; flex-direction: column;">
+<div id="dashboard-screen" class="no-print" style="display: none; height: 100%; flex-direction: column;">
     <header>
         <div class="logo-area">
             <h1><span class="status-dot"></span> <span id="nome-restaurante">A carregar...</span></h1>
@@ -215,7 +214,7 @@
     </div>
 </div>
 
-<div id="modal-detalhes-gerais" class="modal">
+<div id="modal-detalhes-gerais" class="modal no-print">
     <div class="modal-content" style="max-width: 650px;">
         <div class="modal-header">
             <h3 id="detalhes-gerais-titulo" style="margin:0; font-size: 1.5em; display:flex; align-items:center; gap:10px;">Detalhes</h3>
@@ -226,16 +225,24 @@
     </div>
 </div>
 
-<div id="modal-dividir-conta" class="modal">
+<div id="modal-dividir-conta" class="modal no-print">
     <div class="modal-content" style="max-width: 500px;">
         <div class="modal-header" style="background: #eff6ff;">
             <h3 style="margin:0; color: var(--primary);"><i class="fas fa-cut"></i> Dividir Conta</h3>
             <div class="close-modal" onclick="fecharModal('modal-dividir-conta')"><i class="fas fa-times"></i></div> 
         </div>
         <div class="modal-body">
-            <p style="color:#64748b; margin-top:0;">Selecione os artigos que o cliente deseja pagar neste momento:</p>
+            <p style="color:#64748b; margin-top:0;">Selecione os artigos ou defina um valor livre por item que o cliente deseja pagar neste momento:</p>
             <div id="split-bill-lista" style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; max-height: 40vh; overflow-y: auto;">
                 </div>
+            
+            <div style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <span style="font-size: 13px; font-weight: bold; color: #475569;"><i class="fas fa-users"></i> Dividir Conta Total Igualmente:</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" id="split-input-pessoas" min="1" placeholder="Nº Pessoas" class="input-form" style="width: 110px; margin: 0; padding: 6px;" oninput="calcularDivisaoPartesIgnum()">
+                </div>
+            </div>
+
             <div style="margin-top: 20px; font-weight: 900; font-size: 1.5em; text-align:right; color:var(--text);">
                 Subtotal a Pagar: <span id="split-bill-subtotal" style="color:var(--primary);">0.00</span>€
             </div>
@@ -247,7 +254,7 @@
     </div>
 </div>
 
-<div id="modal-transferir-mesa" class="modal">
+<div id="modal-transferir-mesa" class="modal no-print">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-exchange-alt"></i> Transferir Conta</h3>
@@ -262,7 +269,7 @@
     </div>
 </div>
 
-<div id="modal-adicionar-mesa" class="modal">
+<div id="modal-adicionar-mesa" class="modal no-print">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <div class="modal-header" style="background: #f8fafc;">
             <h3 style="margin:0; color: var(--text);"><i class="fas fa-plus-circle" style="color: var(--primary);"></i> Adicionar Mesa</h3>
@@ -276,7 +283,7 @@
     </div>
 </div>
 
-<div id="modal-pin-seguranca" class="modal" style="z-index: 10000;">
+<div id="modal-pin-seguranca" class="modal no-print" style="z-index: 10000;">
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header" style="background: #fffbeb;">
             <h3 style="margin:0; color: var(--warning);"><i class="fas fa-user-shield"></i> Autorização</h3>
@@ -290,7 +297,7 @@
     </div>
 </div>
 
-<div id="modal-historico" class="modal">
+<div id="modal-historico" class="modal no-print">
     <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-history"></i> Histórico de Turno (Hoje)</h3>
@@ -302,7 +309,7 @@
     </div>
 </div>
 
-<div id="modal-pos" class="modal">
+<div id="modal-pos" class="modal no-print">
     <div class="modal-content">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-cash-register"></i> Novo Pedido Manual</h3>
@@ -327,7 +334,7 @@
     </div>
 </div>
 
-<div id="modal-mesa-reserva" class="modal">
+<div id="modal-mesa-reserva" class="modal no-print">
     <div class="modal-content" style="max-width: 350px; text-align: center;">
         <div class="modal-header">
             <h3 style="margin:0;">Atribuir Mesa</h3>
@@ -342,7 +349,7 @@
     </div>
 </div>
 
-<div id="modal-pagar-mesa" class="modal">
+<div id="modal-pagar-mesa" class="modal no-print">
     <div class="modal-content" style="max-width: 500px; text-align: center;">
         <div class="modal-header">
             <h3 id="modal-pagar-mesa-title" style="margin:0;"><i class="fas fa-box"></i> Fechar Pedido</h3>
@@ -389,7 +396,7 @@
     </div>
 </div>
 
-<div id="modal-edicao" class="modal">
+<div id="modal-edicao" class="modal no-print">
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-edit"></i> Editar Pedido <span id="edit-pedido-id" style="color:var(--primary);"></span></h3>
@@ -414,7 +421,7 @@
     </div>
 </div>
 
-<div id="modal-fecho" class="modal">
+<div id="modal-fecho" class="modal no-print">
     <div class="modal-content">
         <div class="modal-header">
             <h3 style="margin:0;"><i class="fas fa-lock"></i> Fecho Diário (Relatório Z)</h3>
@@ -431,6 +438,29 @@
         <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; gap:10px;">
             <button class="btn-action btn-resolve" onclick="fecharModal('modal-fecho')">Cancelar</button>
             <button class="btn-action btn-success" onclick="gerarRelatorioZ()"><i class="fas fa-print"></i> Imprimir Fecho (Relatório Z)</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-opcoes-impressao" class="modal no-print" style="z-index: 10002;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-header" style="background: #f8fafc;">
+            <h3 style="margin:0;"><i class="fas fa-print"></i> Opções de Impressão</h3>
+        </div>
+        <div class="modal-body">
+            <p style="color:#475569; font-weight: bold; margin-bottom: 20px; font-size: 1.1em;">Pretende imprimir o talão para o cliente?</p>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <button class="btn-login btn-success" style="background: var(--success); margin:0;" onclick="executarImpressaoFluxo('cliente')"><i class="fas fa-receipt"></i> Sim, Talão Cliente</button>
+                
+                <div id="zona-copias-cliente" style="display:none; background:#f1f5f9; padding:12px; border-radius:10px; border:1px solid #cbd5e1; flex-direction:column; gap:8px; align-items:center; width:100%;">
+                    <label style="font-size:12px; font-weight:bold; color:#64748b;">Nº de Vias do Cliente:</label>
+                    <input type="number" id="input-qtd-copias" value="1" min="1" max="5" class="input-form" style="width:80px; text-align:center; margin:0;">
+                    <button class="btn-header btn-action-primary" style="padding:8px 15px; width: 100%; justify-content: center;" onclick="confirmarImpressaoCopias()">Confirmar e Imprimir</button>
+                </div>
+
+                <button class="btn-login" style="background: #64748b; margin:0;" onclick="executarImpressaoFluxo('lojista')"><i class="fas fa-store"></i> Não, Imprimir para Lojista</button>
+                <button class="btn-login" style="background: #cbd5e1; color:#1e293b; margin:0;" onclick="executarImpressaoFluxo('nada')"><i class="fas fa-ban"></i> Não Imprimir Nada</button>
+            </div>
         </div>
     </div>
 </div>
@@ -455,6 +485,12 @@
     
     window.splitBillData = [];
     window.splitEmCurso = false;
+    window.splitModoPartes = false;
+    window.splitNumPartes = 1;
+
+    // Globais para o motor de impressão pós-fecho
+    window.htmlTalaoPendente = "";
+    window.talaoMesaNome = "";
 
     const nomeDiasInt = {1: "Segunda-feira", 2: "Terça-feira", 3: "Quarta-feira", 4: "Quinta-feira", 5: "Sexta-feira", 6: "Sábado", 0: "Domingo"};
 
@@ -1378,7 +1414,7 @@
             btn = `
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalTransferir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-exchange-alt"></i> Transferir</button>
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalDividir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-cut"></i> Dividir</button>
-                <button class="btn-action btn-success" onclick="prepararFechoMesa('${m.mesa}', ${m.totalAcumulado}, '[]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
+                <button class="btn-action btn-success" onclick="prepararFechoMesa('${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
             `; 
         }
 
@@ -1442,6 +1478,12 @@
         const m = window.mesasGlobais[mesaNum];
         if(!m || m.rondas.length === 0) return;
         
+        document.getElementById('modal-dividir-conta').setAttribute('data-mesa-num', mesaNum);
+        const inputPessoas = document.getElementById('split-input-pessoas');
+        if(inputPessoas) inputPessoas.value = '';
+        
+        window.splitModoPartes = false;
+        window.splitNumPartes = 1;
         window.splitBillData = [];
         
         m.rondas.forEach(r => {
@@ -1452,7 +1494,8 @@
                     nome: it.nome,
                     preco: it.preco,
                     maxQtde: it.qtde,
-                    payQtde: 0
+                    payQtde: 0,
+                    payValor: 0 // Injeção de Valor Livre
                 });
             });
         });
@@ -1462,38 +1505,75 @@
         document.getElementById('modal-dividir-conta').style.display = 'flex';
     }
 
+    function calcularDivisaoPartesIgnum() {
+        const inputPessoas = document.getElementById('split-input-pessoas');
+        let num = parseInt(inputPessoas.value) || 0;
+        const numMesaLimpo = document.getElementById('modal-dividir-conta').getAttribute('data-mesa-num');
+        
+        if (num > 1) {
+            window.splitModoPartes = true;
+            window.splitNumPartes = num;
+        } else {
+            window.splitModoPartes = false;
+            window.splitNumPartes = 1;
+        }
+        renderizarSplitBill(numMesaLimpo);
+    }
+
     function renderizarSplitBill(mesaNum) {
         const container = document.getElementById('split-bill-lista');
         let subtotal = 0;
+        const m = window.mesasGlobais[mesaNum];
         
-        container.innerHTML = window.splitBillData.map((item, index) => {
-            subtotal += item.preco * item.payQtde;
-            return `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e2e8f0; padding:10px 0;">
-                    <div style="flex:1;">
-                        <strong style="font-size:15px;">${item.nome}</strong><br>
-                        <span style="font-size:13px; color:#64748b;">${item.preco.toFixed(2)}€ / Max: ${item.maxQtde}</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <button onclick="alterarQtdeSplit(${index}, -1, '${mesaNum}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">-</button>
-                        <span style="font-weight:bold; width:20px; text-align:center;">${item.payQtde}</span>
-                        <button onclick="alterarQtdeSplit(${index}, 1, '${mesaNum}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">+</button>
-                    </div>
+        if (window.splitModoPartes) {
+            subtotal = m.totalAcumulado / window.splitNumPartes;
+            container.innerHTML = `
+                <div style="text-align:center; padding:25px; background:#f0fdf4; border-radius:12px; border:1px solid #bbf7d0; grid-column: 1/-1;">
+                    <h4 style="margin:0; color:#166534; font-size:1.1em;"><i class="fas fa-percentage"></i> Modo: Divisão Prorrogada por Partes</h4>
+                    <p style="margin:12px 0; font-size:1.2em; color: var(--text);">Fração a Cobrar: <strong>${subtotal.toFixed(2)}€</strong> (1 de ${window.splitNumPartes} pessoas)</p>
+                    <small style="color:#64748b; display:block; margin-bottom:10px;">Os artigos serão abatidos proporcionalmente ao valor pago.</small>
                 </div>
             `;
-        }).join('');
+        } else {
+            container.innerHTML = window.splitBillData.map((item, index) => {
+                let itemSub = 0;
+                if (item.payValor > 0) {
+                    itemSub = item.payValor;
+                } else {
+                    itemSub = item.preco * item.payQtde;
+                }
+                subtotal += itemSub;
+                
+                return `
+                    <div style="display:flex; flex-direction:column; border-bottom:1px dashed #e2e8f0; padding:12px 0; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="flex:1;">
+                                <strong style="font-size:15px; color:var(--text);">${item.nome}</strong><br>
+                                <span style="font-size:13px; color:#64748b;">${item.preco.toFixed(2)}€ / Max Qtd: ${item.maxQtde}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <button onclick="alterarQtdeSplit(${index}, -1, '${mesaNum}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">-</button>
+                                <span style="font-weight:bold; width:20px; text-align:center;">${item.payQtde}</span>
+                                <button onclick="alterarQtdeSplit(${index}, 1, '${mesaNum}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">+</button>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; background:#f8fafc; padding:6px 10px; border-radius:8px;">
+                            <span style="font-size:12px; color:#64748b; font-weight:bold;">Ou pagar valor livre (€):</span>
+                            <input type="number" step="0.01" min="0" max="${(item.preco * item.maxQtde).toFixed(2)}" class="input-form" style="margin:0; padding:4px 8px; font-size:13px; width:95px; text-align:right; background:white;" placeholder="0.00" value="${item.payValor || ''}" oninput="alterarValorManualSplit(${index}, this.value, '${mesaNum}')">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
         
         document.getElementById('split-bill-subtotal').innerText = subtotal.toFixed(2);
-        
         const btnAvancar = document.getElementById('btn-avancar-split');
         if (subtotal > 0) {
             btnAvancar.style.opacity = '1';
             btnAvancar.disabled = false;
-            
-            // CORREÇÃO CRÍTICA AQUI: O MODAL APENAS SE ESCONDE, NÃO É "FECHADO" (A VARIÁVEL NÃO É RESETADA)
             btnAvancar.onclick = () => {
                 window.splitEmCurso = true;
-                document.getElementById('modal-dividir-conta').style.display = 'none';
+                document.getElementById('modal-dividir-conta').style.display = 'none'; // Apenas esconde, não reseta as variáveis
                 prepararFechoMesa('Mesa ' + mesaNum, subtotal, '[]', ''); 
             };
         } else {
@@ -1503,10 +1583,21 @@
         }
     }
 
+    function alterarValorManualSplit(index, val, mesaNum) {
+        let num = parseFloat(val) || 0;
+        let item = window.splitBillData[index];
+        let maxVal = item.preco * item.maxQtde;
+        if (num > maxVal) num = maxVal;
+        item.payValor = num;
+        if (num > 0) item.payQtde = 0; // Se usar valor manual, anula seletor de qty fixa
+        renderizarSplitBill(mesaNum);
+    }
+
     function alterarQtdeSplit(index, delta, mesaNum) {
         const item = window.splitBillData[index];
         if (delta > 0 && item.payQtde < item.maxQtde) item.payQtde++;
         if (delta < 0 && item.payQtde > 0) item.payQtde--;
+        if (item.payQtde > 0) item.payValor = 0; // Se usar qty fixa, reseta valor manual
         renderizarSplitBill(mesaNum);
     }
 
@@ -1545,7 +1636,7 @@
             btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto');">Marcar Pronto</button>`; 
         } 
         else if(p.estado === 'pronto') { 
-            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto pour Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
+            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto para Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
             btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '${metodoTakeaway}');"><i class="fas fa-check-double"></i> Entregar e Fechar Conta</button>`; 
         }
         else if(p.estado === 'reserva_confirmada') {
@@ -1724,8 +1815,6 @@
         }, "Confirmação de Pagamento");
     }
 
-    // --- NOVA LÓGICA DE PAGAMENTO: DESCONTOS E TROCOS ---
-    
     function aplicarDescontoConta() {
         const perc = parseFloat(document.getElementById('pagar-desc-perc').value);
         let totalBase = parseFloat(document.getElementById('pagar-mesa-total-original').value);
@@ -1815,7 +1904,7 @@
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
     }
 
-    // NOVA FUNÇÃO: Motor de Impressão via Iframe Invisível
+    // --- NOVO MOTOR DE IMPRESSÃO PROFISSIONAL VIA IFRAME ISOLADO COM PREVENÇÃO DE EM BRANCO ---
     function imprimirConteudoIsolado(htmlContent) {
         let iframe = document.getElementById('print-iframe-motor');
         if (!iframe) {
@@ -1825,9 +1914,9 @@
             iframe.style.width = '0px';
             iframe.style.height = '0px';
             iframe.style.border = 'none';
+            iframe.style.visibility = 'hidden';
             document.body.appendChild(iframe);
         }
-        
         const doc = iframe.contentWindow.document;
         doc.open();
         doc.write(`
@@ -1852,18 +1941,16 @@
             </html>
         `);
         doc.close();
-        
         setTimeout(() => {
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
-        }, 500);
+        }, 300);
     }
 
     function gerarTalaoImpressaoHTML(mesa, totalAtual, metodo, isConsulta, nifCliente, trocoInfo) {
         let nomeLoja = window.lojaDataAtual ? window.lojaDataAtual.nome : "Restaurante";
         let nifLoja = window.lojaDataAtual ? (window.lojaDataAtual.nif || "S/ NIF") : "S/ NIF";
-        
-        let subNif = isConsulta ? "Talão de Consulta" : (nifCliente ? `NIF: ${nifCliente}` : "Consumidor Final");
+        let subNif = isConsulta ? "Talão de Consulta" : (nifCliente ? `NIF Cliente: ${nifCliente}` : "Consumidor Final");
         let headerDoc = isConsulta ? "TALÃO DE CONSULTA<br><small>NÃO SERVE COMO FATURA</small>" : "FATURA / RECIBO";
         
         let html = `
@@ -1883,11 +1970,14 @@
         let itensPrint = [];
         let totalOriginal = 0;
         
-        if (window.splitEmCurso && window.splitBillData) {
+        if (window.splitEmCurso && !window.splitModoPartes && window.splitBillData) {
             window.splitBillData.forEach(op => {
                 if (op.payQtde > 0) {
                     itensPrint.push({ qtde: op.payQtde, nome: op.nome, preco: op.preco });
                     totalOriginal += (op.preco * op.payQtde);
+                } else if (op.payValor > 0) {
+                    itensPrint.push({ qtde: 1, nome: op.nome + " (Parcial)", preco: op.payValor });
+                    totalOriginal += op.payValor;
                 }
             });
         } else {
@@ -1929,12 +2019,15 @@
             </table>
             <hr>`;
             
-        if (totalOriginal > totalAtual) {
+        if (totalOriginal > totalAtual && !window.splitModoPartes) {
             html += `<div style="text-align:right; font-size:12px;">Subtotal: ${totalOriginal.toFixed(2)}€</div>
                      <div style="text-align:right; font-size:12px; color:#c0392b;">Desconto: -${(totalOriginal - totalAtual).toFixed(2)}€</div>`;
+        } else if (window.splitModoPartes) {
+            html += `<div style="text-align:right; font-size:12px;">Subtotal Mesa: ${totalOriginal.toFixed(2)}€</div>
+                     <div style="text-align:right; font-size:12px; color:#c0392b;">Desconto (Parte não paga): -${(totalOriginal - totalAtual).toFixed(2)}€</div>`;
         }
             
-        html += `<div class="totais-talao">Total a Pagar: ${parseFloat(totalAtual).toFixed(2)}€</div>`;
+        html += `<div class="totais-talao">Total Pago: ${parseFloat(totalAtual).toFixed(2)}€</div>`;
         
         if (!isConsulta) {
             html += `<div style="text-align:right; font-size:12px; margin-top:5px;">Pago com: ${metodo}</div>`;
@@ -1946,16 +2039,36 @@
         } else {
             html += `<div style="text-align:center; margin-top:20px; font-size:11px;">Obrigado por nos escolher.</div>`;
         }
-        
         return html;
     }
 
     function imprimirTalaoConsulta() {
         const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
         const totalAtual = parseFloat(document.getElementById('pagar-mesa-total').innerText.replace('€',''));
-        
         const talaoHtml = gerarTalaoImpressaoHTML(mesaSegura, totalAtual, null, true, null, null);
         imprimirConteudoIsolado(talaoHtml);
+    }
+
+    // --- NOVA GESTÃO DE IMPRESSÃO SELETIVA PÓS-FECHO (CLIENTE COM VIAS VS LOJISTA) ---
+    function executarImpressaoFluxo(opcao) {
+        if (opcao === 'cliente') {
+            document.getElementById('zona-copias-cliente').style.display = 'flex';
+        } else if (opcao === 'lojista') {
+            let lojistaHTML = `<div style="text-align:center; font-weight:bold; font-size:13px; border:1px solid #000; padding:5px; margin-bottom:15px; text-transform:uppercase;">*** CÓPIA LOJISTA ***</div>` + window.htmlTalaoPendente;
+            imprimirConteudoIsolado(lojistaHTML);
+            fecharModal('modal-opcoes-impressao');
+        } else {
+            fecharModal('modal-opcoes-impressao');
+        }
+    }
+
+    function confirmarImpressaoCopias() {
+        let qtd = parseInt(document.getElementById('input-qtd-copias').value) || 1;
+        if (qtd < 1) qtd = 1;
+        for (let i = 0; i < qtd; i++) {
+            setTimeout(() => imprimirConteudoIsolado(window.htmlTalaoPendente), i * 1500); 
+        }
+        fecharModal('modal-opcoes-impressao');
     }
 
     async function confirmarFechoMesa() {
@@ -1977,90 +2090,99 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...'; btn.disabled = true;
 
         try {
-            // 1. GERAR HTML DO TALÃO ANTES DE LIMPAR AS VARIÁVEIS DA DIVISÃO
-            const talaoFinalHTML = gerarTalaoImpressaoHTML(mesaSegura, totalPagamento, metodo, false, nifInput, trocoInfo);
+            // 1. ASSEGURAR A ESTRUTURA DO TALÃO ANTES DE RESETAR PARÂMETROS
+            window.htmlTalaoPendente = gerarTalaoImpressaoHTML(mesaSegura, totalPagamento, metodo, false, nifInput, trocoInfo);
+            window.talaoMesaNome = mesaSegura;
 
-            // 2. EXECUTAR ABATE NA BASE DE DADOS
+            // 2. LOGISTICA DA BASE DE DADOS (ABATE/PROPORCIONAL/ITENS)
             if (window.splitEmCurso) {
-                const gruposPorPedido = {};
-                window.splitBillData.forEach(op => {
-                    if (!gruposPorPedido[op.pedidoId]) gruposPorPedido[op.pedidoId] = [];
-                    gruposPorPedido[op.pedidoId].push(op);
-                });
-
-                const promessasSplit = [];
-
-                for (const pedidoId in gruposPorPedido) {
-                    const ped = window.pedidosGlobais.find(p => p.id == pedidoId);
-                    if (!ped) continue;
-
-                    let itemsToKeep = JSON.parse(JSON.stringify(ped.itens));
-                    let itemsPaid = [];
-                    let totalPaidForThisPedido = 0;
-                    
-                    const ops = gruposPorPedido[pedidoId];
-                    ops.forEach(op => {
-                        if(op.payQtde > 0) {
-                            itemsPaid.push({ ...itemsToKeep[op.itemIdx], qtde: op.payQtde });
-                            itemsToKeep[op.itemIdx].qtde -= op.payQtde;
-                            totalPaidForThisPedido += (op.preco * op.payQtde);
+                const ordersMesa = window.pedidosGlobais.filter(p => String(p.mesa) === String(numMesaLimpo));
+                
+                if (window.splitModoPartes) {
+                    // Abate proporcional das frações iguais (Opção Bónus)
+                    let totalPagoRestante = totalPagamento;
+                    const promessasPartes = [];
+                    for (let i = 0; i < ordersMesa.length; i++) {
+                        let ped = ordersMesa[i];
+                        if (ped.total <= totalPagoRestante) {
+                            totalPagoRestante -= ped.total;
+                            promessasPartes.push(_sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo }).eq('id', ped.id));
+                        } else {
+                            let novoTotalPed = ped.total - totalPagoRestante;
+                            totalPagoRestante = 0;
+                            promessasPartes.push(_sb.from('pedidos').update({ total: novoTotalPed }).eq('id', ped.id));
+                            break;
+                        }
+                    }
+                    await Promise.all(promessasPartes);
+                } else {
+                    // Abate por Item Fixo ou por Valor Livre (Opção 2)
+                    const gruposPorPedido = {};
+                    window.splitBillData.forEach(op => {
+                        if (op.payQtde > 0 || op.payValor > 0) {
+                            if (!gruposPorPedido[op.pedidoId]) gruposPorPedido[op.pedidoId] = [];
+                            gruposPorPedido[op.pedidoId].push(op);
                         }
                     });
-                    
-                    itemsToKeep = itemsToKeep.filter(it => it.qtde > 0);
-                    let totalRemaining = itemsToKeep.reduce((sum, it) => sum + (it.preco * it.qtde), 0);
-                    
-                    if (totalPagamento < totalOriginal) {
-                        const ratioDesconto = totalPagamento / totalOriginal;
-                        totalPaidForThisPedido = totalPaidForThisPedido * ratioDesconto;
-                    }
 
-                    if (itemsToKeep.length === 0) {
-                        promessasSplit.push((async () => {
-                            const { error: err1 } = await _sb.from('pedidos').update({ 
-                                estado: 'finalizado', 
-                                metodo_pagamento: metodo,
-                                total: totalPaidForThisPedido,
-                                nif_cliente: nifInput || null,
-                                quer_nif: !!nifInput
-                            }).eq('id', pedidoId);
-                            if (err1) throw new Error("Acesso Negado (RLS) ao atualizar pedido: " + err1.message);
-                        })());
-                    } else {
-                        promessasSplit.push((async () => {
-                            const { error: err2 } = await _sb.from('pedidos').update({ itens: itemsToKeep, total: totalRemaining }).eq('id', pedidoId);
-                            if (err2) throw new Error("Acesso Negado (RLS) ao atualizar itens: " + err2.message);
-                            
-                            const { error: err3 } = await _sb.from('pedidos').insert([{
+                    const promessasSplit = [];
+                    for (const pedidoId in gruposPorPedido) {
+                        const ped = window.pedidosGlobais.find(p => p.id == pedidoId);
+                        if (!ped) continue;
+
+                        let itemsToKeep = JSON.parse(JSON.stringify(ped.itens));
+                        let itemsPaid = [];
+                        let totalPaidForThisPedido = 0;
+                        const ops = gruposPorPedido[pedidoId];
+                        
+                        ops.forEach(op => {
+                            if (op.payQtde > 0) {
+                                itemsPaid.push({ ...itemsToKeep[op.itemIdx], qtde: op.payQtde });
+                                itemsToKeep[op.itemIdx].qtde -= op.payQtde;
+                                totalPaidForThisPedido += (op.preco * op.payQtde);
+                            } else if (op.payValor > 0) {
+                                itemsPaid.push({ ...itemsToKeep[op.itemIdx], qtde: 1, nome: itemsToKeep[op.itemIdx].nome + " (Parcial)" });
+                                totalPaidForThisPedido += op.payValor;
+                            }
+                        });
+                        
+                        itemsToKeep = itemsToKeep.filter(it => it.qtde > 0);
+                        let totalRemaining = itemsToKeep.reduce((sum, it) => sum + (it.preco * it.qtde), 0);
+                        
+                        if (window.splitBillData.some(op => op.pedidoId == pedidoId && op.payValor > 0)) {
+                            let valorLivrePago = ops.filter(op => op.payValor > 0).reduce((s, o) => s + o.payValor, 0);
+                            totalRemaining = Math.max(0, ped.total - valorLivrePago);
+                        }
+
+                        if (totalRemaining <= 0 || itemsToKeep.length === 0) {
+                            promessasSplit.push(_sb.from('pedidos').update({ estado: 'finalizado', metodo_pagamento: metodo, total: ped.total, nif_cliente: nifInput || null, quer_nif: !!nifInput }).eq('id', pedidoId));
+                        } else {
+                            promessasSplit.push(_sb.from('pedidos').update({ itens: itemsToKeep, total: totalRemaining }).eq('id', pedidoId));
+                            promessasSplit.push(_sb.from('pedidos').insert([{
                                 loja_id: minhaLojaId,
                                 tipo_pedido: ped.tipo_pedido,
                                 mesa: ped.mesa,
-                                nome_cliente: ped.nome_cliente,
+                                nome_cliente: ped.nome_cliente + " (Split)",
                                 itens: itemsPaid,
                                 total: totalPaidForThisPedido,
                                 estado: 'finalizado',
                                 metodo_pagamento: metodo,
                                 nif_cliente: nifInput || null,
                                 quer_nif: !!nifInput
-                            }]);
-                            if (err3) throw new Error("Acesso Negado (RLS) ao inserir split: " + err3.message);
-                        })());
+                            }]));
+                        }
                     }
+                    await Promise.all(promessasSplit);
                 }
-                
-                await Promise.all(promessasSplit);
-                registarAuditoria(`Fechou a conta PARCIALMENTE na Mesa ${numMesaLimpo} (Pagamento por ${metodo}) no valor de ${totalPagamento}€`);
-
             } else {
+                // Pagamento total e comum da mesa
                 const idsStr = document.getElementById('pagar-mesa-ids').value;
                 if(idsStr && idsStr !== '[]') {
                     const ids = JSON.parse(idsStr);
                     const racioDesconto = totalPagamento / totalOriginal;
-                    
                     await Promise.all(ids.map(async (id) => {
                         let pData = window.pedidosGlobais.find(x => x.id === id);
                         let subNovoTotal = pData ? (pData.total * racioDesconto) : 0;
-                        
                         const { error: errUpdate } = await _sb.from('pedidos').update({ 
                             estado: 'finalizado', 
                             metodo_pagamento: metodo,
@@ -2070,25 +2192,36 @@
                         }).eq('id', id);
                         if (errUpdate) throw new Error("Acesso Negado (RLS): " + errUpdate.message);
                     }));
-                    
-                    if(mesaSegura !== 'Takeaway' && mesaSegura !== 'Reserva') {
-                        localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
-                        limparToastsMesa(numMesaLimpo);
-                    } else {
-                        for(let id of ids) limparToastsMesa(`pedido-${id}`);
-                    }
-                    registarAuditoria(`Fechou a conta (Pagamento por ${metodo}) das encomendas: ${idsStr}`);
                 }
             }
 
-            // 3. LIMPEZA, RECARREGAMENTO E IMPRESSÃO (O SEGREDO DA CORREÇÃO)
+            // 3. ATUALIZAR INTERFACE, MEMÓRIA E FILTRAR SE A MESA FICOU COMPLETAMENTE COBRADA
             window.splitEmCurso = false;
             window.splitBillData = [];
-            fecharModal('modal-pagar-mesa');
+            window.splitModoPartes = false;
+            window.splitNumPartes = 1;
             
-            await carregarDados(); // O ecrã vai agora refletir o abate na mesa.
+            fecharModal('modal-pagar-mesa');
+            await carregarDados(); // Subtotal atualiza-se no ecrã de imediato
 
-            imprimirConteudoIsolado(talaoFinalHTML); // Dispara a impressora em background sem rebentar o layout.
+            // 4. VERIFICADOR DE WIPE-OUT (LIBERTAÇÃO DE MESA SE O VALOR ACUMULADO FOR ZERO)
+            const pedidosAtivosMesa = window.pedidosGlobais.filter(p => String(p.mesa) === String(numMesaLimpo));
+            const subtotalMesaRestante = pedidosAtivosMesa.reduce((sum, ord) => sum + ord.total, 0);
+            
+            if (pedidosAtivosMesa.length === 0 || subtotalMesaRestante <= 0) {
+                localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
+                limparToastsMesa(numMesaLimpo);
+                // Fecha as chamadas em background de conta/empregado pendentes na base de dados
+                try {
+                    await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('loja_id', minhaLojaId).eq('mesa', numMesaLimpo).eq('estado', 'pendente');
+                } catch(err){}
+                await carregarDados();
+            }
+
+            // 5. DISPARAR O NOVO DIÁLOGO INTERACTIVO DE OPÇÕES DE IMPRESSÃO
+            document.getElementById('modal-opcoes-impressao').style.display = 'flex';
+            document.getElementById('zona-copias-cliente').style.display = 'none';
+            document.getElementById('input-qtd-copias').value = '1';
             
         } catch(e) {
             mostrarAlertaCustom(e.message, "Erro Fatal BD");
@@ -2101,9 +2234,7 @@
     async function abrirHistorico() {
         document.getElementById('lista-historico').innerHTML = '<p style="text-align:center; padding: 20px;">A carregar histórico de hoje...</p>';
         document.getElementById('modal-historico').style.display = 'flex';
-        
         const hoje = new Date().toISOString().split('T')[0]; 
-        
         const { data: historico } = await _sb.from('pedidos')
             .select('*')
             .eq('loja_id', minhaLojaId)
@@ -2120,7 +2251,6 @@
                 const textBadge = isCancelado ? 'CANCELADO' : 'PAGO';
                 const desc = p.tipo_pedido === 'mesa' ? `Mesa ${p.mesa}` : `Takeaway/Reserva (${p.nome_cliente || 'Anónimo'})`;
                 const infoNif = p.nif_cliente ? `<br><small style="color:#64748b;">NIF: ${p.nif_cliente}</small>` : '';
-                
                 const btnReabrir = `<button onclick="pedirPin(() => efetuarReabertura(${p.id}))" class="btn-mini-edit" style="background:var(--warning); padding:8px 12px; font-weight:bold; font-size:12px;"><i class="fas fa-undo"></i> Reabrir Pedido</button>`;
                 
                 return `<div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
@@ -2150,7 +2280,6 @@
         const btn = document.querySelector('#modal-fecho .btn-success');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A calcular...';
         btn.disabled = true;
-
         try {
             const hoje = new Date().toISOString().split('T')[0];
             const { data: pedidosHoje } = await _sb.from('pedidos')
@@ -2175,11 +2304,8 @@
                         p.itens.forEach(item => {
                             const prodRef = produtosCatalogo.find(c => c.nome.includes(item.nome.split(' | ')[0]));
                             const taxa = prodRef && prodRef.taxa_iva ? parseFloat(prodRef.taxa_iva) : 23;
-                            
-                            // Distribuição proporcional se houve desconto no total do pedido
                             const ratioDoTotal = (item.preco * item.qtde) / p.itens.reduce((s,i)=>s+(i.preco*i.qtde), 0);
                             const valorFinalItem = p.total * ratioDoTotal;
-                            
                             const valorIva = valorFinalItem - (valorFinalItem / (1 + (taxa/100)));
                             if (taxa === 23) iva23 += valorIva;
                             else if (taxa === 13) iva13 += valorIva;
@@ -2224,9 +2350,7 @@
                     <div style="border-bottom: 1px solid #000; margin-top: 25px;"></div>
                 </div>
             `;
-
             imprimirConteudoIsolado(htmlZ);
-            
             await registarAuditoria('Imprimiu o Relatório Z (Fecho de Caixa).');
         } catch (e) {
             mostrarAlertaCustom("Erro ao gerar Relatório Z: " + e.message, "Erro");
@@ -2239,7 +2363,12 @@
     function fecharModal(id) { 
         document.getElementById(id).style.display = 'none'; 
         if (id === 'modal-detalhes-gerais') modalDetalheAberto = { tipo: null, id: null };
-        if (id === 'modal-dividir-conta') { window.splitEmCurso = false; window.splitBillData = []; }
+        if (id === 'modal-dividir-conta') { 
+            window.splitEmCurso = false; 
+            window.splitBillData = []; 
+            window.splitModoPartes = false; 
+            window.splitNumPartes = 1; 
+        }
         if (id === 'modal-adicionar-mesa') document.getElementById('input-adicionar-mesa').value = '';
     }
 
