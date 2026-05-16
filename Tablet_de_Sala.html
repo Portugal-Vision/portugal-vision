@@ -129,6 +129,7 @@
         .custom-alert-title { font-size: 1.4em; font-weight: 800; color: var(--text); margin-bottom: 10px; }
         .custom-alert-text { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 1em; }
         .custom-alert-actions { display: flex; gap: 10px; justify-content: center; }
+
     </style>
 </head>
 <body>
@@ -241,7 +242,7 @@
         </div>
         <div class="modal-footer">
             <button class="btn-action btn-resolve" onclick="fecharModal('modal-dividir-conta')">Voltar</button>
-            <button class="btn-action btn-success" id="btn-avancar-split" onclick="avancarSplitBill()"><i class="fas fa-arrow-right"></i> Ir para Pagamento Parcial</button>
+            <button class="btn-action btn-success" id="btn-avancar-split"><i class="fas fa-arrow-right"></i> Ir para Pagamento Parcial</button>
         </div>
     </div>
 </div>
@@ -1377,7 +1378,7 @@
             btn = `
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalTransferir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-exchange-alt"></i> Transferir</button>
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalDividir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-cut"></i> Dividir</button>
-                <button class="btn-action btn-success" onclick="prepararFechoMesa('${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
+                <button class="btn-action btn-success" onclick="prepararFechoMesa('${m.mesa}', ${m.totalAcumulado}, '[]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
             `; 
         }
 
@@ -1488,9 +1489,11 @@
         if (subtotal > 0) {
             btnAvancar.style.opacity = '1';
             btnAvancar.disabled = false;
+            
+            // CORREÇÃO CRÍTICA AQUI: O MODAL APENAS SE ESCONDE, NÃO É "FECHADO" (A VARIÁVEL NÃO É RESETADA)
             btnAvancar.onclick = () => {
                 window.splitEmCurso = true;
-                fecharModal('modal-dividir-conta');
+                document.getElementById('modal-dividir-conta').style.display = 'none';
                 prepararFechoMesa('Mesa ' + mesaNum, subtotal, '[]', ''); 
             };
         } else {
@@ -1542,7 +1545,7 @@
             btn = `<button class="btn-action btn-success" onclick="avancarPedido(${p.id}, 'pronto');">Marcar Pronto</button>`; 
         } 
         else if(p.estado === 'pronto') { 
-            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto para Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
+            estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto pour Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
             btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '${metodoTakeaway}');"><i class="fas fa-check-double"></i> Entregar e Fechar Conta</button>`; 
         }
         else if(p.estado === 'reserva_confirmada') {
@@ -1721,6 +1724,8 @@
         }, "Confirmação de Pagamento");
     }
 
+    // --- NOVA LÓGICA DE PAGAMENTO: DESCONTOS E TROCOS ---
+    
     function aplicarDescontoConta() {
         const perc = parseFloat(document.getElementById('pagar-desc-perc').value);
         let totalBase = parseFloat(document.getElementById('pagar-mesa-total-original').value);
@@ -1810,13 +1815,16 @@
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
     }
 
-    // NOVA FUNÇÃO: Motor de Impressão via Iframe Invisível (Zero bugs visuais)
+    // NOVA FUNÇÃO: Motor de Impressão via Iframe Invisível
     function imprimirConteudoIsolado(htmlContent) {
         let iframe = document.getElementById('print-iframe-motor');
         if (!iframe) {
             iframe = document.createElement('iframe');
             iframe.id = 'print-iframe-motor';
-            iframe.style.display = 'none';
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
             document.body.appendChild(iframe);
         }
         
@@ -1833,7 +1841,7 @@
                     th, td { text-align: left; padding: 3px 0; border-bottom: 1px dashed #ccc; }
                     th:last-child, td:last-child { text-align: right; }
                     hr { border: 1px dashed #000; margin: 10px 0; width: 100%; }
-                    h2 { font-size: 18px; margin: 0 0 5px 0; }
+                    h2 { font-size: 18px; margin: 0 0 5px 0; text-align: center; }
                     .header-talao { text-align: center; margin-bottom: 15px; }
                     .totais-talao { text-align: right; font-size: 16px; font-weight: bold; margin: 10px 0; }
                 </style>
@@ -1946,7 +1954,6 @@
         const mesaSegura = document.getElementById('pagar-mesa-id-seguro').value;
         const totalAtual = parseFloat(document.getElementById('pagar-mesa-total').innerText.replace('€',''));
         
-        // Novo motor
         const talaoHtml = gerarTalaoImpressaoHTML(mesaSegura, totalAtual, null, true, null, null);
         imprimirConteudoIsolado(talaoHtml);
     }
