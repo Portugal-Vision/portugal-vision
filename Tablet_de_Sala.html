@@ -132,6 +132,7 @@
 
         /* IMPRESSÃO DO TALÃO TÉRMICO 80mm e RELATÓRIO Z */
         @media print {
+            body { background: white; margin: 0; padding: 0; height: auto; overflow: visible; display: block; }
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
             #print-area { 
