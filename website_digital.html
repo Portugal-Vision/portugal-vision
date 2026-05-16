@@ -149,13 +149,11 @@
 
         .cart-total-zone { margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-size: 1.2em; font-weight: 800; color: var(--p); }
         
-        /* GARANTIA DE CONTRASTE NOS DROPDOWNS EM TEMAS ESCUROS */
         select option {
             background-color: #ffffff !important;
             color: #1e293b !important;
         }
 
-        /* INPUTS CORRIGIDOS */
         .input-form { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2); font-family: inherit; font-size: 14px; background: rgba(128,128,128,0.05); color: var(--text-color); transition: 0.3s; margin-bottom: 5px; }
         .input-form:focus { outline: none; border-color: var(--ok); background: transparent; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1); }
         .input-form::placeholder { color: #94a3b8; }
@@ -165,7 +163,7 @@
         .order-type-box label:hover, .payment-box label:hover { background: rgba(0,0,0,0.05); }
         .order-type-box input[type="radio"], .payment-box input[type="radio"] { accent-color: var(--ok); transform: scale(1.1); margin:0;}
 
-        .mbway-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 0.9em; color: #166534; display: block; }
+        .mbway-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 0.9em; color: #166534; display: none; }
         .mbway-info strong { color: #15803d; }
 
         .btn-checkout { background: var(--ok); color: white; padding: 16px; border-radius: 16px; font-weight: bold; font-size: 1.1em; display: block; width: 100%; border: none; cursor: pointer; margin-top: 20px; transition: 0.3s; flex-shrink: 0;}
@@ -182,6 +180,10 @@
         .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; list-style: none; padding: 0; margin: 0; }
         .legal-links a, .complaints-book a { color: inherit; opacity: 0.8; text-decoration: none; font-size: 0.85em; transition: 0.3s; cursor: pointer; font-weight: 600; }
         .legal-links a:hover, .complaints-book a:hover { opacity: 1; text-decoration: underline;}
+
+        .contact-info { margin-top: 15px; font-size: 0.95em; color: var(--text-color); display: flex; flex-direction: column; gap: 8px; align-items: center;}
+        .contact-info a { color: var(--p); text-decoration: none; font-weight: 600; transition: 0.2s;}
+        .contact-info a:hover { color: var(--accent); }
 
         .auth-tab { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.1); }
         .auth-tab div { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #94a3b8; }
@@ -229,8 +231,7 @@
         <div id="custom-alert-icon" style="font-size: 3em; margin-bottom: 15px; color: var(--p);"><i class="fas fa-info-circle"></i></div>
         <div id="custom-alert-title" class="custom-alert-title">Aviso</div>
         <div id="custom-alert-text" class="custom-alert-text">Mensagem...</div>
-        <div id="custom-alert-actions" class="custom-alert-actions">
-            </div>
+        <div id="custom-alert-actions" class="custom-alert-actions"></div>
     </div>
 </div>
 
@@ -422,9 +423,8 @@
                 <div id="payment-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed rgba(0,0,0,0.1);">
                     <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="payment_method">2. Método de Pagamento</h4>
                     <div class="payment-box">
-                        <label id="label-mbway" style="display:flex;"><input type="radio" name="tipo_pagamento" value="MBWay" id="radio-mbway" checked> <i class="fas fa-mobile-screen-button" style="margin-right:5px;"></i> MBWay</label>
                     </div>
-                    <div id="mbway-zone" class="mbway-info" style="display:block;">
+                    <div id="mbway-zone" class="mbway-info" style="display:none;">
                         <i class="fas fa-info-circle"></i> <strong data-i18n="exclusive_mbway">Pagamento Exclusivo via MBWay</strong><br>
                         <span data-i18n="mbway_instructions">O seu pedido só avança para a cozinha após o envio do comprovativo de transferência para o nº</span> <strong id="mbway-phone"></strong>.
                     </div>
@@ -516,6 +516,11 @@
 
 <div class="footer">
     <p id="footer-morada" style="font-size: 0.95em; opacity: 0.9; margin-bottom: 5px;"></p>
+    <div class="contact-info" id="footer-contactos" style="display:none;">
+        <a id="link-telefone" href=""><i class="fas fa-phone-alt"></i> <span id="texto-telefone"></span></a>
+        <a id="link-email" href=""><i class="fas fa-envelope"></i> <span id="texto-email"></span></a>
+    </div>
+    
     <div class="map-buttons">
         <a id="link-gmaps" target="_blank" class="btn-map google-maps"><i class="fas fa-map-marker-alt"></i> Google Maps</a>
         <a id="link-waze" target="_blank" class="btn-map waze"><i class="fab fa-waze"></i> Waze</a>
@@ -533,6 +538,7 @@
         <p style="font-size: 0.75em; opacity: 0.6; margin-top: 20px;">© 2026 Portugal Vision. <span data-i18n="rights_reserved">Todos os direitos reservados.</span></p>
     </div>
 </div>
+
 <script>
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
@@ -1520,11 +1526,40 @@
                 iniciarOuvinteCliente();
             }
 
+            // ATUALIZAÇÃO CONTACTOS NO RODAPÉ
             if(loja.morada) document.getElementById('footer-morada').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loja.morada}`;
             
             const mEnc = encodeURIComponent(loja.morada || loja.nome);
             document.getElementById('link-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${mEnc}`;
             document.getElementById('link-waze').href = `https://waze.com/ul?q=${mEnc}&navigate=yes`;
+
+            const footerContactos = document.getElementById('footer-contactos');
+            const linkTel = document.getElementById('link-telefone');
+            const textoTel = document.getElementById('texto-telefone');
+            const linkEmail = document.getElementById('link-email');
+            const textoEmail = document.getElementById('texto-email');
+
+            let temContacto = false;
+            
+            if (loja.telefone) {
+                linkTel.href = `tel:${loja.telefone}`;
+                textoTel.innerText = loja.telefone;
+                linkTel.style.display = 'inline-block';
+                temContacto = true;
+            } else {
+                linkTel.style.display = 'none';
+            }
+
+            if (loja.email_contacto) {
+                linkEmail.href = `mailto:${loja.email_contacto}`;
+                textoEmail.innerText = loja.email_contacto;
+                linkEmail.style.display = 'inline-block';
+                temContacto = true;
+            } else {
+                linkEmail.style.display = 'none';
+            }
+
+            if(temContacto) footerContactos.style.display = 'flex';
 
             if (loja.logo_url) {
                 const logo = document.getElementById('v-logo');
