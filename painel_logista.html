@@ -442,6 +442,7 @@
                     </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;">
+                    <button onclick="gerarCodigoSuporte()" style="width:100%; background:#fef3c7; color:#b45309; border: 1px solid #fde68a; padding: 8px 12px; font-size:12px; margin:0;"><i class="fas fa-headset"></i> Pedir Suporte</button>
                     <button id="btn-atualizar-dados" onclick="carregarDados(); carregarMetricasHoje(); carregarStaff();" style="width:100%; background:var(--s); padding: 8px 12px; font-size:12px; margin:0;"><i class="fas fa-sync-alt"></i> Atualizar</button>
                     <button onclick="logoutLojista()" style="width:100%; background:var(--err); padding: 8px 12px; font-size:12px; margin:0;"><i class="fas fa-sign-out-alt"></i> Sair</button>
                 </div>
@@ -1070,7 +1071,7 @@
         try {
             await _sb.from('auditoria_logs').insert([{
                 loja_id: lojaAtiva.id,
-                empregado_id: lojaAtiva.auth_id,
+                empregado_id: lojaAtiva.auth_id || null,
                 empregado_nome: "Lojista (Patrão)",
                 acao: acaoDetalhe
             }]);
@@ -1357,6 +1358,25 @@
     async function logoutLojista() {
         await _sb.auth.signOut();
         location.reload();
+    }
+
+    async function gerarCodigoSuporte() {
+        if(!lojaAtiva) return;
+        // Gera um PIN numérico de 6 dígitos aleatório
+        const token = Math.floor(100000 + Math.random() * 900000).toString(); 
+        
+        const { error } = await _sb.from('lojas').update({ suporte_codigo: token }).eq('id', lojaAtiva.id);
+        
+        if(error) {
+            mostrarAlertaPro("Erro", "Falha ao ativar o modo de suporte: " + error.message, "erro");
+        } else {
+            mostrarAlertaPro(
+                "Acesso Remoto Seguro", 
+                `O seu PIN de suporte é:\n\n[ ${token} ]\n\nForneça este código à equipa técnica para permitir o acesso temporário ao seu painel. Este código expira assim que for utilizado ou substituído.`, 
+                "sucesso"
+            );
+            registarAuditoriaLojista(`Gerou um PIN de Suporte Técnico (${token}) para acesso remoto.`);
+        }
     }
 
     async function abrirPainel() {
@@ -2868,6 +2888,42 @@
         document.getElementById('btn-cancel').classList.remove('hidden');
         document.getElementById('form-title').closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    // --- O MOTOR INVISÍVEL DE ACESSO REMOTO E ARRANQUE ---
+    async function verificarSessao() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const slugSuporte = urlParams.get('suporte');
+        const tokenSuporte = urlParams.get('token');
+
+        if (slugSuporte && tokenSuporte) {
+            document.getElementById('auth-area').classList.add('hidden');
+            
+            const { data, error } = await _sb.from('lojas').select('*').eq('slug', slugSuporte).eq('suporte_codigo', tokenSuporte).maybeSingle();
+            
+            if (data) {
+                lojaAtiva = data;
+                abrirPainel();
+                mostrarAlertaPro("Modo Suporte Remoto", "Sessão iniciada como Administrador através de Handshake Digital.", "sucesso");
+                return;
+            } else {
+                alert("Acesso Negado: Código de suporte inválido ou expirado. Peça ao lojista para gerar um novo PIN.");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // FLUXO NORMAL (Lojista)
+        const { data } = await _sb.auth.getSession();
+        if (data.session) {
+            const { data: lojaData } = await _sb.from('lojas').select('*').eq('auth_id', data.session.user.id).maybeSingle();
+            if(lojaData) {
+                lojaAtiva = lojaData;
+                abrirPainel();
+            }
+        }
+    }
+    
+    // Inicia a aplicação
+    verificarSessao();
 </script>
 </body>
 </html>
