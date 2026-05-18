@@ -135,7 +135,7 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
             <div>
                 <h2 id="ficha-nome" style="margin: 0; color: var(--primary); font-size: 1.8rem;">Nome da Loja</h2>
-                <a id="ficha-link" href="#" target="_blank" style="color: var(--accent); font-size: 0.9rem; text-decoration: none;">pv.pt/slug</a>
+                <a id="ficha-link" href="#" target="_blank" style="color: var(--accent); font-size: 0.9rem; text-decoration: none;">A abrir link seguro...</a>
             </div>
             <button onclick="fecharModal('modalFichaLoja')" class="action-btn"><i class="fas fa-times"></i></button>
         </div>
@@ -182,7 +182,7 @@
         <h4 class="sec-title"><i class="fas fa-network-wired"></i> Estado do Hardware na Loja</h4>
         <div class="hw-grid">
             <div class="hw-card">
-                <div class="hw-dot hw-online" id="hw-dot-sala"></div>
+                <div class="hw-dot hw-offline" id="hw-dot-sala"></div>
                 <div>
                     <strong style="font-size: 0.85rem; display:block;">Tablet Sala</strong>
                     <small style="font-size: 0.7rem; color: var(--muted);" id="hw-time-sala">Verificando...</small>
@@ -286,10 +286,33 @@
             alert("Erro ao ligar à base de dados.");
         } else {
             dadosLocais = lojas || [];
+            await carregarMetricasAdocao(dadosLocais);
             render(dadosLocais);
         }
 
         if(btn) setTimeout(() => btn.classList.remove('loading-spin'), 500);
+    }
+
+    async function carregarMetricasAdocao(lojas) {
+        // Cálculo de adoção para os últimos 30 dias
+        const dataLimite = new Date();
+        dataLimite.setDate(dataLimite.getDate() - 30);
+        
+        const { data: pedidos } = await _sb.from('pedidos')
+            .select('loja_id, tipo_pedido')
+            .gte('created_at', dataLimite.toISOString());
+
+        metricasLocais = {};
+        
+        if (pedidos) {
+            pedidos.forEach(p => {
+                if (!metricasLocais[p.loja_id]) {
+                    metricasLocais[p.loja_id] = { sala: 0, takeaway: 0 };
+                }
+                if (p.tipo_pedido === 'mesa') metricasLocais[p.loja_id].sala++;
+                else metricasLocais[p.loja_id].takeaway++;
+            });
+        }
     }
 
     function render(lista) {
@@ -302,13 +325,16 @@
             const statusIcon = l.status === 'ativa' ? '🟢 Ativa' : '🔴 Suspensa';
             
             const lastActive = l.updated_at ? new Date(l.updated_at).toLocaleDateString('pt-PT') : 'Desconhecida';
+            
+            // Link corrigido para o GitHub Pages correto
+            const linkPrivado = `https://portugal-vision.github.io/portugal-vision/website_digital.html?loja=${l.slug}`;
 
             return `
                 <tr>
                     <td>
                         <strong style="font-size: 1rem; color: var(--primary);">${l.nome}</strong><br>
-                        <a href="https://portugalvision.pt/${l.slug}" target="_blank" style="color:var(--accent); font-size: 0.8rem; text-decoration: none;">
-                            <i class="fas fa-external-link-alt"></i> pv.pt/${l.slug}
+                        <a href="${linkPrivado}" target="_blank" style="color:var(--accent); font-size: 0.8rem; text-decoration: none;">
+                            <i class="fas fa-external-link-alt"></i> Aceder ao Website Público
                         </a>
                     </td>
                     <td>
@@ -336,24 +362,27 @@
         const loja = dadosLocais.find(l => l.id === id);
         if (!loja) return;
 
-        // Popula Header
+        // Popula Header com links corrigidos
         document.getElementById('ficha-nome').innerText = loja.nome;
-        document.getElementById('ficha-link').innerText = `pv.pt/${loja.slug}`;
-        document.getElementById('ficha-link').href = `https://portugalvision.pt/${loja.slug}`;
+        document.getElementById('ficha-link').innerText = `Aceder ao Painel do Lojista (${loja.slug})`;
+        document.getElementById('ficha-link').href = `https://portugal-vision.github.io/portugal-vision/painel_logista.html`;
+        
         document.getElementById('ficha-loja-id').value = loja.id;
         document.getElementById('ficha-status').value = loja.status || 'ativa';
         
         // Popula Views
         document.getElementById('fm-views').innerText = loja.views_total || 0;
         
-        // Simulação Leve de Storage (Opcional)
-        document.getElementById('fm-storage').innerText = "14.2 MB"; // Requereria RPC avançada para calcular real, fixo p/ demo layout
+        // Simulação Leve de Storage
+        document.getElementById('fm-storage').innerText = "14.2 MB"; 
 
         document.getElementById('modalFichaLoja').style.display = 'flex';
 
         // Carrega Dados Dinâmicos da Loja Específica
         await carregarMetricasFicha(id);
         await carregarLogsLocais(id);
+        
+        // Lê dados reais do Heartbeat na Base de Dados
         verificarHeartbeats(loja);
     }
 
@@ -414,14 +443,13 @@
     }
 
     function verificarHeartbeats(loja) {
-        // Lógica visual do Heartbeat (Preparada para ler de loja.heartbeat_sala no futuro)
-        // Para já, usa timestamps simulados para demonstração da arquitetura
-        
+        // LEITURA REAL DA BASE DE DADOS 
         const agora = new Date().getTime();
-        // Simulando que o Tablet Sala pingou há 2 minutos, e a cozinha não pinga há 2 horas.
-        const pingSala = agora - (2 * 60000); 
-        const pingCoz = null; 
-        const pingBar = agora - (15 * 60000); 
+        
+        // As colunas ping_sala, ping_cozinha e ping_bar devem existir na BD.
+        const pingSala = loja.ping_sala ? new Date(loja.ping_sala).getTime() : null;
+        const pingCoz = loja.ping_cozinha ? new Date(loja.ping_cozinha).getTime() : null;
+        const pingBar = loja.ping_bar ? new Date(loja.ping_bar).getTime() : null;
 
         atualizarDot('sala', pingSala, agora);
         atualizarDot('coz', pingCoz, agora);
@@ -434,7 +462,7 @@
         
         if (!pingMs) {
             dot.className = 'hw-dot hw-offline';
-            label.innerText = 'Desligado (Sem sinal)';
+            label.innerText = 'Sem leitura (Nunca conectou)';
             return;
         }
         
@@ -476,7 +504,6 @@
         const tbody = document.getElementById('global-logs-body');
         tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding:30px;"><i class="fas fa-spinner fa-spin"></i> A rastrear rede...</td></tr>';
         
-        // Puxar logs e juntar com o nome da loja
         const { data: logs, error } = await _sb.from('auditoria_logs')
             .select('created_at, loja_id, empregado_nome, acao')
             .order('created_at', { ascending: false })
@@ -493,9 +520,8 @@
             if(l.acao.toLowerCase().includes('apagou') || l.acao.toLowerCase().includes('cancelou') || l.acao.toLowerCase().includes('erro')) colorStr = 'var(--danger)';
             if(l.acao.toLowerCase().includes('ia')) colorStr = '#8b5cf6';
             
-            // Encontrar o nome da loja via dadosLocais em vez de mostrar o ID feio
             const lojaRef = dadosLocais.find(loja => loja.id === l.loja_id);
-            const lojaNomeStr = lojaRef ? lojaRef.nome : 'Loja Apagada/Desconhecida';
+            const lojaNomeStr = lojaRef ? lojaRef.nome : 'Loja Apagada';
 
             return `
                 <tr>
