@@ -8,9 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg: #f1f5f9; --primary: #0f172a; --accent: #2563eb; 
+            --bg: #f8fafc; --primary: #0f172a; --accent: #3b82f6; 
             --text: #1e293b; --muted: #64748b; --border: #e2e8f0; 
-            --success: #22c55e; --danger: #ef4444;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         
@@ -18,35 +18,51 @@
         .login-box { background: white; padding: 2.5rem; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
         
         #main-panel { display: none; }
-        .top-nav { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .top-nav { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: white; padding: 1.2rem; border-radius: 16px; border: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
-        .icon-box { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .icon-box { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         
-        .card-panel { background: white; padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .card-panel { background: white; padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid var(--bg); }
-        td { padding: 14px 12px; border-bottom: 1px solid var(--bg); font-size: 0.85rem; }
+        th { text-align: left; padding: 12px 16px; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid var(--border); letter-spacing: 0.5px; }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
         
-        .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; text-transform: uppercase; }
+        .badge { padding: 8px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
         .btn-on { background: #dcfce7; color: #15803d; }
         .btn-off { background: #fee2e2; color: #b91c1c; }
-        .btn-susp { background: #fef3c7; color: #92400e; }
         .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:hover { background: #2563eb; }
         
-        .action-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f8fafc; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .action-btn:hover { background: var(--accent); color: white; transform: translateY(-2px); }
+        .action-btn { width: 36px; height: 36px; border-radius: 8px; border: none; background: #f1f5f9; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .action-btn:hover { background: var(--border); transform: translateY(-2px); }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 2rem; border-radius: 20px; width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        input, select { width: 100%; padding: 10px; margin: 8px 0 16px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        /* MODAIS */
+        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); padding: 20px; }
+        .modal-content { background: white; padding: 2rem; border-radius: 20px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 14px; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        
+        /* MINI CARDS FICHA DE LOJA */
+        .ficha-metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .ficha-metric { background: #f8fafc; border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; }
+        .ficha-metric h4 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        .ficha-metric span { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; font-weight: bold; }
+
+        /* HEARTBEAT INDICATORS */
+        .hw-grid { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .hw-card { display: flex; align-items: center; gap: 10px; background: white; border: 1px solid var(--border); padding: 10px 15px; border-radius: 10px; flex: 1; min-width: 150px; }
+        .hw-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .hw-online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .hw-offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
         
         .loading-spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .sec-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 800; margin: 0 0 10px 0; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -56,21 +72,21 @@
         <h2 style="color: var(--primary); margin-bottom: 1.5rem;"><i class="fas fa-shield-alt"></i> PV Master</h2>
         <input type="email" id="log-email" placeholder="Email de Administrador">
         <input type="password" id="log-pass" placeholder="Senha">
-        <button id="btn-login-submit" onclick="handleLogin()" class="badge btn-on" style="width:100%; padding:14px; margin-top:10px;">ACEDER AO PAINEL</button>
+        <button id="btn-login-submit" onclick="handleLogin()" class="badge btn-primary" style="width:100%; padding:14px; margin-top:10px; font-size: 14px;">ACEDER AO PAINEL</button>
     </div>
 </div>
 
 <div id="main-panel">
     <nav class="top-nav">
         <div style="display:flex; align-items:center; gap:15px;">
-            <strong id="nav-title">PORTUGAL VISION MASTER CONTROL</strong>
-            <button onclick="carregar()" class="action-btn" id="btn-refresh" title="Atualizar Dados" style="background:rgba(255,255,255,0.2); color:white;">
+            <strong id="nav-title" style="letter-spacing: 1px;">PORTUGAL VISION MASTER CONTROL</strong>
+            <button onclick="carregar()" class="action-btn" id="btn-refresh" title="Atualizar Dados" style="background:rgba(255,255,255,0.1); color:white; border: 1px solid rgba(255,255,255,0.2);">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
         <div style="display:flex; gap:10px;">
-            <button onclick="abrirSystemHealth()" class="badge btn-susp"><i class="fas fa-heartbeat"></i> Radar de Sistema</button>
-            <button onclick="logout()" class="badge btn-off"><i class="fas fa-power-off"></i> SAIR</button>
+            <button onclick="abrirSystemHealth()" class="badge" style="background:#fef3c7; color:#b45309;"><i class="fas fa-heartbeat"></i> Radar Global</button>
+            <button onclick="logout()" class="badge" style="background:rgba(255,255,255,0.1); color:white;"><i class="fas fa-power-off"></i> SAIR</button>
         </div>
     </nav>
 
@@ -78,30 +94,32 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="icon-box" style="background:#eff6ff; color:#3b82f6;"><i class="fas fa-store"></i></div>
-                <div><small>Lojas Registadas</small><h3 id="st-lojas" style="margin:0">0</h3></div>
+                <div><small style="color:var(--muted); font-weight:600;">Lojas Registadas</small><h3 id="st-lojas" style="margin:0; font-size:1.8rem;">0</h3></div>
             </div>
             <div class="stat-card">
-                <div class="icon-box" style="background:#ecfdf5; color:#10b981;"><i class="fas fa-utensils"></i></div>
-                <div><small>Lojas Ativas</small><h3 id="st-ativas" style="margin:0">0</h3></div>
+                <div class="icon-box" style="background:#ecfdf5; color:#10b981;"><i class="fas fa-link"></i></div>
+                <div><small style="color:var(--muted); font-weight:600;">Lojas Ativas</small><h3 id="st-ativas" style="margin:0; font-size:1.8rem;">0</h3></div>
             </div>
             <div class="stat-card">
                 <div class="icon-box" style="background:#fef2f2; color:#ef4444;"><i class="fas fa-ban"></i></div>
-                <div><small>Lojas Suspensas</small><h3 id="st-suspensas" style="margin:0">0</h3></div>
+                <div><small style="color:var(--muted); font-weight:600;">Lojas Suspensas</small><h3 id="st-suspensas" style="margin:0; font-size:1.8rem;">0</h3></div>
             </div>
         </div>
 
         <div class="card-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <input type="text" id="search" placeholder="Procurar loja..." onkeyup="filtrar()" style="max-width:300px; margin:0">
+                <div style="position: relative; width: 300px;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; color: var(--muted);"></i>
+                    <input type="text" id="search" placeholder="Procurar loja ou link..." onkeyup="filtrar()" style="margin:0; padding-left: 35px;">
+                </div>
             </div>
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
-                            <th>Loja / Link</th>
-                            <th>Módulos Ativos</th>
-                            <th>Adoção Lojista (Mês)</th>
-                            <th>Estado Geral</th>
+                            <th>Identificação da Loja</th>
+                            <th>Estado Comercial</th>
+                            <th>Última Atividade</th>
                             <th style="text-align:right">Ações</th>
                         </tr>
                     </thead>
@@ -112,48 +130,113 @@
     </div>
 </div>
 
-<div id="modalLoja" class="modal">
+<div id="modalFichaLoja" class="modal">
     <div class="modal-content">
-        <h3 id="modal-title" style="margin-top:0"><i class="fas fa-cogs"></i> Gestão de Loja</h3>
-        <input type="hidden" id="edit-id">
-        
-        <label style="font-size: 12px; font-weight: bold; color: var(--muted);">Estado Comercial e Operacional</label>
-        <p style="font-size: 11px; color: var(--muted); margin-top: 0;">Ao suspender, o lojista, o staff e o cliente final perdem o acesso a 100% dos painéis e websites imediatamente.</p>
-        <select id="field-status">
-            <option value="ativa">🟢 Ativa (Pagamento Regularizado)</option>
-            <option value="suspensa">🔴 Suspensa (Cortar Acessos)</option>
-        </select>
-        
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="btn-save-loja" onclick="salvarLoja()" class="badge btn-primary" style="flex:1; padding:12px;">APLICAR</button>
-            <button onclick="fecharModal('modalLoja')" class="badge" style="flex:1; background:#eee; color:#333;">CANCELAR</button>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div>
+                <h2 id="ficha-nome" style="margin: 0; color: var(--primary); font-size: 1.8rem;">Nome da Loja</h2>
+                <a id="ficha-link" href="#" target="_blank" style="color: var(--accent); font-size: 0.9rem; text-decoration: none;">pv.pt/slug</a>
+            </div>
+            <button onclick="fecharModal('modalFichaLoja')" class="action-btn"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div style="background: #f8fafc; padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong style="display:block; font-size: 0.9rem;">Estado Operacional</strong>
+                <small style="color: var(--muted);">O estado suspenso bloqueia o acesso a todos os tablets e website.</small>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="ficha-status" style="width: auto; margin: 0; padding: 8px 12px; font-weight: bold;">
+                    <option value="ativa">🟢 ATIVA</option>
+                    <option value="suspensa">🔴 SUSPENSA</option>
+                </select>
+                <button onclick="salvarEstadoLoja()" class="badge btn-primary" style="padding: 10px 15px;"><i class="fas fa-save"></i></button>
+            </div>
+            <input type="hidden" id="ficha-loja-id">
+        </div>
+
+        <h4 class="sec-title"><i class="fas fa-chart-pie"></i> Adoção do Produto (Últimos 30 dias)</h4>
+        <div class="ficha-metrics-grid">
+            <div class="ficha-metric">
+                <h4 id="fm-sala">0</h4>
+                <span>Vendas Sala</span>
+            </div>
+            <div class="ficha-metric">
+                <h4 id="fm-takeaway">0</h4>
+                <span>Takeaway</span>
+            </div>
+            <div class="ficha-metric">
+                <h4 id="fm-reservas">0</h4>
+                <span>Reservas</span>
+            </div>
+            <div class="ficha-metric">
+                <h4 id="fm-views">0</h4>
+                <span>Visitas Web</span>
+            </div>
+            <div class="ficha-metric">
+                <h4 id="fm-storage">0 MB</h4>
+                <span>Espaço Loja</span>
+            </div>
+        </div>
+
+        <h4 class="sec-title"><i class="fas fa-network-wired"></i> Estado do Hardware na Loja</h4>
+        <div class="hw-grid">
+            <div class="hw-card">
+                <div class="hw-dot hw-online" id="hw-dot-sala"></div>
+                <div>
+                    <strong style="font-size: 0.85rem; display:block;">Tablet Sala</strong>
+                    <small style="font-size: 0.7rem; color: var(--muted);" id="hw-time-sala">Verificando...</small>
+                </div>
+            </div>
+            <div class="hw-card">
+                <div class="hw-dot hw-offline" id="hw-dot-coz"></div>
+                <div>
+                    <strong style="font-size: 0.85rem; display:block;">KDS Cozinha</strong>
+                    <small style="font-size: 0.7rem; color: var(--muted);" id="hw-time-coz">Verificando...</small>
+                </div>
+            </div>
+            <div class="hw-card">
+                <div class="hw-dot hw-offline" id="hw-dot-bar"></div>
+                <div>
+                    <strong style="font-size: 0.85rem; display:block;">KDS Bar</strong>
+                    <small style="font-size: 0.7rem; color: var(--muted);" id="hw-time-bar">Verificando...</small>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="sec-title"><i class="fas fa-history"></i> Atividade Recente (Logs da Loja)</h4>
+        <div style="max-height: 250px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 12px;">
+            <table style="width: 100%; font-size: 12px;">
+                <tbody id="ficha-logs-body">
+                    <tr><td style="text-align:center; padding: 20px; color: var(--muted);">A carregar logs...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <div id="modalHealth" class="modal">
-    <div class="modal-content" style="width: 800px; max-width: 90vw;">
-        <h3 style="margin-top:0"><i class="fas fa-heartbeat"></i> Logs do Ecossistema (System Health)</h3>
-        <p style="font-size: 13px; color: var(--muted);">Acompanhamento de erros e auditoria técnica transversal a todas as lojas.</p>
+    <div class="modal-content" style="max-width: 900px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin:0; color: var(--primary);"><i class="fas fa-heartbeat"></i> Logs Críticos da Rede</h2>
+            <button onclick="fecharModal('modalHealth')" class="action-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <p style="font-size: 13px; color: var(--muted); margin-top: -10px;">Monitorização global de erros, cancelamentos e alertas do sistema transversal a todos os clientes.</p>
         
-        <div style="max-height: 400px; overflow-y: auto; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+        <div style="max-height: 500px; overflow-y: auto; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border);">
             <table style="width: 100%;">
-                <thead>
+                <thead style="position: sticky; top: 0; background: #f8fafc; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                     <tr>
                         <th style="font-size: 11px;">Data/Hora</th>
-                        <th style="font-size: 11px;">Loja ID</th>
+                        <th style="font-size: 11px;">Restaurante</th>
                         <th style="font-size: 11px;">Colaborador</th>
-                        <th style="font-size: 11px;">Evento Sistémico</th>
+                        <th style="font-size: 11px;">Evento</th>
                     </tr>
                 </thead>
-                <tbody id="logs-body">
-                    <tr><td colspan="4" style="text-align: center;">A carregar telemetria...</td></tr>
+                <tbody id="global-logs-body">
+                    <tr><td colspan="4" style="text-align: center; padding: 30px;">A rastrear rede...</td></tr>
                 </tbody>
             </table>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <button onclick="fecharModal('modalHealth')" class="badge" style="background:#eee; color:#333; padding: 10px 20px;">FECHAR</button>
         </div>
     </div>
 </div>
@@ -203,33 +286,10 @@
             alert("Erro ao ligar à base de dados.");
         } else {
             dadosLocais = lojas || [];
-            await carregarMetricasAdoção(dadosLocais);
             render(dadosLocais);
         }
 
         if(btn) setTimeout(() => btn.classList.remove('loading-spin'), 500);
-    }
-
-    async function carregarMetricasAdoção(lojas) {
-        // Cálculo de adoção para os últimos 30 dias
-        const dataLimite = new Date();
-        dataLimite.setDate(dataLimite.getDate() - 30);
-        
-        const { data: pedidos } = await _sb.from('pedidos')
-            .select('loja_id, tipo_pedido')
-            .gte('created_at', dataLimite.toISOString());
-
-        metricasLocais = {};
-        
-        if (pedidos) {
-            pedidos.forEach(p => {
-                if (!metricasLocais[p.loja_id]) {
-                    metricasLocais[p.loja_id] = { sala: 0, takeaway: 0 };
-                }
-                if (p.tipo_pedido === 'mesa') metricasLocais[p.loja_id].sala++;
-                else metricasLocais[p.loja_id].takeaway++;
-            });
-        }
     }
 
     function render(lista) {
@@ -238,104 +298,104 @@
         const listaHtml = lista.map(l => {
             if (l.status === 'ativa') tAtivas++; else tSuspensas++;
             
-            const catClass = l.status_catalogo ? 'btn-on' : 'btn-off';
-            const digClass = l.status_digital_box ? 'btn-on' : 'btn-off';
-            const statusClass = l.status === 'ativa' ? 'btn-on' : 'btn-susp';
+            const statusClass = l.status === 'ativa' ? 'btn-on' : 'btn-off';
+            const statusIcon = l.status === 'ativa' ? '🟢 Ativa' : '🔴 Suspensa';
             
-            const stats = metricasLocais[l.id] || { sala: 0, takeaway: 0 };
+            const lastActive = l.updated_at ? new Date(l.updated_at).toLocaleDateString('pt-PT') : 'Desconhecida';
 
             return `
                 <tr>
-                    <td><strong>${l.nome}</strong><br><small style="color:var(--muted)">pv.pt/${l.slug}</small></td>
                     <td>
-                        <button class="badge ${catClass}" onclick="up('${l.id}','status_catalogo',${l.status_catalogo})" title="Alternar Website">
-                            <i class="fas fa-globe"></i> Website
-                        </button>
-                        <button class="badge ${digClass}" onclick="up('${l.id}','status_digital_box',${l.status_digital_box})" title="Alternar DigitalBox">
-                            <i class="fas fa-tv"></i> DigitalBox
-                        </button>
+                        <strong style="font-size: 1rem; color: var(--primary);">${l.nome}</strong><br>
+                        <a href="https://portugalvision.pt/${l.slug}" target="_blank" style="color:var(--accent); font-size: 0.8rem; text-decoration: none;">
+                            <i class="fas fa-external-link-alt"></i> pv.pt/${l.slug}
+                        </a>
                     </td>
                     <td>
-                        <div style="display:flex; flex-direction:column; gap:4px; font-size:11px;">
-                            <span><i class="fas fa-utensils" style="color:var(--muted); width:15px;"></i> Sala: <b>${stats.sala} ped.</b></span>
-                            <span><i class="fas fa-shopping-bag" style="color:var(--muted); width:15px;"></i> Web: <b>${stats.takeaway} ped.</b></span>
-                        </div>
+                        <span class="badge ${statusClass}">${statusIcon}</span>
                     </td>
-                    <td>
-                        <button class="badge ${statusClass}" onclick="abrirEditar('${l.id}')" title="Gerir Estado">
-                            ● ${(l.status || 'ativa').toUpperCase()}
-                        </button>
+                    <td style="color: var(--muted); font-size: 0.85rem;">
+                        ${lastActive}
                     </td>
                     <td style="text-align:right">
-                        <button class="action-btn" onclick="abrirEditar('${l.id}')" title="Gerir Acessos"><i class="fas fa-user-shield"></i></button>
+                        <button class="badge btn-primary" onclick="abrirFichaLoja('${l.id}')">
+                            <i class="fas fa-search-plus"></i> VER FICHA
+                        </button>
                     </td>
                 </tr>`;
         }).join('');
 
-        document.getElementById('lista-lojas').innerHTML = listaHtml || '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted)">Nenhuma loja encontrada.</td></tr>';
+        document.getElementById('lista-lojas').innerHTML = listaHtml || '<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted)">Nenhuma loja encontrada.</td></tr>';
         document.getElementById('st-lojas').innerText = lista.length;
         document.getElementById('st-ativas').innerText = tAtivas;
         document.getElementById('st-suspensas').innerText = tSuspensas;
     }
 
-    async function up(id, campo, valorAtual) {
-        const novoValor = !valorAtual; // Inverte o booleano
-        const { error } = await _sb.from('lojas').update({ [campo]: novoValor }).eq('id', id);
-        if (error) alert("Erro: " + error.message); 
-        else carregar(); 
-    }
-
-    function abrirEditar(id) {
+    // --- NOVA LÓGICA DA FICHA INDIVIDUAL DE LOJA ---
+    async function abrirFichaLoja(id) {
         const loja = dadosLocais.find(l => l.id === id);
         if (!loja) return;
 
-        document.getElementById('edit-id').value = loja.id;
-        document.getElementById('field-status').value = loja.status || "ativa";
-        document.getElementById('modalLoja').style.display = 'flex';
+        // Popula Header
+        document.getElementById('ficha-nome').innerText = loja.nome;
+        document.getElementById('ficha-link').innerText = `pv.pt/${loja.slug}`;
+        document.getElementById('ficha-link').href = `https://portugalvision.pt/${loja.slug}`;
+        document.getElementById('ficha-loja-id').value = loja.id;
+        document.getElementById('ficha-status').value = loja.status || 'ativa';
+        
+        // Popula Views
+        document.getElementById('fm-views').innerText = loja.views_total || 0;
+        
+        // Simulação Leve de Storage (Opcional)
+        document.getElementById('fm-storage').innerText = "14.2 MB"; // Requereria RPC avançada para calcular real, fixo p/ demo layout
+
+        document.getElementById('modalFichaLoja').style.display = 'flex';
+
+        // Carrega Dados Dinâmicos da Loja Específica
+        await carregarMetricasFicha(id);
+        await carregarLogsLocais(id);
+        verificarHeartbeats(loja);
     }
 
-    function fecharModal(modalId) { 
-        document.getElementById(modalId).style.display = 'none'; 
-    }
+    async function carregarMetricasFicha(lojaId) {
+        document.getElementById('fm-sala').innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:1rem;"></i>';
+        document.getElementById('fm-takeaway').innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:1rem;"></i>';
+        document.getElementById('fm-reservas').innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:1rem;"></i>';
 
-    async function salvarLoja() {
-        const id = document.getElementById('edit-id').value;
-        const btn = document.getElementById('btn-save-loja');
+        const dataLimite = new Date();
+        dataLimite.setDate(dataLimite.getDate() - 30);
         
-        if(!id) return;
+        const { data: pedidos } = await _sb.from('pedidos')
+            .select('tipo_pedido')
+            .eq('loja_id', lojaId)
+            .gte('created_at', dataLimite.toISOString());
 
-        const obj = { 
-            status: document.getElementById('field-status').value 
-        };
-        
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...';
-        btn.disabled = true;
-
-        const { error } = await _sb.from('lojas').update(obj).eq('id', id);
-
-        btn.innerHTML = 'APLICAR';
-        btn.disabled = false;
-
-        if (error) {
-            alert("Erro ao guardar: " + error.message);
-        } else {
-            fecharModal('modalLoja'); 
-            carregar();
+        let cSala = 0, cTake = 0, cRes = 0;
+        if (pedidos) {
+            pedidos.forEach(p => {
+                if (p.tipo_pedido === 'mesa') cSala++;
+                else if (p.tipo_pedido === 'reserva') cRes++;
+                else cTake++;
+            });
         }
+
+        document.getElementById('fm-sala').innerText = cSala;
+        document.getElementById('fm-takeaway').innerText = cTake;
+        document.getElementById('fm-reservas').innerText = cRes;
     }
 
-    async function abrirSystemHealth() {
-        document.getElementById('modalHealth').style.display = 'flex';
-        const tbody = document.getElementById('logs-body');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">A rastrear telemetria da rede...</td></tr>';
+    async function carregarLogsLocais(lojaId) {
+        const tbody = document.getElementById('ficha-logs-body');
+        tbody.innerHTML = '<tr><td style="text-align:center; padding: 20px; color: var(--muted);"><i class="fas fa-spinner fa-spin"></i></td></tr>';
         
         const { data, error } = await _sb.from('auditoria_logs')
-            .select('*')
+            .select('created_at, empregado_nome, acao')
+            .eq('loja_id', lojaId)
             .order('created_at', { ascending: false })
-            .limit(100);
+            .limit(20);
             
         if (error || !data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--muted);">Sem atividade recente.</td></tr>';
+            tbody.innerHTML = '<tr><td style="text-align: center; color: var(--muted); padding: 15px;">Sem atividade recente nesta loja.</td></tr>';
             return;
         }
         
@@ -343,17 +403,113 @@
             const dataHora = new Date(l.created_at).toLocaleString('pt-PT', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
             let colorStr = 'var(--text)';
             if(l.acao.toLowerCase().includes('apagou') || l.acao.toLowerCase().includes('cancelou')) colorStr = 'var(--danger)';
-            if(l.acao.toLowerCase().includes('ia')) colorStr = '#8b5cf6';
-
             return `
                 <tr>
-                    <td style="color: var(--muted); font-size: 11px;">${dataHora}</td>
-                    <td style="font-size: 11px; font-family: monospace;" title="${l.loja_id}">${l.loja_id.substring(0,6)}...</td>
-                    <td style="font-size: 12px; font-weight: bold;">${l.empregado_nome}</td>
-                    <td style="font-size: 12px; color: ${colorStr};">${l.acao}</td>
+                    <td style="color: var(--muted); width: 120px;">${dataHora}</td>
+                    <td style="font-weight: bold; width: 150px;">${l.empregado_nome}</td>
+                    <td style="color: ${colorStr};">${l.acao}</td>
                 </tr>
             `;
         }).join('');
+    }
+
+    function verificarHeartbeats(loja) {
+        // Lógica visual do Heartbeat (Preparada para ler de loja.heartbeat_sala no futuro)
+        // Para já, usa timestamps simulados para demonstração da arquitetura
+        
+        const agora = new Date().getTime();
+        // Simulando que o Tablet Sala pingou há 2 minutos, e a cozinha não pinga há 2 horas.
+        const pingSala = agora - (2 * 60000); 
+        const pingCoz = null; 
+        const pingBar = agora - (15 * 60000); 
+
+        atualizarDot('sala', pingSala, agora);
+        atualizarDot('coz', pingCoz, agora);
+        atualizarDot('bar', pingBar, agora);
+    }
+
+    function atualizarDot(tipo, pingMs, agoraMs) {
+        const dot = document.getElementById(`hw-dot-${tipo}`);
+        const label = document.getElementById(`hw-time-${tipo}`);
+        
+        if (!pingMs) {
+            dot.className = 'hw-dot hw-offline';
+            label.innerText = 'Desligado (Sem sinal)';
+            return;
+        }
+        
+        const diffMinutos = Math.floor((agoraMs - pingMs) / 60000);
+        
+        if (diffMinutos < 5) {
+            dot.className = 'hw-dot hw-online';
+            label.innerText = `Online (agora mesmo)`;
+        } else if (diffMinutos < 30) {
+            dot.className = 'hw-dot';
+            dot.style.background = 'var(--warning)';
+            label.innerText = `Inativo (há ${diffMinutos}m)`;
+        } else {
+            dot.className = 'hw-dot hw-offline';
+            label.innerText = `Offline (há ${diffMinutos}m)`;
+        }
+    }
+
+    async function salvarEstadoLoja() {
+        const id = document.getElementById('ficha-loja-id').value;
+        const novoStatus = document.getElementById('ficha-status').value;
+        
+        if(!id) return;
+
+        const { error } = await _sb.from('lojas').update({ status: novoStatus }).eq('id', id);
+
+        if (error) {
+            alert("Erro ao guardar: " + error.message);
+        } else {
+            alert("Estado da loja atualizado com sucesso!");
+            fecharModal('modalFichaLoja'); 
+            carregar();
+        }
+    }
+
+    // --- RADAR GLOBAL DE SISTEMA ---
+    async function abrirSystemHealth() {
+        document.getElementById('modalHealth').style.display = 'flex';
+        const tbody = document.getElementById('global-logs-body');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding:30px;"><i class="fas fa-spinner fa-spin"></i> A rastrear rede...</td></tr>';
+        
+        // Puxar logs e juntar com o nome da loja
+        const { data: logs, error } = await _sb.from('auditoria_logs')
+            .select('created_at, loja_id, empregado_nome, acao')
+            .order('created_at', { ascending: false })
+            .limit(100);
+            
+        if (error || !logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--muted); padding:30px;">Sem atividade recente na rede.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = logs.map(l => {
+            const dataHora = new Date(l.created_at).toLocaleString('pt-PT', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+            let colorStr = 'var(--text)';
+            if(l.acao.toLowerCase().includes('apagou') || l.acao.toLowerCase().includes('cancelou') || l.acao.toLowerCase().includes('erro')) colorStr = 'var(--danger)';
+            if(l.acao.toLowerCase().includes('ia')) colorStr = '#8b5cf6';
+            
+            // Encontrar o nome da loja via dadosLocais em vez de mostrar o ID feio
+            const lojaRef = dadosLocais.find(loja => loja.id === l.loja_id);
+            const lojaNomeStr = lojaRef ? lojaRef.nome : 'Loja Apagada/Desconhecida';
+
+            return `
+                <tr>
+                    <td style="color: var(--muted); border-bottom: 1px solid var(--border);">${dataHora}</td>
+                    <td style="font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border);">${lojaNomeStr}</td>
+                    <td style="border-bottom: 1px solid var(--border);">${l.empregado_nome}</td>
+                    <td style="color: ${colorStr}; border-bottom: 1px solid var(--border);">${l.acao}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function fecharModal(modalId) { 
+        document.getElementById(modalId).style.display = 'none'; 
     }
 
     function filtrar() {
