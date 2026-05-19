@@ -316,6 +316,20 @@
         carregarPedidosFogo();
         carregarRadarReservas();
 
+        // [NOVO] MOTOR DE TELEMETRIA (HEARTBEAT) DA COZINHA
+        setInterval(async () => {
+            if (!minhaLojaId) return;
+            try {
+                const { error } = await _sb.from('lojas')
+                    .update({ ping_cozinha: new Date().toISOString() })
+                    .eq('id', minhaLojaId);
+                    
+                if (error) throw error;
+            } catch (err) {
+                console.warn("[Telemetria] Falha no heartbeat da Cozinha. O sistema tentará novamente em 3 minutos.", err.message);
+            }
+        }, 180000); // Emite um sinal a cada 3 minutos
+
         if(timerAtualizacao) clearInterval(timerAtualizacao);
         timerAtualizacao = setInterval(() => {
             carregarPedidosFogo();
