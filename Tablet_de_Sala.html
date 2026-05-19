@@ -1091,6 +1091,20 @@
 
         carregarDados();
         iniciarCicloCronometros(); 
+
+        // [NOVO] MOTOR DE TELEMETRIA (HEARTBEAT)
+        setInterval(async () => {
+            if (!minhaLojaId) return;
+            try {
+                const { error } = await _sb.from('lojas')
+                    .update({ ping_sala: new Date().toISOString() })
+                    .eq('id', minhaLojaId);
+                    
+                if (error) throw error;
+            } catch (err) {
+                console.warn("[Telemetria] Falha no heartbeat da Sala. O sistema tentará novamente em 3 minutos.", err.message);
+            }
+        }, 180000); // Emite um sinal a cada 3 minutos
         
         if(canalSala) _sb.removeChannel(canalSala);
         canalSala = _sb.channel('sala-updates')
