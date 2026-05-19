@@ -364,12 +364,26 @@
 
     // --- O MOTOR DE IMPERSONATION (ACESSO REMOTO) ---
     function entrarComoLojista(slug) {
-        // Guarda no browser uma chave mestra invisível que diz ao Painel do Lojista para não pedir password
-        sessionStorage.setItem('pv_master_override', 'true');
-        
-        // Abre o painel do Lojista num novo separador já com o URL da loja alvo
-        const urlSuporte = `https://portugal-vision.github.io/portugal-vision/painel_logista.html?suporte=${slug}`;
-        window.open(urlSuporte, '_blank');
+        try {
+            const pin = prompt("Insira o PIN de Suporte de 6 dígitos fornecido pelo lojista:");
+            
+            // Validação estrita: Cancela se for nulo ou vazio
+            if (!pin || pin.trim() === "") return; 
+            
+            const pinLimpo = encodeURIComponent(pin.trim());
+            const slugLimpo = encodeURIComponent(slug);
+
+            // Guarda no browser uma chave mestra invisível que diz ao Painel do Lojista para não pedir password
+            sessionStorage.setItem('pv_master_override', 'true');
+            
+            // Abre o painel do Lojista num novo separador já com o URL da loja alvo e o PIN validado
+            const urlSuporte = `https://portugal-vision.github.io/portugal-vision/painel_logista.html?suporte=${slugLimpo}&token=${pinLimpo}`;
+            window.open(urlSuporte, '_blank');
+            
+        } catch (error) {
+            console.error("Falha ao inicializar sessão de suporte:", error);
+            alert("Erro crítico ao gerar o acesso de suporte. Verifique a consola.");
+        }
     }
 
     // --- NOVA LÓGICA DA FICHA INDIVIDUAL DE LOJA ---
