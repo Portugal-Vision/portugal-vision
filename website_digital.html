@@ -1467,47 +1467,38 @@
             lojaAtual = loja;
             aplicarTemaVisual(loja.tema_sazonal);
 
-// --- MOTOR DE TEMAS SAZONAIS (IMAGEM OU VÍDEO) ---
-            if (lojaAtual.tema_sazonal && lojaAtual.tema_sazonal !== 'nenhum') {
-                aplicarTemaVisual(lojaAtual.tema_sazonal);
-                
-                const tema = lojaAtual.tema_sazonal.toLowerCase();
-                const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
-                
-                // Primeiro, tenta carregar o vídeo. Se não existir, carrega a imagem.
-                // Sugestão: Nomeia os vídeos como natal_PC.mp4
-                const videoUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${tema}_${sufixo}.mp4`;
-                const imageUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${tema}_${sufixo}.png`;
+async function init() {
+    // ... (teu código anterior)
+    
+    // 1. Carrega os dados da loja
+    lojaAtual = loja;
 
-                const container = document.createElement('div');
-                container.id = 'seasonal-frame';
-                container.style.position = 'fixed';
-                container.style.inset = '0';
-                container.style.zIndex = '-1'; 
-                container.style.pointerEvents = 'none';
-                container.style.overflow = 'hidden';
+    // 2. Aplica o TEMA DE CORES escolhido pelo lojista (Base)
+    // Se a loja não tiver tema, aplica um padrão
+    const temaBase = lojaAtual.tema_lojista || 'padrao'; 
+    aplicarTemaVisual(temaBase);
 
-                // Criar o elemento de vídeo
-                const video = document.createElement('video');
-                video.src = videoUrl;
-                video.autoplay = true;
-                video.loop = true;
-                video.muted = true; // Obrigatório para autoplay funcionar
-                video.playsInline = true;
-                video.style.width = '100%';
-                video.style.height = '100%';
-                video.style.objectFit = 'cover';
-
-                // Fallback: se o vídeo não carregar, usa a imagem como poster
-                video.onerror = () => {
-                    container.style.background = `url('${imageUrl}') no-repeat center center`;
-                    container.style.backgroundSize = 'cover';
-                    video.style.display = 'none';
-                };
-
-                container.appendChild(video);
-                document.body.appendChild(container);
-            }
+    // 3. Aplica a MOLDURA SAZONAL (Camada Extra)
+    // Se houver tema sazonal ativo, carregamos APENAS a moldura
+    if (lojaAtual.tema_sazonal && lojaAtual.tema_sazonal !== 'nenhum') {
+        const temaSazonal = lojaAtual.tema_sazonal.toLowerCase();
+        const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
+        const molduraUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${temaSazonal}_${sufixo}.png`;
+        
+        // Criar o elemento da moldura
+        const moldura = document.createElement('div');
+        moldura.id = 'seasonal-frame';
+        moldura.style.position = 'fixed';
+        moldura.style.inset = '0';
+        moldura.style.zIndex = '9999'; // Fica à frente do tema base, mas não bloqueia cliques
+        moldura.style.pointerEvents = 'none'; 
+        moldura.style.background = `url('${molduraUrl}') no-repeat center center`;
+        moldura.style.backgroundSize = 'cover';
+        document.body.appendChild(moldura);
+    }
+    
+    // ... (resto do teu init)
+}
 
             const nomeLoja = lojaAtual.nome || "Estabelecimento";
             const nifLoja = lojaAtual.nif || "N/A";
