@@ -313,7 +313,6 @@
     }
 
     async function carregarMetricasAdocao(lojas) {
-        // Cálculo de adoção para os últimos 30 dias
         const dataLimite = new Date();
         dataLimite.setDate(dataLimite.getDate() - 30);
         
@@ -379,7 +378,6 @@
         document.getElementById('st-suspensas').innerText = tSuspensas;
     }
 
-    // --- O MOTOR DE IMPERSONATION (ACESSO REMOTO) ---
     function entrarComoLojista(slug) {
         try {
             const pin = prompt("Insira o PIN de Suporte de 6 dígitos fornecido pelo lojista:");
@@ -400,7 +398,6 @@
         }
     }
 
-    // --- NOVA LÓGICA DA FICHA INDIVIDUAL DE LOJA ---
     async function abrirFichaLoja(id) {
         const loja = dadosLocais.find(l => l.id === id);
         if (!loja) return;
@@ -411,19 +408,15 @@
         document.getElementById('ficha-loja-id').value = loja.id;
         document.getElementById('ficha-status').value = loja.status || 'ativa';
         
-        // Popula Views
         document.getElementById('fm-views').innerText = loja.views_total || 0;
         
-        // Simulação Leve de Storage
         document.getElementById('fm-storage').innerText = "14.2 MB"; 
 
         document.getElementById('modalFichaLoja').style.display = 'flex';
 
-        // Carrega Dados Dinâmicos da Loja Específica
         await carregarMetricasFicha(id);
         await carregarLogsLocais(id);
         
-        // Lê dados reais do Heartbeat na Base de Dados
         verificarHeartbeats(loja);
     }
 
@@ -484,7 +477,6 @@
     }
 
     function verificarHeartbeats(loja) {
-        // LEITURA REAL DA BASE DE DADOS
         const agora = new Date().getTime();
         
         const pingSala = loja.ping_sala ? new Date(loja.ping_sala).getTime() : null;
@@ -539,13 +531,12 @@
     }
 
     async function up(id, campo, valorAtual) {
-        const novoValor = !valorAtual; // Inverte o booleano
+        const novoValor = !valorAtual; 
         const { error } = await _sb.from('lojas').update({ [campo]: novoValor }).eq('id', id);
         if (error) alert("Erro: " + error.message); 
         else carregar(); 
     }
 
-    // --- RADAR GLOBAL DE SISTEMA ---
     async function abrirSystemHealth() {
         document.getElementById('modalHealth').style.display = 'flex';
         const tbody = document.getElementById('global-logs-body');
@@ -581,7 +572,7 @@
         }).join('');
     }
 
-    // --- [INJEÇÃO] MOTOR DE DISPARO GLOBAL (RPC) ---
+    // --- CORREÇÃO: MOTOR DE DISPARO GLOBAL (SEM RPC) ---
     async function dispararEventoSazonal(tema) {
         const nomesEventos = {
             'natal': 'Natal', 'halloween': 'Halloween', 'namorados': 'São Valentim',
@@ -590,21 +581,34 @@
 
         if(!confirm(`⚠️ AVISO GLOBAL: Vai forçar o tema de ${nomesEventos[tema]} em TODAS as lojas da rede (Websites e DigitalBox). Tem a certeza?`)) return;
 
-        // Desativa os botões para evitar duplo clique
         const container = document.getElementById('botoes-sazonais');
         container.style.opacity = '0.5';
         container.style.pointerEvents = 'none';
 
-        // Dispara a função nativa no Postgres (1 único pedido para milhares de lojas)
-        const { error } = await _sb.rpc('aplicar_tema_global', { novo_tema: tema });
+        // Atualização em Lote (Loop Limpo) garantindo que o tema_lojista NÃO é tocado.
+        // Apenas o campo tema_sazonal é atualizado para cada loja na lista local.
+        let sucessoCount = 0;
+        let falhaCount = 0;
 
-        if (error) {
-            alert("Falha Crítica ao aplicar tema global: " + error.message);
+        for (let loja of dadosLocais) {
+            const { error } = await _sb.from('lojas')
+                .update({ tema_sazonal: tema }) // Somente o campo sazonal
+                .eq('id', loja.id);
+            
+            if (error) {
+                console.error(`Erro na loja ${loja.nome}:`, error);
+                falhaCount++;
+            } else {
+                sucessoCount++;
+            }
+        }
+
+        if (falhaCount > 0) {
+            alert(`Aviso: Ocorreram ${falhaCount} falhas ao aplicar o tema. Verifique a ligação à internet.`);
         } else {
             alert(`SUCESSO: A rede inteira está agora no modo ${nomesEventos[tema]}!`);
         }
 
-        // Reativa os botões
         container.style.opacity = '1';
         container.style.pointerEvents = 'all';
     }
@@ -632,4 +636,3 @@
 </script>
 </body>
 </html>
-
