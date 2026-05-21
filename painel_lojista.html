@@ -432,7 +432,7 @@
                         
                         <div>
                             <label style="font-size:12px; color:#64748b; font-weight: 600; margin-bottom: 4px; display: block;">Tema do Website:</label>
-                            <select id="v-tema-sazonal" onchange="marcarAltPerfil()" style="margin-top: 0;">
+                            <select id="v-tema-lojista" onchange="marcarAltPerfil()" style="margin-top: 0;">
                                 <option value="padrao">⚪ Claro Padrão</option>
                                 <option value="minimalista">⬜ Claro Minimalista</option>
                                 <option value="elegante">🤍 Claro Elegante</option>
@@ -1392,7 +1392,7 @@
         document.getElementById('v-morada-edit').value = lojaAtiva.morada || "";
         
         document.getElementById('v-tipo-negocio').value = lojaAtiva.tipo_negocio || 'restaurante';
-        document.getElementById('v-tema-sazonal').value = lojaAtiva.tema_sazonal || 'padrao';
+        document.getElementById('v-tema-lojista').value = lojaAtiva.tema_lojista || 'padrao';
         atualizarLayoutNegocio(); 
 
         if(lojaAtiva.logo_url) {
@@ -2360,7 +2360,7 @@
             email_contacto: document.getElementById('v-email-edit').value,
             morada: moradaRaw,
             tipo_negocio: document.getElementById('v-tipo-negocio').value, 
-            tema_sazonal: document.getElementById('v-tema-sazonal').value, 
+            tema_lojista: document.getElementById('v-tema-lojista').value, 
             takeaway_ativo: document.getElementById('v-takeaway-ativo').checked,
             reservas_ativo: document.getElementById('v-reservas-ativo').checked,
             pag_dinheiro: document.getElementById('v-pag-dinheiro').checked,
