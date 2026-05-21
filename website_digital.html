@@ -1464,13 +1464,31 @@
                 return;
             }
 
+async function init() {
+        try {
+            traduzirInterface();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const slug = urlParams.get('loja');
+            let paramMesa = urlParams.get('mesa'); 
+            
+            if (!slug && !paramMesa) {
+                document.getElementById('motivo-fecho').innerText = "Falta o identificador da loja.";
+                document.getElementById('block-screen').style.display = 'flex';
+                return;
+            }
+
+            const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
+            if (!loja) return;
+
             lojaAtual = loja;
 
-            // --- CORREÇÃO AQUI ---
-            // 1. Aplica o tema de branding fixo (cores/branding do lojista)
+            // 1. BRANDING BASE (O que o lojista definiu)
+            // Aplica as cores, fontes e backgrounds do lojista.
             aplicarTemaVisual(lojaAtual.tema_lojista || 'padrao');
 
-            // 2. Aplica a moldura sazonal como camada extra (overlay)
+            // 2. MOLDURA SAZONAL (Opcional, aplicada como Fundo)
+            // z-index: -1 garante que nunca tapa os botões ou cards.
             if (lojaAtual.tema_sazonal && lojaAtual.tema_sazonal !== 'nenhum') {
                 const temaSazonal = lojaAtual.tema_sazonal.toLowerCase();
                 const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
@@ -1481,8 +1499,8 @@
                 container.id = 'seasonal-frame';
                 container.style.position = 'fixed';
                 container.style.inset = '0';
-                container.style.zIndex = '999'; 
-                container.style.pointerEvents = 'none';
+                container.style.zIndex = '-1'; // Fundo total
+                container.style.pointerEvents = 'none'; // Ignora cliques
                 container.style.overflow = 'hidden';
 
                 const video = document.createElement('video');
