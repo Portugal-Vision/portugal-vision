@@ -518,7 +518,7 @@
 <div class="footer">
     <p id="footer-morada" style="font-size: 0.95em; opacity: 0.9; margin-bottom: 5px;"></p>
     <div class="contact-info" id="footer-contactos" style="display:none;">
-        <a id="link-telefone" href=""><i class="fas fa-phone-alt"></i> <span id="texto-telefone"></span></a>
+        <a id="link-telefone" href=""><i class="fas fa-phone"></i> <span id="texto-telefone"></span></a>
         <a id="link-email" href=""><i class="fas fa-envelope"></i> <span id="texto-email"></span></a>
     </div>
     
@@ -1467,7 +1467,7 @@
             lojaAtual = loja;
             aplicarTemaVisual(loja.tema_sazonal);
 
-            // --- INJEÇÃO DO MOTOR DE TEMAS SAZONAIS (BACKGROUND) ---
+            // --- INJEÇÃO DO MOTOR DE TEMAS SAZONAIS ---
             if (lojaAtual.tema_sazonal && lojaAtual.tema_sazonal !== 'nenhum') {
                 const tema = lojaAtual.tema_sazonal;
                 const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
@@ -1483,7 +1483,7 @@
                 moldura.style.backgroundSize = 'cover';
                 document.body.appendChild(moldura);
             }
-            // --------------------------------------------------------
+            // ------------------------------------------
 
             const nomeLoja = lojaAtual.nome || "Estabelecimento";
             const nifLoja = lojaAtual.nif || "N/A";
@@ -1572,7 +1572,7 @@
             let temContacto = false;
             
             if (loja.telefone) {
-                linkTel.href = `tel:${loja.telefone}`;
+                linkTel.href = `tel:${loja.telefone.replace(/\s+/g, '')}`;
                 textoTel.innerText = loja.telefone;
                 linkTel.style.display = 'inline-block';
                 temContacto = true;
