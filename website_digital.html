@@ -1464,23 +1464,6 @@
                 return;
             }
 
-async function init() {
-        try {
-            traduzirInterface();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const slug = urlParams.get('loja');
-            let paramMesa = urlParams.get('mesa'); 
-            
-            if (!slug && !paramMesa) {
-                document.getElementById('motivo-fecho').innerText = "Falta o identificador da loja.";
-                document.getElementById('block-screen').style.display = 'flex';
-                return;
-            }
-
-            const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
-            if (!loja) return;
-
             lojaAtual = loja;
 
             // 1. BRANDING BASE (O que o lojista definiu)
