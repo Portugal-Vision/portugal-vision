@@ -1467,23 +1467,47 @@
             lojaAtual = loja;
             aplicarTemaVisual(loja.tema_sazonal);
 
-            // --- INJEÇÃO DO MOTOR DE TEMAS SAZONAIS ---
+// --- MOTOR DE TEMAS SAZONAIS (IMAGEM OU VÍDEO) ---
             if (lojaAtual.tema_sazonal && lojaAtual.tema_sazonal !== 'nenhum') {
-                const tema = lojaAtual.tema_sazonal;
-                const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
-                const molduraUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${tema}_${sufixo}.png`;
+                aplicarTemaVisual(lojaAtual.tema_sazonal);
                 
-                const moldura = document.createElement('div');
-                moldura.id = 'seasonal-frame';
-                moldura.style.position = 'fixed';
-                moldura.style.inset = '0';
-                moldura.style.zIndex = '-1'; // O tema fica por TRÁS de tudo
-                moldura.style.pointerEvents = 'none'; // Não interfere com os cliques
-                moldura.style.background = `url('${molduraUrl}') no-repeat center center`;
-                moldura.style.backgroundSize = 'cover';
-                document.body.appendChild(moldura);
+                const tema = lojaAtual.tema_sazonal.toLowerCase();
+                const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
+                
+                // Primeiro, tenta carregar o vídeo. Se não existir, carrega a imagem.
+                // Sugestão: Nomeia os vídeos como natal_PC.mp4
+                const videoUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${tema}_${sufixo}.mp4`;
+                const imageUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${tema}_${sufixo}.png`;
+
+                const container = document.createElement('div');
+                container.id = 'seasonal-frame';
+                container.style.position = 'fixed';
+                container.style.inset = '0';
+                container.style.zIndex = '-1'; 
+                container.style.pointerEvents = 'none';
+                container.style.overflow = 'hidden';
+
+                // Criar o elemento de vídeo
+                const video = document.createElement('video');
+                video.src = videoUrl;
+                video.autoplay = true;
+                video.loop = true;
+                video.muted = true; // Obrigatório para autoplay funcionar
+                video.playsInline = true;
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+
+                // Fallback: se o vídeo não carregar, usa a imagem como poster
+                video.onerror = () => {
+                    container.style.background = `url('${imageUrl}') no-repeat center center`;
+                    container.style.backgroundSize = 'cover';
+                    video.style.display = 'none';
+                };
+
+                container.appendChild(video);
+                document.body.appendChild(container);
             }
-            // ------------------------------------------
 
             const nomeLoja = lojaAtual.nome || "Estabelecimento";
             const nifLoja = lojaAtual.nif || "N/A";
