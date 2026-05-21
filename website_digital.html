@@ -1467,37 +1467,34 @@
             lojaAtual = loja;
             aplicarTemaVisual(loja.tema_sazonal);
 
+// --- MOTOR DE INICIALIZAÇÃO HÍBRIDO ---
 async function init() {
-    // ... (teu código anterior)
-    
-    // 1. Carrega os dados da loja
-    lojaAtual = loja;
+    // 1. Busca a loja do Supabase
+    const { data: loja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
+    if (!loja) return;
 
-    // 2. Aplica o TEMA DE CORES escolhido pelo lojista (Base)
-    // Se a loja não tiver tema, aplica um padrão
-    const temaBase = lojaAtual.tema_lojista || 'padrao'; 
+    // 2. APLICA O TEMA DE BRANDING (Cor, Fontes, etc.)
+    // O sistema agora respeita a escolha do lojista
+    const temaBase = loja.tema_lojista || 'padrao';
     aplicarTemaVisual(temaBase);
 
-    // 3. Aplica a MOLDURA SAZONAL (Camada Extra)
-    // Se houver tema sazonal ativo, carregamos APENAS a moldura
-    if (lojaAtual.tema_sazonal && lojaAtual.tema_sazonal !== 'nenhum') {
-        const temaSazonal = lojaAtual.tema_sazonal.toLowerCase();
+    // 3. APLICA A MOLDURA SAZONAL (Camada extra de evento)
+    // Se não for 'nenhum', adiciona a moldura por cima
+    if (loja.tema_sazonal && loja.tema_sazonal !== 'nenhum') {
+        const temaSazonal = loja.tema_sazonal.toLowerCase();
         const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
         const molduraUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${temaSazonal}_${sufixo}.png`;
         
-        // Criar o elemento da moldura
         const moldura = document.createElement('div');
         moldura.id = 'seasonal-frame';
         moldura.style.position = 'fixed';
         moldura.style.inset = '0';
-        moldura.style.zIndex = '9999'; // Fica à frente do tema base, mas não bloqueia cliques
-        moldura.style.pointerEvents = 'none'; 
+        moldura.style.zIndex = '999'; // Garante que fica visível, mas não bloqueia cliques
+        moldura.style.pointerEvents = 'none';
         moldura.style.background = `url('${molduraUrl}') no-repeat center center`;
         moldura.style.backgroundSize = 'cover';
         document.body.appendChild(moldura);
     }
-    
-    // ... (resto do teu init)
 }
 
             const nomeLoja = lojaAtual.nome || "Estabelecimento";
