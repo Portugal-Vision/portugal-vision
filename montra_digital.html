@@ -13,7 +13,7 @@
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; cursor: pointer; }
         
-        #slider { width: 100%; height: 100%; position: relative; }
+        #slider { width: 100%; height: 100%; position: relative; z-index: 10; }
 
         .slide { 
             position: absolute; inset: 0; opacity: 0; 
@@ -22,7 +22,7 @@
             overflow: hidden;
         }
 
-        .slide.active { opacity: 1; z-index: 10; }
+        .slide.active { opacity: 1; z-index: 15; }
 
         .slide img.fg-img { 
             position: absolute;
@@ -35,10 +35,8 @@
 
         .slide.active img.fg-img { transform: scale(1.03) translateX(5px); }
 
-        /* A Overlay agora é a 'Mãe' do Texto e do QR Code */
         .overlay { 
             position: absolute; bottom: 0; left: 0; right: 0; 
-            /* Degradê subido ligeiramente para garantir leitura em ecrãs verticais */
             background: linear-gradient(transparent, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.95) 100%); 
             color: white; padding: 100px 50px 100px;
             z-index: 20;
@@ -49,7 +47,6 @@
 
         .slide.active .overlay { transform: translateY(0); }
 
-        /* Limitar o texto para não esmagar o QR Code */
         .text-content { flex: 1; max-width: 65%; }
 
         .overlay p { font-family: 'Inter', sans-serif; font-size: 1.2em; opacity: 0.7; margin: 0 0 10px 0; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; }
@@ -66,18 +63,16 @@
             backdrop-filter: blur(5px);
         }
 
-        /* QR Code reposicionado e Responsivo */
         .qr-code-container {
             background: rgba(255, 255, 255, 0.15); 
             backdrop-filter: blur(10px);
             padding: 15px; border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            flex-shrink: 0; /* Impede que o texto o esmague */
+            flex-shrink: 0; 
         }
 
         .qr-code-container img {
-            /* Tamanho elástico baseado na largura do ecrã, com limite máximo */
             width: 25vw; max-width: 140px; 
             height: auto; display: block;
             border-radius: 8px; mix-blend-mode: normal; 
@@ -102,7 +97,6 @@
         }
         #error-msg p { font-family: 'Inter', sans-serif; font-size: 0.5em; opacity: 0.7; font-weight: 300; }
 
-        /* Media Query para garantir harmonia extra em ecrãs verticais extremos */
         @media (max-width: 600px) {
             .overlay { padding: 80px 30px 100px; flex-direction: column; align-items: flex-start; gap: 30px; }
             .text-content { max-width: 100%; }
@@ -123,14 +117,12 @@
     </div>
 
     <script>
-        // Configuração Supabase
         const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
         let currentIndex = 0;
         let lastDataHash = "";
         let slideTimer = null;
         let baseQRUrl = "";
 
-        // Ativar Fullscreen no clique
         document.body.addEventListener('click', () => {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.log(e));
         });
@@ -140,14 +132,11 @@
             const slug = urlParams.get('loja');
             if (!slug) return;
 
-            // Gera o link dinâmico uma vez para usar em todos os slides
             const orderLink = `https://portugal-vision.github.io/portugal-vision/website_digital.html?loja=${slug}`;
             baseQRUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(orderLink)}&margin=10`;
 
-            // Busca dados da loja e status
             const { data: loja, error: errorLoja } = await _sb.from('lojas').select('*').eq('slug', slug).single();
             
-            // VERIFICAÇÃO DE SEGURANÇA
             if (!loja || loja.status !== 'ativa' || !loja.status_digital_box) {
                 document.getElementById('slider').style.display = 'none';
                 document.getElementById('error-msg').style.display = 'block';
@@ -155,6 +144,43 @@
             } else {
                 document.getElementById('slider').style.display = 'block';
                 document.getElementById('error-msg').style.display = 'none';
+            }
+
+            // --- APLICAÇÃO DA MOLDURA SAZONAL ---
+            if (loja.tema_sazonal && loja.tema_sazonal !== 'nenhum' && !document.getElementById('seasonal-frame')) {
+                const temaSazonal = loja.tema_sazonal.toLowerCase();
+                const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
+                const videoUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${temaSazonal}_${sufixo}.mp4`;
+                const imageUrl = `https://hhrmbrcaujfsqfanxqqq.supabase.co/storage/v1/object/public/molduras/${temaSazonal}_${sufixo}.png`;
+
+                const container = document.createElement('div');
+                container.id = 'seasonal-frame';
+                container.style.position = 'fixed';
+                container.style.inset = '0';
+                container.style.zIndex = '50'; // Fica à frente do slider, mas não interfere nos cliques
+                container.style.pointerEvents = 'none';
+                container.style.overflow = 'hidden';
+
+                const video = document.createElement('video');
+                video.src = videoUrl;
+                video.autoplay = true;
+                video.loop = true;
+                video.muted = true;
+                video.playsInline = true;
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                
+                video.onerror = () => {
+                    container.style.background = `url('${imageUrl}') no-repeat center center`;
+                    container.style.backgroundSize = 'cover';
+                    video.style.display = 'none';
+                };
+                container.appendChild(video);
+                document.body.appendChild(container);
+            } else if (!loja.tema_sazonal || loja.tema_sazonal === 'nenhum') {
+                const existingFrame = document.getElementById('seasonal-frame');
+                if (existingFrame) existingFrame.remove();
             }
 
             // Busca produtos
@@ -165,7 +191,6 @@
 
             if (!produtos || produtos.length === 0) return;
 
-            // Só atualiza o DOM se houver mudanças nos dados
             const currentDataHash = JSON.stringify(produtos);
             if (currentDataHash !== lastDataHash) {
                 lastDataHash = currentDataHash;
@@ -177,7 +202,6 @@
             const slider = document.getElementById('slider');
             const totalProdutos = produtos.length;
             
-            // Mantém o index se possível
             if (currentIndex >= totalProdutos) currentIndex = 0;
 
             slider.innerHTML = produtos.map((p, i) => {
@@ -187,7 +211,6 @@
                 
                 const imgSrc = p.imagem_url || 'https://via.placeholder.com/1920x1080?text=Portugal+Vision';
 
-                // O QR Code e o Texto vivem agora pacificamente dentro do mesmo .overlay
                 return `
                     <div class="slide ${i === currentIndex ? 'active' : ''}">
                         <img class="fg-img" src="${imgSrc}" onerror="this.src='https://via.placeholder.com/1920x1080?text=Portugal+Vision'">
@@ -220,13 +243,8 @@
             }
         }
 
-        // Inicialização
         updateDigitalBox();
-
-        // Ciclo de transição de slides (8 segundos)
         setInterval(nextSlide, 8000);
-
-        // Ciclo de verificação de novos dados (30 segundos)
         setInterval(updateDigitalBox, 30000);
     </script>
 </body>
