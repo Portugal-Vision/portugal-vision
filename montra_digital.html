@@ -43,18 +43,19 @@
             transform: translateY(20px);
             transition: transform 2s ease-out;
             display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
+            pointer-events: none;
         }
 
         .slide.active .overlay { transform: translateY(0); }
 
-        .text-content { flex: 1; max-width: 65%; }
+        .text-content { flex: 1; max-width: 65%; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
 
-        .overlay p { font-family: 'Inter', sans-serif; font-size: 1.2em; opacity: 0.7; margin: 0 0 10px 0; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; }
+        .overlay p { font-family: 'Inter', sans-serif; font-size: 1.2em; opacity: 0.9; margin: 0 0 10px 0; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; }
         .overlay h1 { font-family: 'Playfair Display', serif; font-size: 4em; margin: 0 0 15px 0; font-weight: 600; line-height: 1.1; letter-spacing: -1px; }
         
         .price-row { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
         .overlay h2 { font-family: 'Playfair Display', serif; font-size: 3em; color: #eab308; margin: 0; font-weight: 600; }
-        .old-price { font-family: 'Inter', sans-serif; font-size: 1.2em; text-decoration: line-through; opacity: 0.5; font-weight: 300; }
+        .old-price { font-family: 'Inter', sans-serif; font-size: 1.2em; text-decoration: line-through; opacity: 0.7; font-weight: 300; }
         
         .promo-tag {
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white;
@@ -68,7 +69,7 @@
             backdrop-filter: blur(10px);
             padding: 15px; border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
             flex-shrink: 0; 
         }
 
@@ -81,8 +82,8 @@
 
         .legal-footer {
             position: absolute; bottom: 0; left: 0; right: 0;
-            background: rgba(0, 0, 0, 0.7);
-            color: rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.85);
+            color: rgba(255, 255, 255, 0.5);
             padding: 15px 50px;
             font-size: 0.75em;
             font-family: 'Inter', sans-serif;
@@ -146,7 +147,6 @@
                 document.getElementById('error-msg').style.display = 'none';
             }
 
-            // --- APLICAÇÃO DA MOLDURA SAZONAL ---
             if (loja.tema_sazonal && loja.tema_sazonal !== 'nenhum' && !document.getElementById('seasonal-frame')) {
                 const temaSazonal = loja.tema_sazonal.toLowerCase();
                 const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
@@ -157,7 +157,7 @@
                 container.id = 'seasonal-frame';
                 container.style.position = 'fixed';
                 container.style.inset = '0';
-                container.style.zIndex = '50'; // Fica à frente do slider, mas não interfere nos cliques
+                container.style.zIndex = '5'; 
                 container.style.pointerEvents = 'none';
                 container.style.overflow = 'hidden';
 
@@ -178,12 +178,10 @@
                 };
                 container.appendChild(video);
                 document.body.appendChild(container);
-            } else if (!loja.tema_sazonal || loja.tema_sazonal === 'nenhum') {
-                const existingFrame = document.getElementById('seasonal-frame');
-                if (existingFrame) existingFrame.remove();
+            } else if ((!loja.tema_sazonal || loja.tema_sazonal === 'nenhum') && document.getElementById('seasonal-frame')) {
+                 document.getElementById('seasonal-frame').remove();
             }
 
-            // Busca produtos
             const { data: produtos } = await _sb.from('produtos')
                 .select('*')
                 .eq('loja_id', loja.id)
