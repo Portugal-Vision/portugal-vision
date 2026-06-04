@@ -917,8 +917,7 @@
     }
 
     function mostrarPin() {
-        const selectEmp = document.getElementById('select-empregado');
-        if (selectEmp.value) {
+        if (document.getElementById('select-empregado').value) {
             document.getElementById('pin-empregado').style.display = 'block';
             document.getElementById('label-pin').style.display = 'block';
             document.getElementById('btn-login-text').style.display = 'block';
@@ -1375,9 +1374,16 @@
 
         const chamadasRecentesDestaMesa = window.chamadasGlobais.filter(c => c.mesa === mesaNum);
         
+        // Puxar o método e o NIF da última chamada que seja um pedido de conta
         const ultimaChamadaConta = chamadasRecentesDestaMesa.slice().reverse().find(c => c.tipo_chamada === 'conta');
+        
+        let nifPedidoPeloCliente = '';
         if (ultimaChamadaConta) {
             metodoSelecionadoPeloCliente = ultimaChamadaConta.metodo_pagamento || "Dinheiro";
+            // LÓGICA INJETADA: Capturar NIF para o modal de fecho final
+            if(ultimaChamadaConta.quer_nif && ultimaChamadaConta.nif_cliente) {
+                nifPedidoPeloCliente = ultimaChamadaConta.nif_cliente;
+            }
         }
 
         const chamadasPendentesDestaMesa = chamadasRecentesDestaMesa.filter(c => c.estado === 'pendente');
@@ -1430,10 +1436,11 @@
             btn = `<button class="btn-action btn-warning" onclick="avancarPedido(${idConf}, 'pendente'); event.stopPropagation();"><i class="fas fa-fire"></i> Enviar p/ Cozinha</button>
                    <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedidoSeguro(${idConf}); event.stopPropagation();"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; 
         } else {
+            // LÓGICA INJETADA: O botão "Pagar" envia o NIF se este existir
             btn = `
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalTransferir('${escapeHTML(m.mesa)}'); event.stopPropagation();"><i class="fas fa-exchange-alt"></i> Transferir</button>
                 <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalDividir('${escapeHTML(m.mesa)}'); event.stopPropagation();"><i class="fas fa-cut"></i> Dividir</button>
-                <button class="btn-action btn-success" onclick="prepararFechoMesa('${escapeHTML(m.mesa)}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
+                <button class="btn-action btn-success" onclick="prepararFechoMesa('${escapeHTML(m.mesa)}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}', '${nifPedidoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
             `; 
         }
 
@@ -1545,7 +1552,7 @@
         const m = window.mesasGlobais[mesaNum];
         
         if (window.splitModoPartes) {
-            // CORREÇÃO: Forçar arredondamento correto de 2 decimais para evitar dízimas no Supabase
+            // CORREÇÃO DECIMAL: Forçar arredondamento a duas casas para não dar erro
             subtotal = Math.round((m.totalAcumulado / window.splitNumPartes) * 100) / 100;
             container.innerHTML = `
                 <div style="text-align:center; padding:25px; background:#f0fdf4; border-radius:12px; border:1px solid #bbf7d0; grid-column: 1/-1;">
@@ -1604,7 +1611,7 @@
     }
 
     function alterarValorManualSplit(index, val, mesaNum) {
-        // CORREÇÃO DECIMAL: Aceita vírgula ou ponto
+        // CORREÇÃO DECIMAL
         let num = parseFloat(String(val).replace(',', '.')) || 0;
         let item = window.splitBillData[index];
         let maxVal = item.preco * item.maxQtde;
@@ -1634,6 +1641,7 @@
         
         let estHtml = ''; let btn = '';
         let metodoTakeaway = p.metodo_pagamento || '';
+        let nifExterior = p.nif_cliente || ''; // Recuperar NIF para envio
 
         if(p.estado === 'aguarda_confirmacao') { 
             if(tipo === 'levantamento') {
@@ -1658,7 +1666,8 @@
         } 
         else if(p.estado === 'pronto') { 
             estHtml = `<div style="background:#ecfdf5; padding:15px; border-radius:12px; color:var(--success); font-weight:bold; margin-bottom:15px;">Pronto para Entregar! 🔔 <button onclick="limparToastsMesa('pedido-${p.id}'); event.stopPropagation();" class="btn-mini-edit" style="background:#e2e8f0; color:#333;"><i class="fas fa-eye-slash"></i> Limpar Aviso</button></div>`; 
-            btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '${metodoTakeaway}');"><i class="fas fa-check-double"></i> Entregar e Fechar Conta</button>`; 
+            // Injeta NIF do Takeaway diretamente
+            btn = `<button class="btn-action btn-resolve" onclick="prepararFechoMesa('${tipo === 'levantamento' ? 'Takeaway' : 'Reserva'}', ${p.total}, '[${p.id}]', '${metodoTakeaway}', '${nifExterior}');"><i class="fas fa-check-double"></i> Entregar e Fechar Conta</button>`; 
         }
         else if(p.estado === 'reserva_confirmada') {
             const dataAgendada = p.data_agendada ? new Date(p.data_agendada) : new Date(p.created_at);
@@ -1885,7 +1894,8 @@
         }
     }
 
-    function prepararFechoMesa(mesa, total, idsStr, metodoPreferido) {
+    // --- CORREÇÃO CRÍTICA APLICADA AQUI: Adição do parâmetro nifPreferido ---
+    function prepararFechoMesa(mesa, total, idsStr, metodoPreferido, nifPreferido = '') {
         fecharModal('modal-detalhes-gerais'); 
         
         const btn = document.querySelector('#modal-pagar-mesa .btn-success');
@@ -1898,7 +1908,9 @@
         document.getElementById('pagar-mesa-total-original').value = total;
         document.getElementById('pagar-mesa-total').innerText = parseFloat(total).toFixed(2);
         document.getElementById('pagar-desc-perc').value = '';
-        document.getElementById('pagar-mesa-nif').value = '';
+        
+        // --- INJEÇÃO DA CORREÇÃO ---
+        document.getElementById('pagar-mesa-nif').value = nifPreferido; 
         
         if (mesa === 'Takeaway' || mesa === 'Reserva') {
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
@@ -1931,7 +1943,7 @@
         document.getElementById('modal-pagar-mesa').style.display = 'flex';
     }
 
-    // --- NOVO MOTOR DE IMPRESSÃO PROFISSIONAL VIA IFRAME ISOLADO COM PREVENÇÃO DE EM BRANCO ---
+    // --- MOTOR DE IMPRESSÃO PROFISSIONAL VIA IFRAME ISOLADO COM PREVENÇÃO DE EM BRANCO ---
     function imprimirConteudoIsolado(htmlContent) {
         let iframe = document.getElementById('print-iframe-motor');
         if (!iframe) {
@@ -2076,7 +2088,7 @@
         imprimirConteudoIsolado(talaoHtml);
     }
 
-    // --- NOVA GESTÃO DE IMPRESSÃO SELETIVA PÓS-FECHO (CLIENTE COM VIAS VS LOJISTA) ---
+    // --- GESTÃO DE IMPRESSÃO SELETIVA PÓS-FECHO ---
     function executarImpressaoFluxo(opcao) {
         if (opcao === 'cliente') {
             document.getElementById('zona-copias-cliente').style.display = 'flex';
@@ -2127,7 +2139,6 @@
                 const ordersMesa = window.pedidosGlobais.filter(p => String(p.mesa) === String(numMesaLimpo));
                 
                 if (window.splitModoPartes) {
-                    // Abate proporcional das frações iguais (Opção Bónus)
                     let totalPagoRestante = totalPagamento;
                     const promessasPartes = [];
                     for (let i = 0; i < ordersMesa.length; i++) {
@@ -2144,7 +2155,6 @@
                     }
                     await Promise.all(promessasPartes);
                 } else {
-                    // Abate por Item Fixo ou por Valor Livre (Opção 2)
                     const gruposPorPedido = {};
                     window.splitBillData.forEach(op => {
                         if (op.payQtde > 0 || op.payValor > 0) {
@@ -2223,14 +2233,14 @@
                 }
             }
 
-            // 3. ATUALIZAR INTERFACE, MEMÓRIA E FILTRAR SE A MESA FICOU COMPLETAMENTE COBRADA
+            // 3. ATUALIZAR INTERFACE E FILTRAR SE A MESA FICOU COMPLETAMENTE COBRADA
             window.splitEmCurso = false;
             window.splitBillData = [];
             window.splitModoPartes = false;
             window.splitNumPartes = 1;
             
             fecharModal('modal-pagar-mesa');
-            await carregarDados(); // Subtotal atualiza-se no ecrã de imediato
+            await carregarDados(); 
 
             // 4. VERIFICADOR DE WIPE-OUT (LIBERTAÇÃO DE MESA SE O VALOR ACUMULADO FOR ZERO)
             const pedidosAtivosMesa = window.pedidosGlobais.filter(p => String(p.mesa) === String(numMesaLimpo));
@@ -2239,14 +2249,13 @@
             if (pedidosAtivosMesa.length === 0 || subtotalMesaRestante <= 0) {
                 localStorage.removeItem('mesa_ocupacao_' + numMesaLimpo);
                 limparToastsMesa(numMesaLimpo);
-                // Fecha as chamadas em background de conta/empregado pendentes na base de dados
                 try {
                     await _sb.from('chamadas_sala').update({ estado: 'resolvido' }).eq('loja_id', minhaLojaId).eq('mesa', numMesaLimpo).eq('estado', 'pendente');
                 } catch(err){}
                 await carregarDados();
             }
 
-            // 5. DISPARAR O NOVO DIÁLOGO INTERACTIVO DE OPÇÕES DE IMPRESSÃO
+            // 5. DISPARAR O DIÁLOGO DE IMPRESSÃO
             document.getElementById('modal-opcoes-impressao').style.display = 'flex';
             document.getElementById('zona-copias-cliente').style.display = 'none';
             document.getElementById('input-qtd-copias').value = '1';
