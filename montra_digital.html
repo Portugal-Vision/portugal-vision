@@ -35,7 +35,7 @@
 
         .slide.active img.fg-img { transform: scale(1.03) translateX(5px); }
 
-        /* Nova classe gerida independentemente da slide para contornar o Stacking Context */
+        /* Classe gerida independentemente da slide para contornar o Stacking Context */
         .slide-overlay { 
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: linear-gradient(transparent, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.95) 100%); 
@@ -123,17 +123,22 @@
     </div>
 
     <script>
+        // Função de Blindagem contra Injeção de Código HTML
+        function escapeHTML(str) {
+            return str ? String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])) : '';
+        }
+
         const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
         let currentIndex = 0;
         let lastDataHash = "";
-        let slideTimer = null;
         let baseQRUrl = "";
+        let realtimeCanal = null;
 
         document.body.addEventListener('click', () => {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.log(e));
         });
 
-        async function updateDigitalBox() {
+        async function updateDigitalBox(forceUpdate = false) {
             const urlParams = new URLSearchParams(window.location.search);
             const slug = urlParams.get('loja');
             if (!slug) return;
@@ -162,7 +167,6 @@
                 container.id = 'seasonal-frame';
                 container.style.position = 'fixed';
                 container.style.inset = '0';
-                /* Alteração Crítica: z-index ajustado para 20 para ficar entre as imagens (10) e os overlays (30) */
                 container.style.zIndex = '20'; 
                 container.style.pointerEvents = 'none';
                 container.style.overflow = 'hidden';
@@ -193,28 +197,43 @@
                 .eq('loja_id', loja.id)
                 .eq('oculto', false);
 
-            if (!produtos || produtos.length === 0) return;
+            if (!produtos) return;
 
-            const currentDataHash = JSON.stringify(produtos);
-            if (currentDataHash !== lastDataHash) {
+            // Filtro Cirúrgico de Tempo Real: Prato do Dia e Esgotados
+            const diaSemanaDb = (new Date().getDay() + 6) % 7;
+            const produtosFiltrados = produtos.filter(p => {
+                const foraDoDia = p.dia_semana !== null && p.dia_semana !== "" && parseInt(p.dia_semana) !== diaSemanaDb;
+                const esgotado = p.stock !== null && p.stock !== "" && parseInt(p.stock) <= 0;
+                return !foraDoDia && !esgotado;
+            });
+
+            const currentDataHash = JSON.stringify(produtosFiltrados) + loja.nome;
+            if (currentDataHash !== lastDataHash || forceUpdate) {
                 lastDataHash = currentDataHash;
-                renderSlides(produtos, loja.nome);
+                renderSlides(produtosFiltrados, loja.nome, loja.logo_url);
             }
+
+            iniciarRealtime(loja.id);
         }
 
-        function renderSlides(produtos, nomeLoja) {
+        function renderSlides(produtos, nomeLoja, logoOpcional) {
             const slider = document.getElementById('slider');
             
-            /* Nova Estrutura: Contentor independente para overlays e textos */
             let overlaysContainer = document.getElementById('overlays');
             if (!overlaysContainer) {
                 overlaysContainer = document.createElement('div');
                 overlaysContainer.id = 'overlays';
                 overlaysContainer.style.position = 'absolute';
                 overlaysContainer.style.inset = '0';
-                overlaysContainer.style.zIndex = '30'; /* Fica acima da moldura de vídeo */
+                overlaysContainer.style.zIndex = '30';
                 overlaysContainer.style.pointerEvents = 'none';
                 document.body.appendChild(overlaysContainer);
+            }
+
+            if (produtos.length === 0) {
+                slider.innerHTML = `<div class="slide active" style="background:#0f172a;"><img class="fg-img" style="object-fit:contain; transform:scale(0.8);" src="${logoOpcional || 'https://via.placeholder.com/1920x1080?text=Portugal+Vision'}"></div>`;
+                overlaysContainer.innerHTML = '';
+                return;
             }
 
             const totalProdutos = produtos.length;
@@ -231,19 +250,17 @@
                 const imgSrc = p.imagem_url || 'https://via.placeholder.com/1920x1080?text=Portugal+Vision';
                 const activeClass = i === currentIndex ? 'active' : '';
 
-                // Apenas a imagem
                 slidesHTML += `
                     <div class="slide ${activeClass}">
                         <img class="fg-img" src="${imgSrc}" onerror="this.src='https://via.placeholder.com/1920x1080?text=Portugal+Vision'">
                     </div>
                 `;
 
-                // Apenas os dados formatados
                 overlaysHTML += `
                     <div class="slide-overlay ${activeClass}">
                         <div class="text-content">
-                            <p>${nomeLoja}</p>
-                            <h1>${p.nome}</h1>
+                            <p>${escapeHTML(nomeLoja)}</p>
+                            <h1>${escapeHTML(p.nome)}</h1>
                             <div class="price-row">
                                 <h2>${final}€</h2>
                                 ${desc > 0 ? `<span class="old-price">${preco.toFixed(2)}€</span> <span class="promo-tag">-${desc}%</span>` : ''}
@@ -266,21 +283,33 @@
             const overlays = document.querySelectorAll('.slide-overlay');
             
             if (slides.length > 1) {
-                // Remove estado ativo
                 slides[currentIndex].classList.remove('active');
                 if(overlays[currentIndex]) overlays[currentIndex].classList.remove('active');
                 
                 currentIndex = (currentIndex + 1) % slides.length;
                 
-                // Adiciona estado ativo à imagem e ao texto de forma sincronizada
                 slides[currentIndex].classList.add('active');
                 if(overlays[currentIndex]) overlays[currentIndex].classList.add('active');
             }
         }
 
+        function iniciarRealtime(lojaId) {
+            if(realtimeCanal) return; 
+            
+            realtimeCanal = _sb.channel('montra-updates')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos', filter: `loja_id=eq.${lojaId}` }, () => {
+                    updateDigitalBox(true); 
+                })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'lojas', filter: `id=eq.${lojaId}` }, () => {
+                    updateDigitalBox(true);
+                })
+                .subscribe();
+        }
+
         updateDigitalBox();
         setInterval(nextSlide, 8000);
-        setInterval(updateDigitalBox, 30000);
+        // O heartbeat desceu para 10 minutos (600000ms) para poupar requests, confiando nos WebSockets para os updates imediatos.
+        setInterval(() => updateDigitalBox(false), 600000);
     </script>
 </body>
 </html>
