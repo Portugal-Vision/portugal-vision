@@ -311,7 +311,7 @@
         </div>
 
         <div id="form-reset-pass" style="display:none;">
-            <p style="font-size:13px; margin-top:0;" data-i18n="recover_pass_desc">Insira o e-mail da sua cuenta para receber um link de redefinição.</p>
+            <p style="font-size:13px; margin-top:0;" data-i18n="recover_pass_desc">Insira o e-mail da sua cuenta para receber un link de redefinição.</p>
             <input type="email" id="reset-pass-email" class="input-form" placeholder="E-mail da Conta" data-i18n-ph="email">
             <button class="btn-checkout" onclick="clienteRecuperarPass()" data-i18n="send_link">Enviar Link</button>
             <a onclick="switchAuth('login')" style="display:block; text-align:center; margin-top:15px; color:var(--s); cursor:pointer; font-weight:600; font-size:13px;" data-i18n="back_to_login">Voltar ao Login</a>
@@ -357,7 +357,7 @@
 
             <div id="cart-login-section" style="display:none; margin-top: 20px; padding: 20px; background: rgba(128, 128, 128, 0.05); border: 1px dashed var(--s); border-radius: 12px;">
                 <h4 style="margin: 0 0 10px 0; color: var(--p); font-size: 1em; font-family: 'Playfair Display';" data-i18n="auth_title">Identificação (Obrigatória)</h4>
-                <p style="font-size: 12px; color: var(--s); margin-top:0;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identify.</p>
+                <p style="font-size: 12px; color: var(--s); margin-top:0;" data-i18n="auth_subtitle">Para garantir a sua reserva/takeaway e receber alertas, precisamos de o identificar.</p>
                 
                 <div class="auth-tab">
                     <div id="cart-tab-login" class="active" onclick="switchCartAuth('login')" data-i18n="login">Entrar</div>
@@ -541,6 +541,11 @@
 </div>
 
 <script>
+    // FUNÇÃO CRÍTICA: Proteção contra injeção de código e erros de formatação
+    function escapeHTML(str) {
+        return str ? String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])) : '';
+    }
+
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
     let todosProdutos = [];
@@ -644,7 +649,7 @@
 
     let userLang = localStorage.getItem('pv_idioma') || 'pt';
 
-    // --- FUNÇÕES DE ALERTA NATIVAS DA INTERFACE (Substituem alert, confirm e prompt) ---
+    // --- FUNÇÕES DE ALERTA NATIVAS DA INTERFACE ---
     function mostrarAlertaCustom(mensagem, titulo = "Aviso") {
         document.getElementById('custom-alert-icon').innerHTML = '<i class="fas fa-info-circle"></i>';
         document.getElementById('custom-alert-icon').style.color = 'var(--p)';
@@ -741,7 +746,7 @@
 
     function parseMarkdownToMenuHTML(text) {
         if(!text || typeof text !== 'string') return '';
-        let lines = String(text).split('\n');
+        let lines = escapeHTML(String(text)).split('\n');
         let html = '';
         let ingredientes = [];
         
@@ -840,7 +845,7 @@
                 document.getElementById('btn-user-account-top').style.display = 'flex';
                 
                 const saudacao = document.getElementById('boas-vindas-cliente');
-                saudacao.innerText = `Seja bem vinda(o), ${clienteAtual.nome} 👋`;
+                saudacao.innerText = `Seja bem vinda(o), ${escapeHTML(clienteAtual.nome)} 👋`;
                 saudacao.style.display = 'block';
 
                 document.getElementById('cart-login-section').style.display = 'none';
@@ -1041,7 +1046,7 @@
                 itensHtml = `<div style="margin: 10px 0; padding: 10px; background: var(--card-bg); border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.85em;">`;
                 p.itens.forEach(item => {
                     itensHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed rgba(0,0,0,0.05); padding-bottom: 4px;">
-                                    <span><b style="color: var(--p);">${item.qtde}x</b> ${item.nome}</span>
+                                    <span><b style="color: var(--p);">${item.qtde}x</b> ${escapeHTML(item.nome)}</span>
                                     <span style="opacity: 0.8; font-weight: 600;">${(item.preco * item.qtde).toFixed(2)}€</span>
                                   </div>`;
                 });
@@ -1271,7 +1276,7 @@
         }
 
         if (pratoInvalido) {
-            erroDia.innerHTML = `<i class="fas fa-ban"></i> Atenção: O artigo <b>${pratoInvalido.nome}</b> é um Exclusivo de ${pratoInvalido.diaCorreto}. Por favor, altere a data ou remova o artigo do carrinho.`;
+            erroDia.innerHTML = `<i class="fas fa-ban"></i> Atenção: O artigo <b>${escapeHTML(pratoInvalido.nome)}</b> é um Exclusivo de ${pratoInvalido.diaCorreto}. Por favor, altere a data ou remova o artigo do carrinho.`;
             erroDia.style.display = 'block';
             selectEl.innerHTML = '<option value="" disabled selected>Data Indisponível</option>';
             btnCheckout.disabled = true;
@@ -1466,12 +1471,10 @@
 
             lojaAtual = loja;
 
-            // 1. BRANDING BASE (O que o lojista definiu)
-            // Aplica as cores, fontes e backgrounds do lojista.
+            // 1. BRANDING BASE
             aplicarTemaVisual(lojaAtual.tema_lojista || 'padrao');
 
-            // 2. MOLDURA SAZONAL (Opcional, aplicada como Fundo)
-            // z-index: -1 garante que nunca tapa os botões ou cards.
+            // 2. MOLDURA SAZONAL
             if (lojaAtual.tema_sazonal && lojaAtual.tema_sazonal !== 'nenhum') {
                 const temaSazonal = lojaAtual.tema_sazonal.toLowerCase();
                 const sufixo = window.innerWidth < 768 ? 'Mobile' : 'PC';
@@ -1482,8 +1485,8 @@
                 container.id = 'seasonal-frame';
                 container.style.position = 'fixed';
                 container.style.inset = '0';
-                container.style.zIndex = '-1'; // Fundo total
-                container.style.pointerEvents = 'none'; // Ignora cliques
+                container.style.zIndex = '-1'; 
+                container.style.pointerEvents = 'none'; 
                 container.style.overflow = 'hidden';
 
                 const video = document.createElement('video');
@@ -1505,14 +1508,14 @@
                 document.body.appendChild(container);
             }
 
-            const nomeLoja = lojaAtual.nome || "Estabelecimento";
-            const nifLoja = lojaAtual.nif || "N/A";
+            const nomeLoja = escapeHTML(lojaAtual.nome) || "Estabelecimento";
+            const nifLoja = escapeHTML(lojaAtual.nif) || "N/A";
             legalTexts.termos = `<h3 style="font-family: 'Playfair Display', serif; color: var(--p); border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px;">Termos e Condições</h3>
             <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>1. Identificação da Entidade:</strong> O presente serviço digital é operado pelo estabelecimento <strong>${nomeLoja}</strong>, com o NIF <strong>${nifLoja}</strong>.</p>
             <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>2. Direito de Livre Resolução (DL 24/2014):</strong> Ao abrigo do Artigo 17.º, alínea d) do Decreto-Lei n.º 24/2014, o consumidor não goza do direito de livre resolução nos contratos de fornecimento de bens que, por natureza, não possam ser devolvidos ou sejam suscetíveis de se deteriorarem rapidamente. <strong>Não são aceites cancelamentos ou devoluções após o início da confeção do pedido.</strong></p>
             <p style="font-size: 0.9em; line-height: 1.6; opacity: 0.8;"><strong>3. Preços e Alergénios:</strong> As informações sobre preços, descrições, ingredientes e alergénios são da inteira responsabilidade do Lojista. Confirme as suas alergias no momento do pedido.</p>`;
 
-            document.getElementById('v-nome').innerText = loja.nome;
+            document.getElementById('v-nome').innerText = escapeHTML(loja.nome);
             document.getElementById('v-nome').removeAttribute('data-i18n');
 
             if (mesaAtual) {
@@ -1564,7 +1567,7 @@
             }
 
             if (mesaAtual) {
-                document.getElementById('mesa-badge').innerText = `📍 Mesa ${mesaAtual}`;
+                document.getElementById('mesa-badge').innerText = `📍 Mesa ${escapeHTML(mesaAtual)}`;
                 document.getElementById('mesa-badge').style.display = 'inline-block';
                 document.getElementById('checkout-options-wrapper').style.display = 'none';
                 
@@ -1577,7 +1580,7 @@
             }
 
             // ATUALIZAÇÃO CONTACTOS NO RODAPÉ
-            if(loja.morada) document.getElementById('footer-morada').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loja.morada}`;
+            if(loja.morada) document.getElementById('footer-morada').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${escapeHTML(loja.morada)}`;
             
             const mEnc = encodeURIComponent(loja.morada || loja.nome);
             document.getElementById('link-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${mEnc}`;
@@ -1593,7 +1596,7 @@
             
             if (loja.telefone) {
                 linkTel.href = `tel:${loja.telefone.replace(/\s+/g, '')}`;
-                textoTel.innerText = loja.telefone;
+                textoTel.innerText = escapeHTML(loja.telefone);
                 linkTel.style.display = 'inline-block';
                 temContacto = true;
             } else {
@@ -1602,7 +1605,7 @@
 
             if (loja.email_contacto) {
                 linkEmail.href = `mailto:${loja.email_contacto}`;
-                textoEmail.innerText = loja.email_contacto;
+                textoEmail.innerText = escapeHTML(loja.email_contacto);
                 linkEmail.style.display = 'inline-block';
                 temContacto = true;
             } else {
@@ -1617,11 +1620,11 @@
                 
                 document.getElementById('dynamic-favicon').href = loja.logo_url;
                 document.getElementById('dynamic-apple-icon').href = loja.logo_url;
-                document.title = loja.nome + " | Website";
+                document.title = escapeHTML(loja.nome) + " | Website";
             }
 
             if (loja.mbway_key && !mesaAtual) {
-                document.getElementById('mbway-phone').innerText = loja.mbway_key;
+                document.getElementById('mbway-phone').innerText = escapeHTML(loja.mbway_key);
             }
 
             registarVisita(loja.id, loja.views_total || 0);
@@ -1650,7 +1653,7 @@
             
             const cats = [...new Set(todosProdutos.map(p => p.categoria))].filter(Boolean);
             document.getElementById('cat-list').innerHTML = `<button class="cat-btn active" onclick="setCategoria('todos', this)">Todos</button>` +
-                cats.map(c => `<button class="cat-btn" onclick="setCategoria('${c}', this)">${c}</button>`).join('');
+                cats.map(c => `<button class="cat-btn" onclick="setCategoria('${escapeHTML(c)}', this)">${escapeHTML(c)}</button>`).join('');
 
             renderizar(todosProdutos);
             
@@ -1841,7 +1844,7 @@
             html += `
                 <div class="cart-item">
                     <div class="cart-item-info">
-                        <div class="cart-item-title">${item.nome}</div>
+                        <div class="cart-item-title">${escapeHTML(item.nome)}</div>
                         <div class="cart-item-price">${item.preco.toFixed(2)}€ x ${item.qtde} = ${subtotal.toFixed(2)}€</div>
                     </div>
                     <div class="cart-item-actions">
@@ -1868,7 +1871,7 @@
                 document.getElementById('erro-data-dia').style.display = 'none';
                 
                 const btnFinal = document.getElementById('btn-checkout-final');
-                btnFinal.innerHTML = `<i class="fas fa-fire"></i> Enviar para a Cozinha - Mesa ${mesaAtual}`;
+                btnFinal.innerHTML = `<i class="fas fa-fire"></i> Enviar para a Cozinha - Mesa ${escapeHTML(mesaAtual)}`;
                 btnFinal.style.padding = "20px";
                 btnFinal.style.fontSize = "1.2em";
                 btnFinal.style.marginTop = "10px";
@@ -1946,7 +1949,7 @@
                 }]);
 
                 if (error) throw error; 
-                mostrarAlertaCustom(`Pedido disparado para a Cozinha!\nOs produtos foram adicionados à sua conta da Mesa ${mesaAtual}.`, "Sucesso");
+                mostrarAlertaCustom(`Pedido disparado para a Cozinha!\nOs produtos foram adicionados à sua conta da Mesa ${escapeHTML(mesaAtual)}.`, "Sucesso");
             } else {
                 const tipoPedido = document.querySelector('input[name="tipo_pedido"]:checked').value;
                 const data = document.getElementById('cli-data').value;
@@ -2010,7 +2013,7 @@
             console.error("ERRO COMPLETO:", e);
             mostrarAlertaCustom((e.message || "Falha ao ligar à base de dados."), "Erro"); 
         } finally {
-            btnFinal.innerHTML = mesaAtual ? `<i class="fas fa-fire"></i> Enviar para a Cozinha - Mesa ${mesaAtual}` : `<i class="fas fa-check"></i> <span data-i18n="confirm_order">Confirmar e Enviar Pedido</span>`;
+            btnFinal.innerHTML = mesaAtual ? `<i class="fas fa-fire"></i> Enviar para a Cozinha - Mesa ${escapeHTML(mesaAtual)}` : `<i class="fas fa-check"></i> <span data-i18n="confirm_order">Confirmar e Enviar Pedido</span>`;
             btnFinal.disabled = false;
         }
     }
@@ -2036,7 +2039,7 @@
                     try { listaAlg = JSON.parse(p.alergenios); } catch(e) { listaAlg = p.alergenios.replace(/[{}]/g, '').split(',').map(s=>s.trim()); }
                 }
                 if (listaAlg.length > 0 && listaAlg[0] !== "") {
-                    alergeniosHtml = `<div class="alergenios-badge" onclick="showLegal('alergenios'); event.stopPropagation();" style="cursor:pointer;" title="Ver detalhes"><i class="fas fa-exclamation-circle"></i> <span data-i18n="contains">Contém:</span> ${listaAlg.join(', ')} <i class="fas fa-info-circle"></i></div>`;
+                    alergeniosHtml = `<div class="alergenios-badge" onclick="showLegal('alergenios'); event.stopPropagation();" style="cursor:pointer;" title="Ver detalhes"><i class="fas fa-exclamation-circle"></i> <span data-i18n="contains">Contém:</span> ${escapeHTML(listaAlg.join(', '))} <i class="fas fa-info-circle"></i></div>`;
                 }
             }
 
@@ -2072,7 +2075,7 @@
                             </div>
                             <div class="info">
                                 <div>
-                                    <strong>${p.nome}</strong>
+                                    <strong>${escapeHTML(p.nome)}</strong>
                                     <div class="price-box">
                                         ${htmlPreco}
                                     </div>
@@ -2084,8 +2087,8 @@
                         </div>
 
                         <div class="card-back">
-                            <h4>${p.nome}</h4>
-                            <div class="card-desc">${p.descricao ? parseMarkdownToMenuHTML(p.descricao) : 'Sem descrição disponible.'}</div>
+                            <h4>${escapeHTML(p.nome)}</h4>
+                            <div class="card-desc">${p.descricao ? parseMarkdownToMenuHTML(p.descricao) : 'Sem descrição disponível.'}</div>
                             ${alergeniosHtml}
                             ${btnAdicionar}
                             <button onclick="virarCartao('${p.id}'); event.stopPropagation();" style="background: none; border: none; width: 100%; color: inherit; margin-top: 15px; cursor: pointer; font-weight: 600;" data-i18n="back">
@@ -2111,7 +2114,7 @@
     function aplicarFiltros() {
         const termo = document.getElementById('search-input').value.toLowerCase();
         let filtrados = todosProdutos.filter(p => 
-            (categoriaSelecionada === 'todos' || p.categoria === categoriaSelecionada) && 
+            (categoriaSelecionada === 'todos' || escapeHTML(p.categoria) === categoriaSelecionada) && 
             p.nome.toLowerCase().includes(termo)
         );
         renderizar(filtrados);
