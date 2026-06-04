@@ -934,6 +934,11 @@
 </div>
 
 <script>
+    // FUNÇÃO CRÍTICA ADICIONADA: Proteção contra injeção de código (XSS)
+    function escapeHTML(str) {
+        return str ? String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])) : '';
+    }
+
     const _URL = "https://hhrmbrcaujfsqfanxqqq.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk";
     const _sb = supabase.createClient(_URL, _KEY);
@@ -1094,12 +1099,13 @@
             return;
         }
 
+        // Aplicação de Escape HTML para blindagem contra XSS na tabela de auditoria
         tbody.innerHTML = logs.map(l => {
             const dataHora = new Date(l.created_at).toLocaleString('pt-PT');
             return `<tr>
                 <td style="font-size: 12px; color: #64748b;">${dataHora}</td>
-                <td><strong>${l.empregado_nome}</strong></td>
-                <td>${l.acao}</td>
+                <td><strong>${escapeHTML(l.empregado_nome)}</strong></td>
+                <td>${escapeHTML(l.acao)}</td>
             </tr>`;
         }).join('');
     }
@@ -1144,7 +1150,7 @@
         const p = produtosLocais.find(item => item.id == idProduto);
         if(!p) return;
 
-        document.getElementById('modal-ficha-titulo').innerHTML = `<i class="fas fa-clipboard-list" style="color:var(--s);"></i> ${p.nome}`;
+        document.getElementById('modal-ficha-titulo').innerHTML = `<i class="fas fa-clipboard-list" style="color:var(--s);"></i> ${escapeHTML(p.nome)}`;
         document.getElementById('modal-ficha-subtitulo').innerText = p.categoria || "Sem Categoria";
         
         let textoNotas = p.ficha_tecnica_texto || "Sem notas de confeção registadas.";
@@ -1362,7 +1368,6 @@
 
     async function gerarCodigoSuporte() {
         if(!lojaAtiva) return;
-        // Gera um PIN numérico de 6 dígitos aleatório
         const token = Math.floor(100000 + Math.random() * 900000).toString(); 
         
         const { error } = await _sb.from('lojas').update({ suporte_codigo: token }).eq('id', lojaAtiva.id);
@@ -1471,7 +1476,7 @@
         
         let html = `
             <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
-                <h1 style="margin: 0 0 10px 0;">${nomeLoja}</h1>
+                <h1 style="margin: 0 0 10px 0;">${escapeHTML(nomeLoja)}</h1>
                 <p style="margin: 0; font-size: 16px; font-weight: bold;">Relatório de Inventário (Stock Atual) - ${dataPt}</p>
             </div>
             <table class="print-table">
@@ -1487,8 +1492,8 @@
 
         ingredientesLocais.forEach(i => {
             html += `<tr>
-                <td>${i.nome}</td>
-                <td style="text-align: center; font-weight: bold;">${i.stock_atual} ${i.unidade}</td>
+                <td>${escapeHTML(i.nome)}</td>
+                <td style="text-align: center; font-weight: bold;">${i.stock_atual} ${escapeHTML(i.unidade)}</td>
                 <td style="background: #f9f9f9; outline: 1px dashed #ccc;"></td>
             </tr>`;
         });
@@ -1519,12 +1524,12 @@
             lista.forEach(i => {
                 const critico = parseFloat(i.stock_atual) <= parseFloat(i.stock_minimo);
                 html += `<tr style="${critico ? 'background:#fef2f2; color:#991b1b;' : ''}">
-                    <td>${critico ? '<i class="fas fa-exclamation-triangle" title="Baixo Stock"></i> ' : ''}${i.nome}</td>
-                    <td>${i.unidade}</td>
+                    <td>${critico ? '<i class="fas fa-exclamation-triangle" title="Baixo Stock"></i> ' : ''}${escapeHTML(i.nome)}</td>
+                    <td>${escapeHTML(i.unidade)}</td>
                     <td><b style="font-size:14px;">${i.stock_atual}</b></td>
                     <td>${i.stock_minimo}</td>
                     <td style="display:flex; gap:5px;">
-                        <button class="btn-edit-staff" onclick="abrirExtrato('${i.id}', '${i.nome}')" title="Ver Histórico de Movimentos" style="color:var(--ia);"><i class="fas fa-history"></i></button>
+                        <button class="btn-edit-staff" onclick="abrirExtrato('${i.id}', '${escapeHTML(i.nome)}')" title="Ver Histórico de Movimentos" style="color:var(--ia);"><i class="fas fa-history"></i></button>
                         <button class="btn-edit-staff" onclick="prepararEdicaoIngrediente('${i.id}')" title="Editar"><i class="fas fa-edit"></i></button>
                         <button class="btn-del-staff" onclick="apagarIngrediente('${i.id}')" title="Remover do Armazém"><i class="fas fa-trash"></i></button>
                     </td>
@@ -1558,7 +1563,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px; background:white; border-radius:12px; margin-bottom:8px; border-left: 4px solid ${isSaida ? 'var(--err)' : 'var(--ok)'}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div>
                         <small style="color:#94a3b8; display:block; font-weight:600;"><i class="fas fa-clock"></i> ${dataF}</small>
-                        <b style="font-size:13px; color:var(--p);">${m.motivo}</b>
+                        <b style="font-size:13px; color:var(--p);">${escapeHTML(m.motivo)}</b>
                     </div>
                     <div style="color:${isSaida ? 'var(--err)' : 'var(--ok)'}; font-weight:800; font-size:16px;">
                         ${isSaida ? '' : '+'}${m.quantidade}
@@ -1574,8 +1579,12 @@
         const id = document.getElementById('ing-id').value;
         const nome = document.getElementById('ing-nome').value;
         const unidade = document.getElementById('ing-unidade').value;
-        const stockAtual = parseFloat(document.getElementById('ing-stock').value) || 0;
-        const stockMin = parseFloat(document.getElementById('ing-min').value) || 0;
+        // CORREÇÃO: Aplicado filtro replace(',', '.') para permitir casas decimais corretas
+        const stockAtualStr = document.getElementById('ing-stock').value.replace(',', '.');
+        const stockMinStr = document.getElementById('ing-min').value.replace(',', '.');
+        
+        const stockAtual = parseFloat(stockAtualStr) || 0;
+        const stockMin = parseFloat(stockMinStr) || 0;
 
         if(!nome) { mostrarAlertaPro("Aviso", "Defina um nome para o ingrediente.", "aviso"); return; }
 
@@ -1636,7 +1645,7 @@
         
         let options = '<option value="">Selecione a Matéria-Prima...</option>';
         ingredientesLocais.forEach(i => {
-            options += `<option value="${i.id}" ${i.id === ingId ? 'selected' : ''} data-un="${i.unidade}">${i.nome}</option>`;
+            options += `<option value="${i.id}" ${i.id === ingId ? 'selected' : ''} data-un="${i.unidade}">${escapeHTML(i.nome)}</option>`;
         });
 
         div.innerHTML = `
@@ -1691,7 +1700,7 @@
             <i class="fas fa-bell notificacao-icon"></i>
             <div style="flex: 1;">
                 <b style="display:block; font-size:14px; margin-bottom:4px;">Atenção!</b>
-                <span style="font-size:13px; line-height:1.4;">${mensagem}</span>
+                <span style="font-size:13px; line-height:1.4;">${escapeHTML(mensagem)}</span>
             </div>
             <button onclick="this.parentElement.classList.remove('mostrar'); setTimeout(() => this.parentElement.remove(), 500);" style="background:transparent; color:white; border:none; width:auto; padding:5px; font-size:18px; cursor:pointer;">
                 <i class="fas fa-times"></i>
@@ -1755,7 +1764,7 @@
 
         tbody.innerHTML = empregadosLocais.map(s => `
             <tr>
-                <td><i class="fas fa-user-circle" style="color:var(--s); margin-right:8px;"></i> ${s.nome}</td>
+                <td><i class="fas fa-user-circle" style="color:var(--s); margin-right:8px;"></i> ${escapeHTML(s.nome)}</td>
                 <td>****</td>
                 <td>
                     <button class="btn-edit-staff" onclick="prepararEdicaoStaff('${s.id}')" title="Editar"><i class="fas fa-edit"></i></button>
@@ -1822,7 +1831,7 @@
     function imprimirAvisoHorario() {
         let html = `<div style="text-align:center; padding: 20px; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; box-sizing: border-box;">
             <div>
-                <h1 style="font-size: 40px; margin-bottom: 10px; color: #0f172a;">${lojaAtiva.nome || 'A Nossa Loja'}</h1>
+                <h1 style="font-size: 40px; margin-bottom: 10px; color: #0f172a;">${escapeHTML(lojaAtiva.nome) || 'A Nossa Loja'}</h1>
                 <h2 style="font-size: 28px; color: #475569; margin-bottom: 30px; border-bottom: 3px solid #cbd5e1; padding-bottom: 15px;">Horário de Funcionamento</h2>
                 
                 <div style="display:flex; flex-wrap:wrap; justify-content:center; gap: 15px; font-size: 20px;">`;
@@ -1915,7 +1924,7 @@
         
         let html = `
         <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
-            <h1 style="margin: 0 0 10px 0;">${lojaAtiva.nome}</h1>
+            <h1 style="margin: 0 0 10px 0;">${escapeHTML(lojaAtiva.nome)}</h1>
             <p style="margin: 0; font-size: 16px; font-weight: bold;">Relatório de Fecho de Caixa - ${dataPt}</p>
         </div>`;
         
@@ -1961,7 +1970,7 @@
                 
                 secHtml += `<tr>
                     <td>${hora}</td>
-                    <td>${ident}</td>
+                    <td>${escapeHTML(ident)}</td>
                     <td>${p.metodo_pagamento || 'N/A'}</td>
                     <td class="money">${p.total.toFixed(2)}€</td>
                 </tr>`;
@@ -1997,7 +2006,7 @@
         lines.forEach(l => {
             let t = l.trim();
             if(!t) return;
-            t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            t = escapeHTML(t).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
             if(t.startsWith('###')) {
                 if(ingredientes.length > 0) {
@@ -2035,7 +2044,7 @@
             let t = l.trim();
             if(!t) return;
             
-            t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            t = escapeHTML(t).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
             if(t.startsWith('###')) {
                 if(inList) { html += '</ul>'; inList = false; }
@@ -2068,7 +2077,7 @@
         let html = `
         <div class="print-menu-item" style="display: block; text-align: left; padding: 20px;">
             <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
-                <h1 style="margin: 0 0 10px 0; color: #0f172a;">${nomeLoja}</h1>
+                <h1 style="margin: 0 0 10px 0; color: #0f172a;">${escapeHTML(nomeLoja)}</h1>
                 <p style="margin: 0; font-size: 16px; font-weight: bold; color: #334155;">Lista de Compras Inteligente - ${dataPt}</p>
             </div>
             <div style="width: 100%;">
@@ -2091,8 +2100,8 @@
             criticos.forEach(c => {
                 const deficit = (parseFloat(c.stock_minimo) - parseFloat(c.stock_atual)).toFixed(2);
                 html += `<tr>
-                    <td style="padding:12px; font-weight:bold;">${c.nome}</td>
-                    <td style="text-align:center; color:#991b1b; font-weight:bold;">+${deficit} ${c.unidade}</td>
+                    <td style="padding:12px; font-weight:bold;">${escapeHTML(c.nome)}</td>
+                    <td style="text-align:center; color:#991b1b; font-weight:bold;">+${deficit} ${escapeHTML(c.unidade)}</td>
                     <td contenteditable="true" style="background:#fff; outline:1px dashed #fca5a5;"></td>
                 </tr>`;
             });
@@ -2161,7 +2170,7 @@
         let html = `
         <div class="print-menu-item" style="display: block; text-align: left; padding: 30px; max-width: 210mm;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="margin: 0 0 5px 0; color: #0f172a; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">${nomeLoja}</h1>
+                <h1 style="margin: 0 0 5px 0; color: #0f172a; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">${escapeHTML(nomeLoja)}</h1>
                 <p style="margin: 0; color: #64748b; font-size: 14px;">Tabela de Preços Oficial - Atualizada a ${dataPt}</p>
             </div>
             <table class="tabela-precos-pro">
@@ -2176,7 +2185,7 @@
         `;
 
         categorias.forEach(cat => {
-            html += `<tr><td colspan="3" class="cat-header">${cat}</td></tr>`;
+            html += `<tr><td colspan="3" class="cat-header">${escapeHTML(cat)}</td></tr>`;
             const prods = produtosAtivos.filter(p => (p.categoria || 'Sem Categoria') === cat).sort((a,b) => a.nome.localeCompare(b.nome));
             
             prods.forEach(p => {
@@ -2187,7 +2196,7 @@
                 
                 html += `<tr>
                     <td>
-                        <strong>${p.nome}</strong>
+                        <strong>${escapeHTML(p.nome)}</strong>
                         ${desconto > 0 ? `<span style="color:var(--err); font-size:11px; font-weight:bold; margin-left:8px; background:#fee2e2; padding:2px 4px; border-radius:4px;">PROMO (-${desconto}%)</span>` : ''}
                     </td>
                     <td style="text-align:center; color:#64748b; font-size:13px; font-weight:bold;">${iva}</td>
@@ -2238,7 +2247,7 @@
                 
                 let alergeniosHtml = "";
                 if(Array.isArray(p.alergenios) && p.alergenios.length > 0) {
-                    alergeniosHtml = `<div class="print-item-allergens" contenteditable="true" spellcheck="false"><i class="fas fa-exclamation-triangle"></i> Alergénios: ${p.alergenios.join(' • ')}</div>`;
+                    alergeniosHtml = `<div class="print-item-allergens" contenteditable="true" spellcheck="false"><i class="fas fa-exclamation-triangle"></i> Alergénios: ${escapeHTML(p.alergenios.join(' • '))}</div>`;
                 }
 
                 if(tipoImpressao === 'menu') {
@@ -2257,14 +2266,14 @@
                     html += `
                         <div class="print-menu-item">
                             <div class="print-header">
-                                <div class="print-store-name" contenteditable="true" spellcheck="false">${nomeLoja}</div>
-                                <div class="print-cat-badge" contenteditable="true" spellcheck="false">${p.categoria || 'Sugestão'}</div>
+                                <div class="print-store-name" contenteditable="true" spellcheck="false">${escapeHTML(nomeLoja)}</div>
+                                <div class="print-cat-badge" contenteditable="true" spellcheck="false">${escapeHTML(p.categoria || 'Sugestão')}</div>
                             </div>
                             
                             ${imgHtml}
                             
                             <div class="print-content">
-                                <div class="print-item-title" contenteditable="true" spellcheck="false">${p.nome}</div>
+                                <div class="print-item-title" contenteditable="true" spellcheck="false">${escapeHTML(p.nome)}</div>
                                 <div class="print-item-desc" contenteditable="true" spellcheck="false">${parseMarkdownToMenuHTML(p.descricao)}</div>
                             </div>
 
@@ -2281,8 +2290,8 @@
                         <div class="print-menu-item ficha-tecnica-box">
                             <div class="print-header" style="text-align:left; margin-bottom: 20px;">
                                 <div style="font-size: 14px; color: #64748b; font-weight: bold; letter-spacing: 2px;">FICHA TÉCNICA DE PREPARAÇÃO</div>
-                                <div class="print-item-title" contenteditable="true" spellcheck="false" style="margin-bottom: 0; margin-top: 5px;">${p.nome}</div>
-                                <div class="print-cat-badge" style="border:none; padding:0;">${p.categoria}</div>
+                                <div class="print-item-title" contenteditable="true" spellcheck="false" style="margin-bottom: 0; margin-top: 5px;">${escapeHTML(p.nome)}</div>
+                                <div class="print-cat-badge" style="border:none; padding:0;">${escapeHTML(p.categoria)}</div>
                             </div>
                             
                             <div class="ficha-layout-flex">
@@ -2295,7 +2304,7 @@
                             
                             <div class="ficha-internal-notes">
                                 <strong style="display:block; margin-bottom:10px;"><i class="fas fa-clipboard-list"></i> NOTAS INTERNAS / MODO DE PREPARO:</strong>
-                                <div contenteditable="true" spellcheck="false" style="white-space: pre-wrap;">${p.ficha_tecnica_texto ? p.ficha_tecnica_texto : 'Nenhuma nota interna registada para este artigo.'}</div>
+                                <div contenteditable="true" spellcheck="false" style="white-space: pre-wrap;">${escapeHTML(p.ficha_tecnica_texto ? p.ficha_tecnica_texto : 'Nenhuma nota interna registada para este artigo.')}</div>
                             </div>
                             
                             ${p.ficha_tecnica_url ? `<div style="margin-top: 20px; font-size: 13px; color: var(--s); font-weight: bold;"><a href="${p.ficha_tecnica_url}" target="_blank" style="color:var(--s); text-decoration:none;"><i class="fas fa-paperclip"></i> Abrir Documento Anexo Original</a></div>` : ''}
@@ -2477,7 +2486,7 @@
                 
                 let alergeniosHtml = "";
                 if(p.alergenios && p.alergenios.length > 0) {
-                    alergeniosHtml = `<div style="margin-top: 4px; font-size: 11px; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; display: inline-block;"><i class="fas fa-exclamation-triangle"></i> ${p.alergenios.join(', ')}</div>`;
+                    alergeniosHtml = `<div style="margin-top: 4px; font-size: 11px; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; display: inline-block;"><i class="fas fa-exclamation-triangle"></i> ${escapeHTML(p.alergenios.join(', '))}</div>`;
                 }
 
                 let infoExtraHtml = "";
@@ -2533,8 +2542,8 @@
                     </div>
                     <img src="${p.imagem_url || ''}" class="prod-img">
                     <div style="padding:12px">
-                        <small style="color: #64748b; font-weight: 600;">${p.categoria || 'Sem categoria'}</small><br>
-                        <span style="font-weight: 600; font-size: 14px; display: block; margin: 4px 0;">${p.nome}</span>
+                        <small style="color: #64748b; font-weight: 600;">${escapeHTML(p.categoria || 'Sem categoria')}</small><br>
+                        <span style="font-weight: 600; font-size: 14px; display: block; margin: 4px 0;">${escapeHTML(p.nome)}</span>
                         ${htmlPreco}
                         ${horarioHtml}
                         ${infoExtraHtml}
@@ -2612,7 +2621,6 @@
             if (data && data.error) throw new Error(data.error);
             if (!data || !data.dados_ia) throw new Error("Resposta inválida do servidor.");
 
-            // <-- BLOQUEIO DE RESPONSABILIDADE INJETADO AQUI -->
             await mostrarAlertaPro(
                 "⚠️ Aviso Legal - Inteligência Artificial", 
                 "Os dados seguintes foram extraídos e sugeridos automaticamente pela IA com base no teu documento.\n\nA Portugal Vision não se responsabiliza por quantidades erradas ou alergénios não marcados. O lojista é OBRIGADO a rever todos os campos antes de guardar o artigo.", 
@@ -2680,14 +2688,15 @@
         const tags = Array.from(document.querySelectorAll('#p-tags-container input:checked')).map(cb => cb.value);
         const alergenios = Array.from(document.querySelectorAll('#p-alergenios-container input:checked')).map(cb => cb.value);
         
-        const precoVal = parseFloat(document.getElementById('p-preco').value);
+        // CORREÇÃO: replace(',', '.')
+        const precoVal = parseFloat(document.getElementById('p-preco').value.replace(',', '.'));
         const nomeProd = document.getElementById('p-nome').value;
         if(!nomeProd || isNaN(precoVal)) { mostrarAlertaPro("Aviso", "Nome e preço são obrigatórios.", "aviso"); return; }
 
-        const taxaIvaVal = parseFloat(document.getElementById('p-taxa-iva').value) || 0;
+        const taxaIvaVal = parseFloat(document.getElementById('p-taxa-iva').value.replace(',', '.')) || 0;
 
         let stockVal = document.getElementById('p-stock').value;
-        stockVal = (stockVal !== "" && stockVal !== null) ? parseInt(stockVal) : null;
+        stockVal = (stockVal !== "" && stockVal !== null) ? parseInt(stockVal.replace(',', '.')) : null;
         
         let diaVal = document.getElementById('p-dia-semana').value;
         diaVal = (diaVal !== "") ? parseInt(diaVal) : null;
@@ -2700,7 +2709,9 @@
         receitaRows.forEach(row => {
             const select = row.querySelector('.rec-ing');
             const ingId = select.value;
-            const qtd = parseFloat(row.querySelector('.rec-qtd').value) || 0;
+            // CORREÇÃO: replace(',', '.')
+            const qtdStr = row.querySelector('.rec-qtd').value.replace(',', '.');
+            const qtd = parseFloat(qtdStr) || 0;
             if(ingId && qtd > 0) {
                 receitaJson.push({ ingrediente_id: ingId, quantidade: qtd });
             }
@@ -2840,7 +2851,6 @@
         document.getElementById('form-title').innerHTML = `<i class="fas fa-box-open"></i> Publicar ou Editar Artigo`;
         document.getElementById('btn-cancel').classList.add('hidden');
         
-        // Auto-fecha o painel após cancelar a edição
         const divPublicar = document.getElementById('painel-publicar');
         if(!divPublicar.classList.contains('hidden')) { togglePublicarArtigo(); }
     }
@@ -2849,7 +2859,6 @@
         const p = produtosLocais.find(item => item.id == id);
         if(!p) return;
 
-        // Auto-Abre o painel de Publicação se estiver fechado
         const divPublicar = document.getElementById('painel-publicar');
         if(divPublicar.classList.contains('hidden')) { togglePublicarArtigo(); }
 
