@@ -171,6 +171,11 @@
 </div>
 
 <script>
+    // FUNÇÃO CRÍTICA ADICIONADA: Proteção contra injeção de código (XSS)
+    function escapeHTML(str) {
+        return str ? String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])) : '';
+    }
+
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     
     let minhaLojaId = null;
@@ -180,7 +185,7 @@
     let canalNotificacoesBar = null;
     let cachePedidosBar = [];
 
-    // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO CORRIGIDA) ---
+    // --- ARRANQUE E CAMADA 1 (AUTORIZAÇÃO) ---
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('loja');
@@ -245,7 +250,7 @@
         
         if (equipa && equipa.length > 0) {
             selectEmp.innerHTML = '<option value="" disabled selected>Selecione o seu nome...</option>' + 
-                                  equipa.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+                                  equipa.map(e => `<option value="${e.id}">${escapeHTML(e.nome)}</option>`).join('');
         } else {
             selectEmp.innerHTML = '<option value="" disabled selected>Nenhum colaborador configurado.</option>';
         }
@@ -313,13 +318,13 @@
     // --- ARRANQUE E FUNCIONAMENTO DO BAR ---
     function arrancarBar() {
         document.getElementById('kds-screen').style.display = 'flex';
-        document.getElementById('nome-restaurante').innerText = "Bar - " + nomeLojaAtual;
-        document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${nomeOperadorAtual}`;
+        document.getElementById('nome-restaurante').innerText = "Bar - " + escapeHTML(nomeLojaAtual);
+        document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${escapeHTML(nomeOperadorAtual)}`;
 
         carregarPedidosBar();
         carregarRadarReservas();
 
-        // [NOVO] MOTOR DE TELEMETRIA (HEARTBEAT) DO BAR
+        // MOTOR DE TELEMETRIA (HEARTBEAT) DO BAR
         setInterval(async () => {
             if (!minhaLojaId) return;
             try {
@@ -331,7 +336,7 @@
             } catch (err) {
                 console.warn("[Telemetria] Falha no heartbeat do Bar. O sistema tentará novamente em 3 minutos.", err.message);
             }
-        }, 180000); // Emite um sinal a cada 3 minutos
+        }, 180000); 
 
         if(timerAtualizacao) clearInterval(timerAtualizacao);
         timerAtualizacao = setInterval(() => {
@@ -406,7 +411,6 @@
                 
                 if (itensBar.length > 0) {
                     const pedidoApenasBar = { ...p, itens: itensBar };
-                    // Se o item do bar já iniciou a preparação, assume estado local para UI
                     if(itensBar.some(it => it._barIniciado) && p.estado === 'pendente') {
                         pedidoApenasBar.estadoLocal = 'preparacao';
                     } else {
@@ -438,7 +442,7 @@
 
             let localTag = '';
             if (p.tipo_pedido === 'mesa') {
-                localTag = `<i class="fas fa-utensils"></i> Mesa ${p.mesa}`;
+                localTag = `<i class="fas fa-utensils"></i> Mesa ${escapeHTML(p.mesa)}`;
             } else if (p.tipo_pedido === 'levantamento' || p.tipo_pedido === 'takeaway') {
                 localTag = `<i class="fas fa-shopping-bag"></i> Takeaway`;
             } else {
@@ -446,12 +450,12 @@
             }
 
             let itensHtml = p.itens.map(item => {
-                let obsHtml = item.obs ? `<span class="item-obs"><i class="fas fa-comment-alt"></i> ${item.obs}</span>` : '';
+                let obsHtml = item.obs ? `<span class="item-obs"><i class="fas fa-comment-alt"></i> ${escapeHTML(item.obs)}</span>` : '';
                 return `
                 <div class="item-row">
                     <div class="item-qtde">${item.qtde}x</div>
                     <div style="flex: 1;">
-                        <div class="item-nome">${item.nome}</div>
+                        <div class="item-nome">${escapeHTML(item.nome)}</div>
                         ${obsHtml}
                     </div>
                 </div>
@@ -599,7 +603,7 @@
                 htmlRadarFinal += `
                     <div class="radar-item">
                         <div class="qtde">${qtde}x</div>
-                        <div class="nome">${nome}</div>
+                        <div class="nome">${escapeHTML(nome)}</div>
                     </div>
                 `;
             });
@@ -671,7 +675,7 @@
             <i class="fas fa-bullhorn notificacao-icon"></i>
             <div style="flex: 1;">
                 <b style="display:block; font-size:14px; margin-bottom:4px;">Aviso da Sala:</b>
-                <span style="font-size:13px; line-height:1.4;">${mensagem}</span>
+                <span style="font-size:13px; line-height:1.4;">${escapeHTML(mensagem)}</span>
             </div>
             <button onclick="this.parentElement.classList.remove('mostrar'); setTimeout(() => this.parentElement.remove(), 500); document.body.classList.remove('piscar-ecra');" style="background:transparent; color:white; border:none; width:auto; padding:5px; font-size:18px; cursor:pointer;">
                 <i class="fas fa-times"></i>
