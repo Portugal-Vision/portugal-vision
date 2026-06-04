@@ -466,6 +466,11 @@
 </div>
 
 <script>
+    // FUNÇÃO CRÍTICA ADICIONADA: Proteção contra injeção de código (XSS) e quebras visuais
+    function escapeHTML(str) {
+        return str ? String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])) : '';
+    }
+
     const _sb = supabase.createClient("https://hhrmbrcaujfsqfanxqqq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhocm1icmNhdWpmc3FmYW54cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTA0NDIsImV4cCI6MjA4ODcyNjQ0Mn0.pPkvwcb4h8SjYyvAFt1dnJE6Xn8KDQ4TVcy-QiamLpk");
     let minhaLojaId = null; let lojaNome = ""; let nomeOperadorAtual = "";
     let produtosCatalogo = []; let posCarrinho = []; let posTotal = 0;
@@ -664,7 +669,7 @@
                 if (data.nome && !document.getElementById('pos-mesa').value) {
                     document.getElementById('pos-mesa').value = data.nome;
                 }
-                dispararToast('Cliente Encontrado', `Dados de ${data.nome || 'Cliente VIP'} preenchidos.`, 'cozinha');
+                dispararToast('Cliente Encontrado', `Dados de ${escapeHTML(data.nome) || 'Cliente VIP'} preenchidos.`, 'cozinha');
             }
         }, 500);
     }
@@ -685,7 +690,7 @@
             let isDiaErrado = p.dia_semana !== null && p.dia_semana !== "" && parseInt(p.dia_semana) !== diaSemanaDb;
 
             let overlayHtml = '';
-            let onclickAttr = `onclick="adicionarAoPOS(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${precoFinal})"`;
+            let onclickAttr = `onclick="adicionarAoPOS(${p.id}, '${escapeHTML(p.nome).replace(/'/g, "\\'")}', ${precoFinal})"`;
             let styleOpacity = '';
 
             if (isEsgotado) {
@@ -701,8 +706,8 @@
             return `
                 <div class="pos-item" ${onclickAttr} style="position:relative; ${styleOpacity}">
                     ${overlayHtml}
-                    <img src="${p.imagem_url || 'https://via.placeholder.com/150?text=Sem+Imagem'}" alt="${p.nome}">
-                    <strong style="font-size:0.9em; margin-top:5px;">${p.nome}</strong>
+                    <img src="${p.imagem_url || 'https://via.placeholder.com/150?text=Sem+Imagem'}" alt="${escapeHTML(p.nome)}">
+                    <strong style="font-size:0.9em; margin-top:5px;">${escapeHTML(p.nome)}</strong>
                     <span style="color:var(--primary); font-weight:bold;">${precoFinal.toFixed(2)}€</span>
                 </div>
             `;
@@ -716,7 +721,7 @@
 
         if (pDb && pDb.stock !== null && pDb.stock !== "") {
             if (qtyAtual + 1 > parseInt(pDb.stock)) {
-                mostrarAlertaCustom(`Não é possível adicionar mais. O limite de stock foi atingido para: ${nome}.`);
+                mostrarAlertaCustom(`Não é possível adicionar mais. O limite de stock foi atingido para: ${escapeHTML(nome)}.`);
                 return;
             }
         }
@@ -732,7 +737,7 @@
             const pDb = produtosCatalogo.find(p => String(p.id) === String(item.id));
             if (pDb && pDb.stock !== null && pDb.stock !== "") {
                 if (item.qtde + 1 > parseInt(pDb.stock)) {
-                    mostrarAlertaCustom(`Não é possível adicionar mais. O limite de stock foi atingido para: ${item.nome}.`);
+                    mostrarAlertaCustom(`Não é possível adicionar mais. O limite de stock foi atingido para: ${escapeHTML(item.nome)}.`);
                     return;
                 }
             }
@@ -761,7 +766,7 @@
                     <li style="display:flex; flex-direction:column; border-bottom:1px solid #e2e8f0; padding:8px 0;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
-                                <strong>${item.nome}</strong><br>
+                                <strong>${escapeHTML(item.nome)}</strong><br>
                                 <span style="font-size:0.85em; color:#64748b;">${item.preco.toFixed(2)}€/un</span>
                             </div>
                             <div style="display:flex; align-items:center; gap:8px;">
@@ -770,7 +775,7 @@
                                 <button onclick="alterarQtdePOS(${index}, 1)" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">+</button>
                             </div>
                         </div>
-                        <input type="text" class="input-form obs-input" placeholder="+ Obs. Cozinha (ex: mal passado)" value="${item.obs || ''}" onchange="atualizarObsPOS(${index}, this.value)" style="margin:5px 0 0 0; padding:6px 10px; font-size:12px; background:#f8fafc; border-radius:6px;">
+                        <input type="text" class="input-form obs-input" placeholder="+ Obs. Cozinha (ex: mal passado)" value="${escapeHTML(item.obs || '')}" onchange="atualizarObsPOS(${index}, this.value)" style="margin:5px 0 0 0; padding:6px 10px; font-size:12px; background:#f8fafc; border-radius:6px;">
                     </li>
                 `;
             }).join('');
@@ -897,7 +902,7 @@
             
             if (equipa && equipa.length > 0) {
                 selectEmp.innerHTML = '<option value="" disabled selected>Selecione o seu nome...</option>' + 
-                                      equipa.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+                                      equipa.map(e => `<option value="${e.id}">${escapeHTML(e.nome)}</option>`).join('');
                 selectEmp.style.display = 'block'; labelEmp.style.display = 'block';
                 inputPin.style.display = 'none'; labelPin.style.display = 'none'; btnLogin.style.display = 'none';
             } else {
@@ -1056,8 +1061,8 @@
         toast.innerHTML = `
             <i class="fas ${icone} notificacao-icon"></i>
             <div style="flex: 1;">
-                <b style="display:block; font-size:15px; margin-bottom:4px;">${titulo}</b>
-                <span style="font-size:13px; line-height:1.4;">${mensagem}</span>
+                <b style="display:block; font-size:15px; margin-bottom:4px;">${escapeHTML(titulo)}</b>
+                <span style="font-size:13px; line-height:1.4;">${escapeHTML(mensagem)}</span>
             </div>
             <button onclick="this.parentElement.classList.remove('mostrar'); setTimeout(() => this.parentElement.remove(), 500);" style="background:transparent; color:white; border:none; width:auto; padding:5px; font-size:18px; cursor:pointer;">
                 <i class="fas fa-times"></i>
@@ -1083,8 +1088,8 @@
         document.getElementById('login-screen').style.display = 'none'; document.getElementById('dashboard-screen').style.display = 'flex';
         
         lojaNome = window.lojaDataAtual.nome;
-        document.getElementById('nome-restaurante').innerText = window.lojaDataAtual.nome + " - Sala";
-        document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${nomeOperadorAtual}`;
+        document.getElementById('nome-restaurante').innerText = escapeHTML(window.lojaDataAtual.nome) + " - Sala";
+        document.getElementById('nome-operador').innerHTML = `<i class="fas fa-user-circle"></i> Op: ${escapeHTML(nomeOperadorAtual)}`;
         
         const { data: prods } = await _sb.from('produtos').select('id, nome, preco, desconto_percent, imagem_url, stock, dia_semana').eq('loja_id', minhaLojaId).eq('oculto', false);
         if(prods) produtosCatalogo = prods;
@@ -1092,7 +1097,7 @@
         carregarDados();
         iniciarCicloCronometros(); 
 
-        // [NOVO] MOTOR DE TELEMETRIA (HEARTBEAT)
+        // MOTOR DE TELEMETRIA (HEARTBEAT)
         setInterval(async () => {
             if (!minhaLojaId) return;
             try {
@@ -1104,7 +1109,7 @@
             } catch (err) {
                 console.warn("[Telemetria] Falha no heartbeat da Sala. O sistema tentará novamente em 3 minutos.", err.message);
             }
-        }, 180000); // Emite um sinal a cada 3 minutos
+        }, 180000); 
         
         if(canalSala) _sb.removeChannel(canalSala);
         canalSala = _sb.channel('sala-updates')
@@ -1276,16 +1281,16 @@
                 }
 
                 htmlSala += `
-                <div class="mesa-box ${cl}" onclick="abrirDetalhesMesa('${m.mesa}')">
+                <div class="mesa-box ${cl}" onclick="abrirDetalhesMesa('${escapeHTML(m.mesa)}')">
                     ${notifIcon}
                     <div class="mesa-timer-grid cronometro-vivo" data-inicio="${timestampInicio}">${formatarCronometro(timestampInicio)}</div>
-                    <div class="mesa-numero-grid">${m.mesa}</div>
+                    <div class="mesa-numero-grid">${escapeHTML(m.mesa)}</div>
                     <div class="mesa-total-grid">${m.totalAcumulado.toFixed(2)}€</div>
                 </div>`;
             } else {
                 htmlSala += `
-                <div class="mesa-box mesa-livre" onclick="abrirPOSMesaLivre('${t}')">
-                    <div class="mesa-numero-grid">${t}</div>
+                <div class="mesa-box mesa-livre" onclick="abrirPOSMesaLivre('${escapeHTML(t)}')">
+                    <div class="mesa-numero-grid">${escapeHTML(t)}</div>
                     <div class="mesa-total-grid" style="color:#94a3b8; font-weight:normal;">Livre</div>
                 </div>`;
             }
@@ -1349,7 +1354,7 @@
         return `
         <div class="card ${cClass} card-resumo" onclick="abrirDetalhesExterno(${p.id})">
              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div class="mesa-tag" style="font-size:1.2em;">${icon} ${p.nome_cliente || 'Anónimo'}</div>
+                <div class="mesa-tag" style="font-size:1.2em;">${icon} ${escapeHTML(p.nome_cliente) || 'Anónimo'}</div>
                 ${estBadge}
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
@@ -1381,25 +1386,25 @@
             const isC = c.tipo_chamada === 'conta'; 
             if(isC) {
                 const metodo = c.metodo_pagamento || "Dinheiro";
-                const nif = (c.quer_nif && c.nif_cliente) ? `<br><strong style="color: var(--danger);">NIF:</strong> ${c.nif_cliente}` : '';
+                const nif = (c.quer_nif && c.nif_cliente) ? `<br><strong style="color: var(--danger);">NIF:</strong> ${escapeHTML(c.nif_cliente)}` : '';
                 chamadasHtml += `<div style="background:#fef2f2; border:1px solid #fecaca; padding:15px; border-radius:12px; margin-bottom:15px; font-size:1em; color:var(--danger);">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <strong><i class="fas fa-file-invoice-dollar"></i> Pediu a Conta</strong>
-                                        <button onclick="resolverChamada(${c.id}, '${mesaNum}'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--danger); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
+                                        <button onclick="resolverChamada(${c.id}, '${escapeHTML(mesaNum)}'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--danger); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
                                     </div>
-                                    <div style="margin-top:8px;"><strong>Paga com:</strong> ${metodo} ${nif}</div>
+                                    <div style="margin-top:8px;"><strong>Paga com:</strong> ${escapeHTML(metodo)} ${nif}</div>
                                 </div>`;
             } else {
                 chamadasHtml += `<div style="background:#fffbeb; border:1px solid #fde68a; padding:15px; border-radius:12px; margin-bottom:15px; font-size:1em; color:#b45309; display:flex; justify-content:space-between; align-items:center;">
                                     <strong><i class="fas fa-bell"></i> Chamou Empregado</strong>
-                                    <button onclick="resolverChamada(${c.id}, '${mesaNum}'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--warning); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
+                                    <button onclick="resolverChamada(${c.id}, '${escapeHTML(mesaNum)}'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--warning); padding:8px 15px;"><i class="fas fa-check"></i> Feito</button>
                                 </div>`;
             }
         });
 
         let rondasHtml = ''; let idConf = null;
         m.rondas.forEach((r, i) => {
-            let itens = r.itens.map(it => `<li><strong>${it.qtde}x</strong> ${it.nome}</li>`).join(''); 
+            let itens = r.itens.map(it => `<li><strong>${it.qtde}x</strong> ${escapeHTML(it.nome)}</li>`).join(''); 
             let badge = '';
             if (r.estado === 'aguarda_confirmacao') { badge = `<span style="color:var(--warning);">⚠️ Confirmar</span>`; idConf = r.id; } 
             else if (r.estado === 'pendente') { badge = `<span style="color:var(--danger);">Na Fila</span> <button onclick="avancarPedido(${r.id}, 'pronto'); event.stopPropagation();" class="btn-mini-edit" style="background:var(--success);"><i class="fas fa-check"></i> Pronto</button>`; } 
@@ -1426,13 +1431,13 @@
                    <button class="btn-action" style="background:#e2e8f0; flex: 0.3;" onclick="apagarPedidoSeguro(${idConf}); event.stopPropagation();"><i class="fas fa-trash" style="color:var(--danger)"></i></button>`; 
         } else {
             btn = `
-                <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalTransferir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-exchange-alt"></i> Transferir</button>
-                <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalDividir('${m.mesa}'); event.stopPropagation();"><i class="fas fa-cut"></i> Dividir</button>
-                <button class="btn-action btn-success" onclick="prepararFechoMesa('${m.mesa}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
+                <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalTransferir('${escapeHTML(m.mesa)}'); event.stopPropagation();"><i class="fas fa-exchange-alt"></i> Transferir</button>
+                <button class="btn-action" style="background:#f1f5f9; color:#475569;" onclick="abrirModalDividir('${escapeHTML(m.mesa)}'); event.stopPropagation();"><i class="fas fa-cut"></i> Dividir</button>
+                <button class="btn-action btn-success" onclick="prepararFechoMesa('${escapeHTML(m.mesa)}', ${m.totalAcumulado}, '[${m.rondas.map(r=>r.id).join(',')}]', '${metodoSelecionadoPeloCliente}'); event.stopPropagation();"><i class="fas fa-euro-sign"></i> Pagar (${m.totalAcumulado.toFixed(2)}€)</button>
             `; 
         }
 
-        document.getElementById('detalhes-gerais-titulo').innerHTML = `<i class="fas fa-utensils" style="color:var(--primary);"></i> Detalhes Mesa ${m.mesa}`;
+        document.getElementById('detalhes-gerais-titulo').innerHTML = `<i class="fas fa-utensils" style="color:var(--primary);"></i> Detalhes Mesa ${escapeHTML(m.mesa)}`;
         document.getElementById('detalhes-gerais-body').innerHTML = `
             ${chamadasHtml}
             ${rondasHtml}
@@ -1509,7 +1514,7 @@
                     preco: it.preco,
                     maxQtde: it.qtde,
                     payQtde: 0,
-                    payValor: 0 // Injeção de Valor Livre
+                    payValor: 0 
                 });
             });
         });
@@ -1540,7 +1545,8 @@
         const m = window.mesasGlobais[mesaNum];
         
         if (window.splitModoPartes) {
-            subtotal = m.totalAcumulado / window.splitNumPartes;
+            // CORREÇÃO: Forçar arredondamento correto de 2 decimais para evitar dízimas no Supabase
+            subtotal = Math.round((m.totalAcumulado / window.splitNumPartes) * 100) / 100;
             container.innerHTML = `
                 <div style="text-align:center; padding:25px; background:#f0fdf4; border-radius:12px; border:1px solid #bbf7d0; grid-column: 1/-1;">
                     <h4 style="margin:0; color:#166534; font-size:1.1em;"><i class="fas fa-percentage"></i> Modo: Divisão Prorrogada por Partes</h4>
@@ -1562,18 +1568,18 @@
                     <div style="display:flex; flex-direction:column; border-bottom:1px dashed #e2e8f0; padding:12px 0; gap:8px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div style="flex:1;">
-                                <strong style="font-size:15px; color:var(--text);">${item.nome}</strong><br>
+                                <strong style="font-size:15px; color:var(--text);">${escapeHTML(item.nome)}</strong><br>
                                 <span style="font-size:13px; color:#64748b;">${item.preco.toFixed(2)}€ / Max Qtd: ${item.maxQtde}</span>
                             </div>
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <button onclick="alterarQtdeSplit(${index}, -1, '${mesaNum}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">-</button>
+                                <button onclick="alterarQtdeSplit(${index}, -1, '${escapeHTML(mesaNum)}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">-</button>
                                 <span style="font-weight:bold; width:20px; text-align:center;">${item.payQtde}</span>
-                                <button onclick="alterarQtdeSplit(${index}, 1, '${mesaNum}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">+</button>
+                                <button onclick="alterarQtdeSplit(${index}, 1, '${escapeHTML(mesaNum)}')" class="btn-mini-edit" style="background:#e2e8f0; color:#333; height:28px; width:28px; display:flex; align-items:center; justify-content:center;">+</button>
                             </div>
                         </div>
                         <div style="display:flex; align-items:center; gap:10px; background:#f8fafc; padding:6px 10px; border-radius:8px;">
                             <span style="font-size:12px; color:#64748b; font-weight:bold;">Ou pagar valor livre (€):</span>
-                            <input type="number" step="0.01" min="0" max="${(item.preco * item.maxQtde).toFixed(2)}" class="input-form" style="margin:0; padding:4px 8px; font-size:13px; width:95px; text-align:right; background:white;" placeholder="0.00" value="${item.payValor || ''}" oninput="alterarValorManualSplit(${index}, this.value, '${mesaNum}')">
+                            <input type="number" step="0.01" min="0" max="${(item.preco * item.maxQtde).toFixed(2)}" class="input-form" style="margin:0; padding:4px 8px; font-size:13px; width:95px; text-align:right; background:white;" placeholder="0.00" value="${item.payValor || ''}" oninput="alterarValorManualSplit(${index}, this.value, '${escapeHTML(mesaNum)}')">
                         </div>
                     </div>
                 `;
@@ -1587,7 +1593,7 @@
             btnAvancar.disabled = false;
             btnAvancar.onclick = () => {
                 window.splitEmCurso = true;
-                document.getElementById('modal-dividir-conta').style.display = 'none'; // Apenas esconde, não reseta as variáveis
+                document.getElementById('modal-dividir-conta').style.display = 'none'; 
                 prepararFechoMesa('Mesa ' + mesaNum, subtotal, '[]', ''); 
             };
         } else {
@@ -1598,12 +1604,13 @@
     }
 
     function alterarValorManualSplit(index, val, mesaNum) {
-        let num = parseFloat(val) || 0;
+        // CORREÇÃO DECIMAL: Aceita vírgula ou ponto
+        let num = parseFloat(String(val).replace(',', '.')) || 0;
         let item = window.splitBillData[index];
         let maxVal = item.preco * item.maxQtde;
         if (num > maxVal) num = maxVal;
         item.payValor = num;
-        if (num > 0) item.payQtde = 0; // Se usar valor manual, anula seletor de qty fixa
+        if (num > 0) item.payQtde = 0; 
         renderizarSplitBill(mesaNum);
     }
 
@@ -1611,7 +1618,7 @@
         const item = window.splitBillData[index];
         if (delta > 0 && item.payQtde < item.maxQtde) item.payQtde++;
         if (delta < 0 && item.payQtde > 0) item.payQtde--;
-        if (item.payQtde > 0) item.payValor = 0; // Se usar qty fixa, reseta valor manual
+        if (item.payQtde > 0) item.payValor = 0; 
         renderizarSplitBill(mesaNum);
     }
 
@@ -1622,7 +1629,7 @@
         if(!p) { fecharModal('modal-detalhes-gerais'); return; }
 
         let tipo = p.tipo_pedido;
-        let itens = p.itens && p.itens.length > 0 ? p.itens.map(it => `<li><strong>${it.qtde}x</strong> ${it.nome}</li>`).join('') : '<li style="color:#94a3b8; font-style:italic;">Reserva de Mesa Apenas</li>';
+        let itens = p.itens && p.itens.length > 0 ? p.itens.map(it => `<li><strong>${it.qtde}x</strong> ${escapeHTML(it.nome)}</li>`).join('') : '<li style="color:#94a3b8; font-style:italic;">Reserva de Mesa Apenas</li>';
         let icon = tipo === 'levantamento' ? '<i class="fas fa-shopping-bag" style="color:#8b5cf6;"></i>' : '<i class="far fa-calendar-check" style="color:#14b8a6;"></i>';
         
         let estHtml = ''; let btn = '';
@@ -1630,7 +1637,7 @@
 
         if(p.estado === 'aguarda_confirmacao') { 
             if(tipo === 'levantamento') {
-                const infoNif = p.quer_nif ? `<strong><i class="fas fa-file-invoice"></i> Cliente pediu NIF:</strong> ${p.nif_cliente}` : `<strong><i class="fas fa-ban"></i> Cliente NÃO quer NIF.</strong>`;
+                const infoNif = p.quer_nif ? `<strong><i class="fas fa-file-invoice"></i> Cliente pediu NIF:</strong> ${escapeHTML(p.nif_cliente)}` : `<strong><i class="fas fa-ban"></i> Cliente NÃO quer NIF.</strong>`;
                 estHtml = `<div style="background:#fff7ed; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #fed7aa; color:#9a3412; font-size:1em; display:flex; flex-direction:column; gap:8px;">
                             <span><i class="fas fa-mobile-screen-button"></i> Aguarda comprovativo MBWay.</span>${infoNif}</div>`;
                 btn = `<button class="btn-action btn-warning" onclick="confirmarTakeaway(${p.id});"><i class="fas fa-check"></i> Validar MbWay e Aceitar</button>`;
@@ -1677,13 +1684,13 @@
             }
         }
 
-        const tel = p.telefone ? `<a href="tel:${p.telefone}" style="color:var(--primary); text-decoration:none;">📞 ${p.telefone}</a>` : 'S/ Número';
+        const tel = p.telefone ? `<a href="tel:${escapeHTML(p.telefone)}" style="color:var(--primary); text-decoration:none;">📞 ${escapeHTML(p.telefone)}</a>` : 'S/ Número';
         
         document.getElementById('detalhes-gerais-titulo').innerHTML = `${icon} Detalhes de ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
         document.getElementById('detalhes-gerais-body').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <div>
-                    <div style="font-size:1.2em; font-weight:800;">${p.nome_cliente || 'Anónimo'}</div>
+                    <div style="font-size:1.2em; font-weight:800;">${escapeHTML(p.nome_cliente) || 'Anónimo'}</div>
                     <div style="color:#64748b; font-size:0.9em; margin-top:5px;">Para as ${p.data_agendada ? formatarHora(p.data_agendada) : formatarHora(p.created_at)} | ${tel}</div>
                 </div>
                 <div>
@@ -1769,8 +1776,12 @@
         const { data: p } = await _sb.from('pedidos').select('*').eq('id', id).single();
         if (!p) return mostrarAlertaCustom("Erro ao carregar pedido.", "Erro");
         pedidoEditando = JSON.parse(JSON.stringify(p)); 
-        document.getElementById('edit-pedido-id').innerText = `#${p.id}`; document.getElementById('edit-nome').value = p.nome_cliente || ''; document.getElementById('edit-nif').value = p.nif_cliente || ''; document.getElementById('edit-mesa').value = p.mesa || '';
-        document.getElementById('edit-add-produto-select').innerHTML = '<option value="" disabled selected>Escolher produto a adicionar...</option>' + produtosCatalogo.map(prod => { const finalP = prod.desconto_percent > 0 ? prod.preco * (1 - prod.desconto_percent/100) : prod.preco; return `<option value="${prod.id}">${prod.nome} (${finalP.toFixed(2)}€)</option>`; }).join('');
+        document.getElementById('edit-pedido-id').innerText = `#${p.id}`; 
+        document.getElementById('edit-nome').value = p.nome_cliente || ''; 
+        document.getElementById('edit-nif').value = p.nif_cliente || ''; 
+        document.getElementById('edit-mesa').value = p.mesa || '';
+        
+        document.getElementById('edit-add-produto-select').innerHTML = '<option value="" disabled selected>Escolher produto a adicionar...</option>' + produtosCatalogo.map(prod => { const finalP = prod.desconto_percent > 0 ? prod.preco * (1 - prod.desconto_percent/100) : prod.preco; return `<option value="${prod.id}">${escapeHTML(prod.nome)} (${finalP.toFixed(2)}€)</option>`; }).join('');
         renderizarProdutosEdicao(); document.getElementById('modal-edicao').style.display = 'flex';
     }
 
@@ -1781,7 +1792,7 @@
             const subtotal = item.preco * item.qtde; total += subtotal;
             return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding:10px 0;">
                         <div style="flex:1;">
-                            <strong style="font-size:16px; color:#1e293b;">${item.nome}</strong><br>
+                            <strong style="font-size:16px; color:#1e293b;">${escapeHTML(item.nome)}</strong><br>
                             <span style="font-size:14px; color:#64748b;">${item.preco.toFixed(2)}€/un</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -1830,7 +1841,8 @@
     }
 
     function aplicarDescontoConta() {
-        const perc = parseFloat(document.getElementById('pagar-desc-perc').value);
+        // CORREÇÃO DECIMAL: Aceita vírgula ou ponto
+        const perc = parseFloat(document.getElementById('pagar-desc-perc').value.replace(',', '.'));
         let totalBase = parseFloat(document.getElementById('pagar-mesa-total-original').value);
         
         if (isNaN(totalBase) || totalBase <= 0) return;
@@ -1861,7 +1873,8 @@
     }
 
     function calcularTroco() {
-        const entregue = parseFloat(document.getElementById('pagar-valor-entregue').value);
+        // CORREÇÃO DECIMAL: Aceita vírgula ou ponto
+        const entregue = parseFloat(document.getElementById('pagar-valor-entregue').value.replace(',', '.'));
         const aPagar = parseFloat(document.getElementById('pagar-mesa-total').innerText.replace('€',''));
         const spanTroco = document.getElementById('pagar-valor-troco');
         
@@ -1891,7 +1904,7 @@
             document.querySelector('#modal-pagar-mesa h3').innerHTML = '<i class="fas fa-box"></i> Fechar Pedido';
         } else {
             let label = window.splitEmCurso ? 'Pagamento Parcial - Mesa ' : 'Fechar Mesa ';
-            document.querySelector('#modal-pagar-mesa h3').innerHTML = `<i class="fas fa-utensils"></i> ${label} ${mesa.replace('Mesa ', '')}`;
+            document.querySelector('#modal-pagar-mesa h3').innerHTML = `<i class="fas fa-utensils"></i> ${label} ${escapeHTML(mesa).replace('Mesa ', '')}`;
         }
 
         document.getElementById('pagar-mesa-ids').value = idsStr;
@@ -1906,7 +1919,7 @@
         
         if (metodoPreferido && metodoPreferido !== "undefined" && metodoPreferido !== "") {
             if (!htmlOpcoes.includes(`value="${metodoPreferido}"`)) {
-                htmlOpcoes += `<option value="${metodoPreferido}">💳 ${metodoPreferido} (Pedido do Cliente)</option>`;
+                htmlOpcoes += `<option value="${escapeHTML(metodoPreferido)}">💳 ${escapeHTML(metodoPreferido)} (Pedido do Cliente)</option>`;
             }
         }
         
@@ -1962,9 +1975,9 @@
     }
 
     function gerarTalaoImpressaoHTML(mesa, totalAtual, metodo, isConsulta, nifCliente, trocoInfo) {
-        let nomeLoja = window.lojaDataAtual ? window.lojaDataAtual.nome : "Restaurante";
-        let nifLoja = window.lojaDataAtual ? (window.lojaDataAtual.nif || "S/ NIF") : "S/ NIF";
-        let subNif = isConsulta ? "Talão de Consulta" : (nifCliente ? `NIF Cliente: ${nifCliente}` : "Consumidor Final");
+        let nomeLoja = window.lojaDataAtual ? escapeHTML(window.lojaDataAtual.nome) : "Restaurante";
+        let nifLoja = window.lojaDataAtual ? escapeHTML(window.lojaDataAtual.nif || "S/ NIF") : "S/ NIF";
+        let subNif = isConsulta ? "Talão de Consulta" : (nifCliente ? `NIF Cliente: ${escapeHTML(nifCliente)}` : "Consumidor Final");
         let headerDoc = isConsulta ? "TALÃO DE CONSULTA<br><small>NÃO SERVE COMO FATURA</small>" : "FATURA / RECIBO";
         
         let html = `
@@ -1972,7 +1985,7 @@
                 <h2>${nomeLoja}</h2>
                 <div>NIF Empresa: ${nifLoja}</div>
                 <div style="margin-top:5px; font-weight:bold; font-size:14px; text-transform:uppercase;">${headerDoc}</div>
-                <div style="margin-top:5px; font-weight:bold; font-size:14px;">Mesa: ${mesa}</div>
+                <div style="margin-top:5px; font-weight:bold; font-size:14px;">Mesa: ${escapeHTML(mesa)}</div>
                 <div>${subNif}</div>
             </div>
             <hr>
@@ -2023,7 +2036,7 @@
         itensPrint.forEach(it => {
             html += `<tr>
                 <td>${it.qtde}</td>
-                <td>${it.nome}</td>
+                <td>${escapeHTML(it.nome)}</td>
                 <td>${(it.preco * it.qtde).toFixed(2)}€</td>
             </tr>`;
         });
@@ -2044,10 +2057,10 @@
         html += `<div class="totais-talao">Total Pago: ${parseFloat(totalAtual).toFixed(2)}€</div>`;
         
         if (!isConsulta) {
-            html += `<div style="text-align:right; font-size:12px; margin-top:5px;">Pago com: ${metodo}</div>`;
+            html += `<div style="text-align:right; font-size:12px; margin-top:5px;">Pago com: ${escapeHTML(metodo)}</div>`;
             if (trocoInfo) {
-                html += `<div style="text-align:right; font-size:12px;">Entregue: ${trocoInfo.entregue}€</div>
-                         <div style="text-align:right; font-size:12px;">Troco: ${trocoInfo.troco}€</div>`;
+                html += `<div style="text-align:right; font-size:12px;">Entregue: ${escapeHTML(trocoInfo.entregue)}€</div>
+                         <div style="text-align:right; font-size:12px;">Troco: ${escapeHTML(trocoInfo.troco)}€</div>`;
             }
             html += `<div style="text-align:center; margin-top:20px; font-size:11px;">Obrigado pela sua visita!</div>`;
         } else {
@@ -2095,7 +2108,8 @@
         
         let trocoInfo = null;
         if (metodo === 'Dinheiro') {
-            const ent = parseFloat(document.getElementById('pagar-valor-entregue').value);
+            // CORREÇÃO DECIMAL: Aceita vírgula ou ponto
+            const ent = parseFloat(document.getElementById('pagar-valor-entregue').value.replace(',', '.'));
             const troco = parseFloat(document.getElementById('pagar-valor-troco').innerText);
             if (!isNaN(ent)) trocoInfo = { entregue: ent.toFixed(2), troco: troco.toFixed(2) };
         }
@@ -2263,15 +2277,15 @@
                 const isCancelado = p.estado === 'cancelado';
                 const corBadge = isCancelado ? 'var(--danger)' : 'var(--success)';
                 const textBadge = isCancelado ? 'CANCELADO' : 'PAGO';
-                const desc = p.tipo_pedido === 'mesa' ? `Mesa ${p.mesa}` : `Takeaway/Reserva (${p.nome_cliente || 'Anónimo'})`;
-                const infoNif = p.nif_cliente ? `<br><small style="color:#64748b;">NIF: ${p.nif_cliente}</small>` : '';
+                const desc = p.tipo_pedido === 'mesa' ? `Mesa ${escapeHTML(p.mesa)}` : `Takeaway/Reserva (${escapeHTML(p.nome_cliente) || 'Anónimo'})`;
+                const infoNif = p.nif_cliente ? `<br><small style="color:#64748b;">NIF: ${escapeHTML(p.nif_cliente)}</small>` : '';
                 const btnReabrir = `<button onclick="pedirPin(() => efetuarReabertura(${p.id}))" class="btn-mini-edit" style="background:var(--warning); padding:8px 12px; font-weight:bold; font-size:12px;"><i class="fas fa-undo"></i> Reabrir Pedido</button>`;
                 
                 return `<div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                             <div>
                                 <strong style="font-size:1.1em; color:var(--text);">${desc} - ${p.total.toFixed(2)}€</strong>
                                 <span style="display:inline-block; background:${corBadge}; color:white; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:bold; margin-left:10px;">${textBadge}</span>
-                                <span style="display:block; font-size:0.85em; color:#64748b; margin-top:5px;">${formatarHora(p.created_at)} | Via: ${p.metodo_pagamento || '-'} ${infoNif}</span>
+                                <span style="display:block; font-size:0.85em; color:#64748b; margin-top:5px;">${formatarHora(p.created_at)} | Via: ${escapeHTML(p.metodo_pagamento) || '-'} ${infoNif}</span>
                             </div>
                             <div>${btnReabrir}</div>
                         </div>`;
@@ -2330,7 +2344,7 @@
                 });
             }
 
-            let nomeLoja = window.lojaDataAtual ? window.lojaDataAtual.nome : "Restaurante";
+            let nomeLoja = window.lojaDataAtual ? escapeHTML(window.lojaDataAtual.nome) : "Restaurante";
             let dataHoje = new Date().toLocaleDateString('pt-PT');
             let horaFecho = new Date().toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
 
@@ -2339,7 +2353,7 @@
                     <h2>${nomeLoja}</h2>
                     <h3>RELATÓRIO Z</h3>
                     <div>Data: ${dataHoje} | Hora: ${horaFecho}</div>
-                    <div>Operador: ${nomeOperadorAtual}</div>
+                    <div>Operador: ${escapeHTML(nomeOperadorAtual)}</div>
                 </div>
                 <hr>
                 <div style="font-size:14px; margin-bottom:10px; font-weight:bold;">VENDAS POR PAGAMENTO</div>
